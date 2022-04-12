@@ -1,8 +1,7 @@
-
-
 export enum TemplateType {
-  Types = "Types",
-  Enums = "Enums"
+  Types = "types",
+  Instructions = "instructions",
+  Events = "events"
 }
 
 // -------------------- VIEW --------------------
@@ -17,8 +16,9 @@ export type ViewPrimitive =
 export type ViewField = {
   name: string
   type: ViewPrimitive | string
-  rustType: IdlType
+  rustType: string
   optional: boolean
+  multiple: boolean
   length?: number
 }
 
@@ -37,11 +37,30 @@ export type ViewTypes = {
   types: ViewStruct[]
 }
 
+export type ViewAccount = {
+  name: string
+  multiple: boolean
+}
+
 export type ViewInstruction = {
   name: string
-  type: string
+  code: number
   data: ViewStruct
-  accounts: string[]
+  accounts: ViewAccount[]
+}
+
+export type ViewInstructions = {
+  typeImports: string[]
+  rustTypeImports: string[]
+  eventTypeEnum: ViewEnum
+  instructions: ViewInstruction[]
+}
+
+export type ViewEvent = ViewStruct
+
+export type ViewEvents = {
+  typeImports: string[]
+  events: ViewStruct[]
 }
 
 // -------------------- RAW IDL --------------------

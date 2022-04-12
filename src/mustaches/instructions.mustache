@@ -1,0 +1,76 @@
+/*********************************************
+ | Type file generated with anchor-generator |
+ *********************************************/
+
+import BN from "bn.js";
+import { PublicKey } from "@solana/web3.js";
+import {
+{{#typeImports}}
+  {{.}},
+{{/typeImports}}
+} from "./types.js";
+import {
+  struct,
+{{#rustTypeImports}}
+  {{.}},
+{{/rustTypeImports}}
+} from '@aleph-indexer/layout';
+
+// ------------------- INSTRUCTION TYPE -------------------
+{{#eventTypeEnum}}
+export enum {{name}} {
+{{#variants}}
+  {{.}} = '{{.}}',
+{{/variants}}
+}
+{{/eventTypeEnum}}
+
+// ------------------- INSTRUCTION CODES -------------------
+export const IX_METHOD_CODE: Record<string,{{eventTypeEnum.name}} | undefined> = {
+{{#instructions}}
+  [{{code}}]: {{eventTypeEnum.name}}.{{name}},
+{{/instructions}}
+}
+
+// ------------------- DATA LAYOUT -------------------
+export const IX_DATA_LAYOUT: Partial<Record<{{eventTypeEnum.name}}, any>> = {
+{{#instructions}}
+  [{{eventTypeEnum.name}}.{{name}}]: struct([
+    u8('instruction'),
+  {{#data.fields}}
+    {{rustType}}({{#length}}{{length}}, {{/length}}'{{name}}'),
+  {{/data.fields}}
+  ]),
+{{/instructions}}
+}
+
+// ------------------- ACCOUNT LAYOUT -------------------
+export const IX_ACCOUNTS_LAYOUT: Partial<Record<{{eventTypeEnum.name}}, any>> = {
+{{#instructions}}
+  [{{eventTypeEnum.name}}.{{name}}]: [
+  {{#accounts}}
+    {{#multiple}}[{{/multiple}}'{{name}}'{{#multiple}}]{{/multiple}},
+  {{/accounts}}
+  ],
+{{/instructions}}
+}
+
+// ------------------- INSTRUCTIONS -------------------
+{{#instructions}}
+export type {{name}}Instruction = {
+{{#data.fields}}
+  {{name}}{{#optional}}?{{/optional}}: {{type}}{{#multiple}}[]{{/multiple}}
+{{/data.fields}}
+  accounts: {
+{{#accounts}}
+    {{name}}Account{{#multiple}}s{{/multiple}}: string{{#multiple}}[]{{/multiple}}
+{{/accounts}}
+  }
+}
+
+{{/instructions}}
+
+export type ParsedInstruction =
+{{#instructions}}
+  {{name}}Instruction |
+{{/instructions}}

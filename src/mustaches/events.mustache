@@ -1,0 +1,26 @@
+/*********************************************
+ | Type file generated with anchor-generator |
+ *********************************************/
+
+import BN from "bn.js";
+import { PublicKey } from "@solana/web3.js";
+import {
+{{#typeImports}}
+  {{.}},
+{{/typeImports}}
+} from "./types.js";
+
+// ------------------- EVENTS -------------------
+{{#events}}
+export type {{name}} = {
+{{#fields}}
+  {{name}}{{#optional}}?{{/optional}}: {{type}}{{#multiple}}[]{{/multiple}}
+{{/fields}}
+}
+
+{{/events}}
+
+export type ParsedEvent =
+{{#events}}
+  {{name}} |
+{{/events}}

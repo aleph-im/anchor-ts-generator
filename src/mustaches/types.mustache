@@ -19,7 +19,7 @@ export enum {{name}} {
 {{#types}}
 export type {{name}} = {
 {{#fields}}
-  {{name}}{{#optional}}?{{/optional}}: {{type}}
+  {{name}}{{#optional}}?{{/optional}}: {{type}}{{#multiple}}[]{{/multiple}}
 {{/fields}}
 }
 

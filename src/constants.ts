@@ -19,4 +19,4 @@ export const primitivesMap: Record<string, string> = {
   bytes: "Buffer"
 };
 
-export const PACKAGE_ROOT: string = "./"
+export const PACKAGE_ROOT: string = "./packages/anchor-generator"
