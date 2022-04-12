@@ -1,22 +1,43 @@
 {
-    "compilerOptions": {
-        "outDir": "build",
-        "module": "commonjs",
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "target": "es6",
-        "noImplicitAny": true,
-        "moduleResolution": "node",
-        "sourceMap": true
-    },
-    "exclude": [
-        "node_modules",
-        "output",
-        "scripts",
-        "tests",
-        "**/*.spec.ts",
-        "**/*.test.ts",
-        "**/__tests__",
-        "**/__mocks__"
-    ]
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": [
+      "ESNext",
+    ],
+    "module": "esnext",
+    "rootDir": "src",
+    "strict": true,
+    "types": ["node"],
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "moduleResolution": "node",
+    "removeComments": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "baseUrl": "."
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "output",
+    "scripts",
+    "tests",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/__tests__",
+    "**/__mocks__"
+  ],
+  "include": ["./src/**/*.ts"]
 }

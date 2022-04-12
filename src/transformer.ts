@@ -197,7 +197,7 @@ export default class IdlTransformer {
     return {
       name: type.name,
       variants: (type.type as IdlTypeDefTyEnum).variants
-        .map((value, index) => value.name)
+        .map(value => value.name)
     };
   }
 }
