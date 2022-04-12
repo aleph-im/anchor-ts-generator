@@ -6,8 +6,9 @@
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.js",
+  "type": "module",
   "scripts": {
-    "start": "npm i && node ./dist/run.js",
+    "start": "npm i && node ./dist/index.js",
     "postinstall": "npm run build",
     "build": "npm run clean:ts && npm run build:ts",
     "build:ts": "tsc -p ./tsconfig.json",
