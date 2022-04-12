@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "outDir": "build",
         "module": "commonjs",
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,

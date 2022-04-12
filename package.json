@@ -3,15 +3,15 @@
   "version": "1.0.0",
   "author": "Mike Hukiewitz",
   "description": "",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.js",
+  "main": "build/index.js",
+  "module": "build/index.js",
+  "types": "build/index.d.js",
   "scripts": {
-    "start": "npm i && node ./dist/run.js",
+    "start": "npm i && node ./build/run.js",
     "postinstall": "npm run build",
     "build": "npm run clean && npm run build:ts",
-    "build:ts": "tsc -p ./tsconfig.json",
-    "clean": "rm -rf ./node_modules && rm -rf ./dist"
+    "build:ts": "tsc --declaration",
+    "clean": "rm -rf ./node_modules && rm -rf ./build"
   },
   "license": "MIT",
   "dependencies": {
