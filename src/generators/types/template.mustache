@@ -1,0 +1,26 @@
+/*********************************************
+ | Type file generated with anchor-generator |
+ *********************************************/
+
+import BN from "bn.js";
+import { PublicKey } from "@solana/web3.js";
+
+// ------------------- ENUMS -------------------
+{{#enums}}
+export enum {{name}} {
+{{#variants}}
+  {{.}} = '{{.}}',
+{{/variants}}
+}
+
+{{/enums}}
+
+// ------------------- TYPES -------------------
+{{#types}}
+export type {{name}} = {
+{{#fields}}
+  {{name}}{{#optional}}?{{/optional}}: {{type}}
+{{/fields}}
+}
+
+{{/types}}
