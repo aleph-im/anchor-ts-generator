@@ -1,7 +1,8 @@
 export enum TemplateType {
   Types = "types",
   Instructions = "instructions",
-  Events = "events"
+  Events = "events",
+  Accounts = "accounts",
 }
 
 // -------------------- VIEW --------------------

@@ -1,12 +1,13 @@
 import generate from "./generator.js";
-import { TemplateType } from "./types.js";
+import {TemplateType} from "./types.js";
 
 async function main() {
   generate("switchboard_v2.json",
     [
       TemplateType.Types,
       TemplateType.Instructions,
-      TemplateType.Events
+      TemplateType.Events,
+      TemplateType.Accounts
     ]
   )
 }
