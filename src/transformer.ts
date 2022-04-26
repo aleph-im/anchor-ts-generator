@@ -105,6 +105,23 @@ export default class IdlTransformer {
     return this._viewTypes;
   }
 
+    public generateViewAccounts(idl?: IdlTypeDef[]): ViewTypes {
+    if (idl === undefined)
+      idl = this.idl.accounts as IdlTypeDef[]
+    let view: ViewTypes = {
+      enums: [],
+      types: []
+    };
+    for (const type of idl) {
+      if (type.type.kind === "struct")
+        view.types = [...view.types, this.toViewStruct(type)];
+      else if (type.type.kind === "enum")
+        view.enums = [...view.enums, this.toViewEnum(type)];
+    }
+    this._viewTypes = view;
+    return this._viewTypes;
+  }
+
   public generateViewEvents(idl?: IdlEvent[]): ViewEvents {
     if (idl === undefined)
       idl = this.idl.events as IdlEvent[];

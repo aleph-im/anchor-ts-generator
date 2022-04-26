@@ -20,6 +20,8 @@ function generateFromTemplateType(idl: Idl, type: TemplateType): string {
   switch (type) {
     case TemplateType.Types:
       return idl.types ? generateTypes(idl) : "// No IDL types detected"
+    case TemplateType.Accounts:
+      return idl.accounts ? generateAccounts(idl) : "// No IDL types detected"
     case TemplateType.Instructions:
       return (idl.types && idl.instructions) ? generateInstructions(idl) :
         "// Missing IDL types or instructions"
@@ -34,6 +36,14 @@ function generateFromTemplateType(idl: Idl, type: TemplateType): string {
 function generateTypes(idl: Idl): string {
   const trafo = new IdlTransformer(idl);
   let view = trafo.generateViewTypes();
+  const template = fs.readFileSync(
+    `${PACKAGE_ROOT}/src/mustaches/types.mustache`, "utf8");
+  return Mustache.render(template, view);
+}
+
+function generateAccounts(idl: Idl): string {
+  const trafo = new IdlTransformer(idl);
+  let view = trafo.generateViewAccounts();
   const template = fs.readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/types.mustache`, "utf8");
   return Mustache.render(template, view);
