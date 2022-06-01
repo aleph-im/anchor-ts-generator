@@ -4,6 +4,12 @@
 
 import BN from "bn.js";
 import { PublicKey } from "@solana/web3.js";
+import {
+  anchorStruct,
+{{#rustTypeImports}}
+  {{.}},
+{{/rustTypeImports}}
+} from '@aleph-indexer/layout';
 
 // ------------------- ENUMS -------------------
 {{#enums}}
@@ -24,3 +30,15 @@ export type {{name}} = {
 }
 
 {{/types}}
+
+
+// ------------------- DATA LAYOUT -------------------
+export const IX_DATA_LAYOUT: Partial<Record<{{eventTypeEnum.name}}, any>> = {
+{{#types}}
+  ["{{name}}"]: anchorStruct([
+  {{#fields}}
+    {{rustType}}({{#length}}{{length}}, {{/length}}'{{name}}'),
+  {{/fields}}
+  ]),
+{{/types}}
+}
