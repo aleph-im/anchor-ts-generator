@@ -748,6 +748,34 @@
       ]
     },
     {
+      "name": "leaseSetAuthority",
+      "accounts": [
+        {
+          "name": "lease",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "newAuthority",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": "LeaseSetAuthorityParams"
+          }
+        }
+      ]
+    },
+    {
       "name": "leaseWithdraw",
       "accounts": [
         {
@@ -1654,11 +1682,15 @@
             "type": "u64"
           },
           {
+            "name": "disableCrank",
+            "type": "bool"
+          },
+          {
             "name": "ebuf",
             "type": {
               "array": [
                 "u8",
-                164
+                163
               ]
             }
           }
@@ -2029,6 +2061,10 @@
           {
             "name": "referenceCount",
             "type": "u32"
+          },
+          {
+            "name": "totalSpent",
+            "type": "u128"
           }
         ]
       }
@@ -2504,6 +2540,13 @@
             "type": "u8"
           }
         ]
+      }
+    },
+    {
+      "name": "LeaseSetAuthorityParams",
+      "type": {
+        "kind": "struct",
+        "fields": []
       }
     },
     {
@@ -3711,6 +3754,44 @@
             "name": "BBBB"
           },
           {
+            "name": "CACA"
+          },
+          {
+            "name": "DBBD"
+          },
+          {
+            "name": "ADDA"
+          },
+          {
+            "name": "CBCB"
+          },
+          {
+            "name": "ABAB"
+          },
+          {
+            "name": "BADC"
+          },
+          {
+            "name": "BACD"
+          },
+          {
+            "name": "ABDC"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Shuffle",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AAAA"
+          },
+          {
+            "name": "BBBB"
+          },
+          {
             "name": "BADC"
           },
           {
@@ -3733,6 +3814,32 @@
           },
           {
             "name": "CACA"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Lanes",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "D"
+          },
+          {
+            "name": "C"
+          },
+          {
+            "name": "AB"
+          },
+          {
+            "name": "AC"
+          },
+          {
+            "name": "AD"
+          },
+          {
+            "name": "BCD"
           }
         ]
       }
@@ -4649,6 +4756,11 @@
       "code": 6071,
       "name": "InvalidVrfProducerError",
       "msg": "An incorrect oracle attempted to submit a proof"
+    },
+    {
+      "code": 6072,
+      "name": "NoopError",
+      "msg": "Noop error"
     }
   ]
 }
