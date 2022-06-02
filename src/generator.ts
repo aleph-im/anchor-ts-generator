@@ -1,19 +1,58 @@
 import { Idl, TemplateType } from "./types.js";
-import fs from "fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync, realpathSync } from "fs";
 import { PACKAGE_ROOT } from "./constants.js";
 import Mustache from "mustache";
 import IdlTransformer from "./transformer.js";
+import { Paths } from './paths.js'
+import { renderRootFiles } from './render-root.js'
+import { renderSrcFiles } from './render-src.js'
 
 export default function generate(fileName: string, toGenerate: TemplateType[]) {
-  const idl = parseIdl(`${PACKAGE_ROOT}/idl/${fileName}`)
+  const paths = new Paths(`./`)
+  const idl = parseIdl(paths.idlFile(fileName))
 
-  if(!fs.existsSync(`${PACKAGE_ROOT}/output`))
-    fs.mkdirSync(`${PACKAGE_ROOT}/output`)
+  if(!existsSync(paths.outputDir))
+    mkdirSync(paths.outputDir)
 
+  if(!existsSync(paths.tsDir))
+    mkdirSync(paths.tsDir)
   for (const templateType of toGenerate) {
     const output = generateFromTemplateType(idl, templateType)
-    fs.writeFileSync(`${PACKAGE_ROOT}/output/${templateType}.ts`, output);
+    writeFileSync(paths.tsFile(templateType), output);
   }
+
+  if(!existsSync(paths.indexerDir))
+    mkdirSync(paths.indexerDir)
+    const { config, pkg, run, tsconfig } = renderRootFiles(fileName)
+    writeFileSync(paths.indexerFile('config.ts'), config);
+    writeFileSync(paths.indexerFile('package.json'), pkg);
+    writeFileSync(paths.indexerFile('run.ts'), run);
+    writeFileSync(paths.indexerFile('config.ts'), tsconfig);
+
+  if(!existsSync(paths.srcDir))
+    mkdirSync(paths.srcDir)
+    let { constants, solanarpc, types } = renderSrcFiles()
+    writeFileSync(paths.srcFile('constants'), constants);
+    writeFileSync(paths.srcFile('solanaRpc'), solanarpc);
+    writeFileSync(paths.srcFile('types'), types);
+
+  if(!existsSync(paths.dalDir))
+    mkdirSync(paths.dalDir)
+
+  if(!existsSync(paths.domainDir))
+    mkdirSync(paths.domainDir)
+  
+  if(!existsSync(paths.graphqlDir))
+    mkdirSync(paths.graphqlDir)
+
+  if(!existsSync(paths.indexersDir))
+    mkdirSync(paths.indexersDir)
+
+  if(!existsSync(paths.parsersDir))
+    mkdirSync(paths.parsersDir)
+
+  if(!existsSync(paths.utilsDir))
+    mkdirSync(paths.utilsDir)
 }
 
 function generateFromTemplateType(idl: Idl, type: TemplateType): string {
@@ -34,7 +73,7 @@ function generateFromTemplateType(idl: Idl, type: TemplateType): string {
 function generateTypes(idl: Idl): string {
   const trafo = new IdlTransformer(idl);
   let view = trafo.generateViewTypes();
-  const template = fs.readFileSync(
+  const template = readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/types.mustache`, "utf8");
   return Mustache.render(template, view);
 }
@@ -42,7 +81,7 @@ function generateTypes(idl: Idl): string {
 function generateInstructions(idl: Idl): string {
   const trafo = new IdlTransformer(idl);
   const view = trafo.generateViewInstructions();
-  const template = fs.readFileSync(
+  const template = readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/instructions.mustache`, "utf8");
   const text = Mustache.render(template, view);
   // TODO: Modularize to enum.mustache
@@ -52,7 +91,7 @@ function generateInstructions(idl: Idl): string {
 function generateEvents(idl: Idl): string {
   const trafo = new IdlTransformer(idl);
   const view = trafo.generateViewEvents();
-  const template = fs.readFileSync(
+  const template = readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/events.mustache`, "utf8");
   const text = Mustache.render(template, view);
   // TODO: Modularize to enum.mustache
@@ -60,6 +99,6 @@ function generateEvents(idl: Idl): string {
 }
 
 function parseIdl(path: string): Idl {
-  console.log(fs.realpathSync(path))
-  return JSON.parse(fs.readFileSync(path, "utf8"))
+  console.log(realpathSync(path))
+  return JSON.parse(readFileSync(path, "utf8"))
 }
