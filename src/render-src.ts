@@ -27,7 +27,11 @@ export const solanaMainPublicRPCRoundRobin = new SolanaRPCRoundRobin(
 export const solana = solanaRPCRoundRobin.getProxy()
 export const solanaMainPublic = solanaMainPublicRPCRoundRobin.getProxy()`
 
-    let types: string = `export * from "../../ts/types"`
+    let types: string = 
+`export * from "../../ts/types.js"
+export * from "../../ts/events.js"
+export * from "../../ts/instructions.js"
+`
 
     return { constants, solanarpc, types }
   }

@@ -3,9 +3,12 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync, realpathSync } from
 import { PACKAGE_ROOT } from "./constants.js";
 import Mustache from "mustache";
 import IdlTransformer from "./transformer.js";
+
 import { Paths } from './paths.js'
 import { renderRootFiles } from './render-root.js'
 import { renderSrcFiles } from './render-src.js'
+import { renderParsersFiles } from './render-parsers.js'
+import { renderGraphQLFiles } from './render-graphql.js'
 
 export default function generate(fileName: string, toGenerate: TemplateType[]) {
   const paths = new Paths(`./`)
@@ -16,22 +19,21 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.tsDir))
     mkdirSync(paths.tsDir)
-  for (const templateType of toGenerate) {
-    const output = generateFromTemplateType(idl, templateType)
-    writeFileSync(paths.tsFile(templateType), output);
-  }
-
+  
+  const { typesView, instructionsView, eventsView } = generateFromTemplateType(idl, toGenerate, paths)
+  console.log(typesView, instructionsView, eventsView)
+  
   if(!existsSync(paths.indexerDir))
     mkdirSync(paths.indexerDir)
     const { config, pkg, run, tsconfig } = renderRootFiles(fileName)
     writeFileSync(paths.indexerFile('config.ts'), config);
     writeFileSync(paths.indexerFile('package.json'), pkg);
     writeFileSync(paths.indexerFile('run.ts'), run);
-    writeFileSync(paths.indexerFile('config.ts'), tsconfig);
+    writeFileSync(paths.indexerFile('tsconfig.json'), tsconfig);
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
-    let { constants, solanarpc, types } = renderSrcFiles()
+    const { constants, solanarpc, types } = renderSrcFiles()
     writeFileSync(paths.srcFile('constants'), constants);
     writeFileSync(paths.srcFile('solanaRpc'), solanarpc);
     writeFileSync(paths.srcFile('types'), types);
@@ -44,58 +46,94 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
   
   if(!existsSync(paths.graphqlDir))
     mkdirSync(paths.graphqlDir)
+    const { index, resolvers, schema, GQLtypes } = renderGraphQLFiles(fileName)
+    writeFileSync(paths.graphqlFile('index'), index);
+    writeFileSync(paths.graphqlFile('resolvers'), resolvers);
+    writeFileSync(paths.graphqlFile('schema'), schema);
+    writeFileSync(paths.graphqlFile('types'), GQLtypes);
 
   if(!existsSync(paths.indexersDir))
     mkdirSync(paths.indexersDir)
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
+    const event = renderParsersFiles(fileName)
+    writeFileSync(paths.parsersFile('event'), event);
 
   if(!existsSync(paths.utilsDir))
     mkdirSync(paths.utilsDir)
 }
 
-function generateFromTemplateType(idl: Idl, type: TemplateType): string {
-  switch (type) {
-    case TemplateType.Types:
-      return idl.types ? generateTypes(idl) : "// No IDL types detected"
-    case TemplateType.Instructions:
-      return (idl.types && idl.instructions) ? generateInstructions(idl) :
-        "// Missing IDL types or instructions"
-    case TemplateType.Events:
-      return (idl.events && idl.instructions) ? generateEvents(idl) :
-        "// Missing IDL types or events"
-    default:
-      return `// template type ${type} not supported`
+function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {
+  let typesView, instructionsView, eventsView = null
+
+  for (const templateType of toGenerate) {
+    switch (templateType) {
+      case TemplateType.Types:
+        if (idl.types && idl.instructions) {
+          const { template, view } = generateTypes(idl)
+          const text = Mustache.render(template, view);
+          writeFileSync(paths.tsFile(templateType), text)
+          typesView = view
+        }
+        else console.log("No IDL types detected")
+        break
+  
+      case TemplateType.Instructions:
+        if (idl.types && idl.instructions) {
+          const { template, view } = generateInstructions(idl)
+          const text = Mustache.render(template, view);
+          // TODO: Modularize to enum.mustache
+          text.slice(0, text.length-2)  // to avoid the last '|'
+          writeFileSync(paths.tsFile(templateType), text)
+          instructionsView = view
+        }
+        else console.log("Missing IDL types or instructions")
+        break
+  
+      case TemplateType.Events:
+        if (idl.events && idl.instructions){
+          const { template, view } = generateEvents(idl)
+          const text = Mustache.render(template, view)
+          // TODO: Modularize to enum.mustache
+          text.slice(0, text.length-2)
+          writeFileSync(paths.tsFile(templateType), text)
+          eventsView = view
+        }
+        else console.log("Missing IDL types or events")
+        break
+  
+      default:
+        console.log(`template type ${templateType} not supported`)
+    }
   }
+
+  return { typesView, instructionsView, eventsView }
 }
 
-function generateTypes(idl: Idl): string {
+function generateTypes(idl: Idl) {
   const trafo = new IdlTransformer(idl);
   let view = trafo.generateViewTypes();
   const template = readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/types.mustache`, "utf8");
-  return Mustache.render(template, view);
+  return { template, view };
 }
 
-function generateInstructions(idl: Idl): string {
+function generateInstructions(idl: Idl) {
   const trafo = new IdlTransformer(idl);
   const view = trafo.generateViewInstructions();
   const template = readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/instructions.mustache`, "utf8");
-  const text = Mustache.render(template, view);
-  // TODO: Modularize to enum.mustache
-  return text.slice(0, text.length-2)  // to avoid the last '|'
+
+  return { template, view };
 }
 
-function generateEvents(idl: Idl): string {
+function generateEvents(idl: Idl) {
   const trafo = new IdlTransformer(idl);
   const view = trafo.generateViewEvents();
   const template = readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/events.mustache`, "utf8");
-  const text = Mustache.render(template, view);
-  // TODO: Modularize to enum.mustache
-  return text.slice(0, text.length-2)
+  return { template, view };
 }
 
 function parseIdl(path: string): Idl {

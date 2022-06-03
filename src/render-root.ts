@@ -4,6 +4,7 @@ export function renderRootFiles(name: string){
 dotenv.config()
 
 export default process.env`
+
     let pkg: string = 
 `{
   "name": "@aleph-indexer/${name}",
@@ -20,7 +21,6 @@ export default process.env`
   "license": "ISC",
   "dependencies": {
     "@aleph-indexer/core": "1.0.0",
-    "@orca-so/sdk": "^1.1.0",
     "@solana/web3.js": "^1.16.1",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
@@ -32,7 +32,48 @@ export default process.env`
   }
 }`
 
-    let run: string = "" //Insert code here
+    let run: string = 
+`import os from 'os'
+import { EventEmitter } from 'events'
+import { Settings } from 'luxon'
+
+Settings.defaultZone = 'utc'
+
+import config from './config.js'
+import { graphQLServer } from './src/graphql/index.js'
+import { SPLTokenIndexer } from './src/indexers/token.js'
+import { discoveryFn } from './src/utils/discovery.js'
+
+// Disable event emmiter warning
+EventEmitter.defaultMaxListeners = 100000
+
+// max old heap mem size
+process.env.NODE_OPTIONS = '--max-old-space-size=8192' // 8gb
+
+// libuv max threads
+const cpus = os.cpus().length
+const concurrency = cpus // Math.max(4, Math.min(12, cpus))
+process.env.UV_THREADPOOL_SIZE = concurrency as any
+
+console.log('UV_THREADPOOL_SIZE', process.env.UV_THREADPOOL_SIZE)
+console.log('NODE_OPTIONS', process.env.NODE_OPTIONS)
+
+async function main() {
+  graphQLServer.start(config.PORT ? parseInt(config.PORT) : 8080)
+  const indexer = new SPLTokenIndexer(discoveryFn)
+  await indexer.init()
+  await indexer.run()
+}
+
+main()
+
+process.on('uncaughtException', (e) => {
+  console.log('uncaughtException', e)
+})
+
+process.on('unhandledRejection', (e) => {
+  console.log('unhandledRejection', e)
+})`
 
     let tsconfig: string = 
 `{

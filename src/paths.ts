@@ -12,7 +12,7 @@ export class Paths {
     return path.join(this.rootDir.toString(), 'idl')
   }
   idlFile(name: string) {
-    return path.join(this.idlDir, `${name}`)
+    return path.join(this.idlDir, `${name}.json`)
   }
 
   get outputDir() {
