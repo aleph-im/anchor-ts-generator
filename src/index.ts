@@ -6,7 +6,8 @@ async function main() {
     [
       TemplateType.Types,
       TemplateType.Instructions,
-      TemplateType.Events
+      TemplateType.Events,
+      TemplateType.Accounts
     ]
   )
 }

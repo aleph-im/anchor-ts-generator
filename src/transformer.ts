@@ -16,7 +16,9 @@ import {
   ViewInstruction,
   ViewInstructions,
   ViewStruct,
-  ViewTypes
+  ViewTypes,
+  ViewAccounts,
+  _ViewAccount
 } from "./types.js";
 import { primitivesMap } from "./constants.js";
 
@@ -24,6 +26,7 @@ export default class IdlTransformer {
   private _viewTypes: ViewTypes | undefined = undefined;
   private _viewEvents: ViewEvents | undefined = undefined;
   private _viewInstructions: ViewInstructions | undefined = undefined;
+  private _viewAccounts: ViewAccounts | undefined = undefined;
 
   constructor(
     protected idl: Idl,
@@ -125,6 +128,42 @@ export default class IdlTransformer {
     return this._viewEvents;
   }
 
+  public generateViewAccounts(idl?: IdlTypeDef[]): ViewAccounts {
+    if (idl === undefined)
+      idl = this.idl.accounts as IdlTypeDef[]
+
+    let typeImports: Set<string> = new Set([])
+    let rustTypeImports: Set<string> = new Set([])
+    let accounts: _ViewAccount[] = [];
+    let code = 0;
+    
+    for (const account of idl) {
+      const name = account.name.slice(0, 1).toUpperCase() + account.name.slice(1);
+
+      const data = this.toViewStruct(account)
+
+      for (const field of data.fields) {
+        if(!this.ignoreImports.has(field.type) && !typeImports.has(field.type))
+          typeImports.add(field.type)
+        if(!rustTypeImports.has(field.rustType))
+          rustTypeImports.add(field.rustType)
+      }
+
+      accounts.push({
+        name,
+        code,
+        data,
+      });
+      code++;
+    }
+    this._viewAccounts = {
+      typeImports: [...typeImports.values()],
+      accounts,
+      rustTypeImports: [...rustTypeImports.values()],
+    };
+    console.log(this._viewAccounts)
+    return this._viewAccounts;
+  }
 
   // ---------------------------------------------
   // ----------------- PROTECTED -----------------

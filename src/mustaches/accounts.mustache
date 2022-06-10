@@ -1,0 +1,55 @@
+/*********************************************
+ | Type file generated with anchor-generator |
+ *********************************************/
+
+import BN from "bn.js";
+import { PublicKey } from "@solana/web3.js";
+import {
+{{#typeImports}}
+  {{.}},
+{{/typeImports}}
+} from "./types.js";
+import {
+  anchorStruct,
+{{#rustTypeImports}}
+  {{.}},
+{{/rustTypeImports}}
+} from '@aleph-indexer/layout';
+
+// ------------------- ACCOUNT TYPE -------------------
+
+export enum AccountType {
+{{#accounts}}
+  {{name}} = '{{name}}',
+{{/accounts}}
+}
+
+
+
+// ------------------- ACCOUNTS CODES -------------------
+export const ACCOUNTS_CODE: Record<string, AccountType | undefined> = {
+{{#accounts}}
+  [{{code}}]: AccountType.{{name}},
+{{/accounts}}
+}
+
+// ------------------- DATA LAYOUT -------------------
+export const ACCOUNTS_DATA_LAYOUT: Partial<Record< AccountType, any>> = {
+{{#accounts}}
+  [AccountType.{{name}}]: anchorStruct([
+  {{#data.fields}}
+    {{rustType}}({{#length}}{{length}}, {{/length}}'{{name}}'),
+  {{/data.fields}}
+  ]),
+{{/accounts}}
+}
+
+// ------------------- ACCOUNTS -------------------
+{{#accounts}}
+export type {{name}} = {
+{{#data.fields}}
+  {{name}}{{#optional}}?{{/optional}}: {{type}}{{#multiple}}[]{{/multiple}}
+{{/data.fields}}
+}
+
+{{/accounts}}

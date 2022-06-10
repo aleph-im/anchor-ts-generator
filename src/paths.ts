@@ -2,7 +2,7 @@ import { PathLike } from 'fs'
 import path from 'path'
 
 export class Paths {
-  constructor(readonly root: PathLike) {}
+  constructor(readonly root: PathLike, readonly project: string) {}
 
   get rootDir() {
     return this.root.toString()
@@ -19,15 +19,19 @@ export class Paths {
     return path.join(this.rootDir.toString(), 'output')
   }
 
+  get projectDir() {
+    return path.join(this.outputDir.toString(), this.project)
+  }
+
   get tsDir() {
-    return path.join(this.outputDir.toString(), 'ts')
+    return path.join(this.projectDir.toString(), 'ts')
   }
   tsFile(name: string) {
     return path.join(this.tsDir, `${name}.ts`)
   }
 
   get indexerDir() {
-    return path.join(this.outputDir.toString(), 'indexer')
+    return path.join(this.projectDir.toString(), 'indexer')
   }
   indexerFile(name: string) {
     return path.join(this.indexerDir, name)
@@ -78,6 +82,16 @@ export class Paths {
   }
   indexersFile(name: string) {
     return path.join(this.indexersDir, `${name}.ts`)
+  }
+
+  get layaoutsDir() {
+    return path.join(this.srcDir.toString(), 'layouts')
+  }
+  get relLayaoutsDir() {
+    return path.relative(process.cwd(), this.layaoutsDir)
+  }
+  layoutsFile(name: string) {
+    return path.join(this.layaoutsDir, `${name}.ts`)
   }
 
   get parsersDir() {

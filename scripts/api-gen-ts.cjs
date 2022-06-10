@@ -9,16 +9,19 @@ const generatedIdlDir = path.join(__dirname, "..", "idl");
 const generatedSDKDir = path.join(
   __dirname,
   "..",
-  "generated",
+  "output",
   PROGRAM_NAME,
-  "ts"
+  "solita-ts"
 );
 
 const generatedSchemaDir = path.join(
   __dirname,
   "..",
-  "generated",
+  "output",
   PROGRAM_NAME,
+  "indexer",
+  "src",
+  "graphql",
   "schema"
 );
 

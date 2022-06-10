@@ -9,63 +9,87 @@ import { renderRootFiles } from './render-root.js'
 import { renderSrcFiles } from './render-src.js'
 import { renderParsersFiles } from './render-parsers.js'
 import { renderGraphQLFiles } from './render-graphql.js'
+import { renderDALFiles } from './render-dal.js'
+import { renderDomainFiles } from './render-domain.js'
+import { renderIndexersFiles } from './render-indexers.js'
+import { renderLayoutsFiles } from './render-layouts.js'
 
 export default function generate(fileName: string, toGenerate: TemplateType[]) {
-  const paths = new Paths(`./`)
+  const paths = new Paths(`./`, fileName)
   const idl = parseIdl(paths.idlFile(fileName))
 
   if(!existsSync(paths.outputDir))
     mkdirSync(paths.outputDir)
 
+  if(!existsSync(paths.projectDir))
+    mkdirSync(paths.projectDir)
+
   if(!existsSync(paths.tsDir))
     mkdirSync(paths.tsDir)
-  
-  const { typesView, instructionsView, eventsView } = generateFromTemplateType(idl, toGenerate, paths)
-  console.log(typesView, instructionsView, eventsView)
-  
+  const { typesView, instructionsView, eventsView, accountsView } = generateFromTemplateType(idl, toGenerate, paths)
+  console.log(typesView, instructionsView, eventsView, accountsView)
+
   if(!existsSync(paths.indexerDir))
     mkdirSync(paths.indexerDir)
-    const { config, pkg, run, tsconfig } = renderRootFiles(fileName)
-    writeFileSync(paths.indexerFile('config.ts'), config);
-    writeFileSync(paths.indexerFile('package.json'), pkg);
-    writeFileSync(paths.indexerFile('run.ts'), run);
-    writeFileSync(paths.indexerFile('tsconfig.json'), tsconfig);
+  const { config, pkg, run, tsconfig } = renderRootFiles(fileName)
+  writeFileSync(paths.indexerFile('config.ts'), config);
+  writeFileSync(paths.indexerFile('package.json'), pkg);
+  writeFileSync(paths.indexerFile('run.ts'), run);
+  writeFileSync(paths.indexerFile('tsconfig.json'), tsconfig);
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
-    const { constants, solanarpc, types } = renderSrcFiles()
-    writeFileSync(paths.srcFile('constants'), constants);
-    writeFileSync(paths.srcFile('solanaRpc'), solanarpc);
-    writeFileSync(paths.srcFile('types'), types);
+  const { constants, solanarpc, types } = renderSrcFiles(fileName)
+  writeFileSync(paths.srcFile('constants'), constants);
+  writeFileSync(paths.srcFile('solanaRpc'), solanarpc);
+  writeFileSync(paths.srcFile('types'), types);
 
   if(!existsSync(paths.dalDir))
     mkdirSync(paths.dalDir)
+  const { main, common, eventDAL, fetcherPool, fetcherState } = renderDALFiles(fileName)
+  writeFileSync(paths.dalFile('index'), main);
+  writeFileSync(paths.dalFile('common'), common);
+  writeFileSync(paths.dalFile('event'), eventDAL);
+  writeFileSync(paths.dalFile('fetcherPool'), fetcherPool);
+  writeFileSync(paths.dalFile('fetcherState'), fetcherState);
 
   if(!existsSync(paths.domainDir))
     mkdirSync(paths.domainDir)
+  const { aggregator, processor, custom } = renderDomainFiles(fileName)
+  writeFileSync(paths.domainFile('aggregator'), aggregator);
+  writeFileSync(paths.domainFile('processor'), processor);
+  writeFileSync(paths.domainFile(fileName), custom);
   
   if(!existsSync(paths.graphqlDir))
     mkdirSync(paths.graphqlDir)
-    const { index, resolvers, schema, GQLtypes } = renderGraphQLFiles(fileName)
-    writeFileSync(paths.graphqlFile('index'), index);
-    writeFileSync(paths.graphqlFile('resolvers'), resolvers);
-    writeFileSync(paths.graphqlFile('schema'), schema);
-    writeFileSync(paths.graphqlFile('types'), GQLtypes);
+  const { index, resolvers, schema, GQLtypes } = renderGraphQLFiles(fileName)
+  writeFileSync(paths.graphqlFile('index'), index);
+  writeFileSync(paths.graphqlFile('resolvers'), resolvers);
+  writeFileSync(paths.graphqlFile('schema'), schema);
+  writeFileSync(paths.graphqlFile('types'), GQLtypes);
 
   if(!existsSync(paths.indexersDir))
     mkdirSync(paths.indexersDir)
+  const aggregatorIndexers = renderIndexersFiles(fileName)
+  writeFileSync(paths.indexersFile('aggregator'), aggregatorIndexers);
+
+  if(!existsSync(paths.layaoutsDir))
+    mkdirSync(paths.layaoutsDir)
+  const { accountLayouts, ixLayouts } = renderLayoutsFiles(instructionsView)
+  writeFileSync(paths.layoutsFile('accounts'), accountLayouts);
+  writeFileSync(paths.layoutsFile('instructions'), ixLayouts);
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
-    const event = renderParsersFiles(fileName)
-    writeFileSync(paths.parsersFile('event'), event);
+  const event = renderParsersFiles(fileName, eventsView)
+  writeFileSync(paths.parsersFile('event'), event);
 
   if(!existsSync(paths.utilsDir))
     mkdirSync(paths.utilsDir)
 }
 
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {
-  let typesView, instructionsView, eventsView = null
+  let typesView, instructionsView, eventsView, accountsView = null
 
   for (const templateType of toGenerate) {
     switch (templateType) {
@@ -84,8 +108,7 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: P
           const { template, view } = generateInstructions(idl)
           const text = Mustache.render(template, view);
           // TODO: Modularize to enum.mustache
-          text.slice(0, text.length-2)  // to avoid the last '|'
-          writeFileSync(paths.tsFile(templateType), text)
+          writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
           instructionsView = view
         }
         else console.log("Missing IDL types or instructions")
@@ -96,19 +119,28 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: P
           const { template, view } = generateEvents(idl)
           const text = Mustache.render(template, view)
           // TODO: Modularize to enum.mustache
-          text.slice(0, text.length-2)
-          writeFileSync(paths.tsFile(templateType), text)
+          writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
           eventsView = view
         }
-        else console.log("Missing IDL types or events")
+        else console.log("Missing IDL events or instructions")
         break
+
+        case TemplateType.Accounts:
+          if (idl.accounts && idl.events){
+            const { template, view } = generateAccounts(idl)
+            const text = Mustache.render(template, view)
+            // TODO: Modularize to enum.mustache
+            writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
+            accountsView = view
+          }
+          else console.log("Missing IDL accounts or events")
+          break
   
       default:
         console.log(`template type ${templateType} not supported`)
     }
   }
-
-  return { typesView, instructionsView, eventsView }
+  return { typesView, instructionsView, eventsView, accountsView }
 }
 
 function generateTypes(idl: Idl) {
@@ -124,7 +156,6 @@ function generateInstructions(idl: Idl) {
   const view = trafo.generateViewInstructions();
   const template = readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/instructions.mustache`, "utf8");
-
   return { template, view };
 }
 
@@ -133,6 +164,14 @@ function generateEvents(idl: Idl) {
   const view = trafo.generateViewEvents();
   const template = readFileSync(
     `${PACKAGE_ROOT}/src/mustaches/events.mustache`, "utf8");
+  return { template, view };
+}
+
+function generateAccounts(idl: Idl) {
+  const trafo = new IdlTransformer(idl);
+  const view = trafo.generateViewAccounts();
+  const template = readFileSync(
+    `${PACKAGE_ROOT}/src/mustaches/accounts.mustache`, "utf8");
   return { template, view };
 }
 
