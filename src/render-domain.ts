@@ -3,8 +3,7 @@ export function renderDomainFiles(name: string){
     const NAME = name.toUpperCase()
 
     const aggregator: string = 
-`
-import { DateTime, Interval } from 'luxon'
+`import { DateTime, Interval } from 'luxon'
 import { Utils, SolanaPool, EntityStorage } from '@aleph-indexer/core'
 import {
   OracleEvent,
@@ -168,12 +167,10 @@ export class Aggregator extends SolanaPool<AggregatorInfo, AggregatorStats> {
       statsMap,
     }
   }
-}
-`
+}`
   
     const processor: string =
-`
-import { Utils } from '@aleph-indexer/core'
+`import { Utils } from '@aleph-indexer/core'
 import { DateTimeUnit } from 'luxon'
 import { ${NAME}_PROGRAM_ID } from '../constants.js'
 import { AggregatorStats, AggregatorTimeStat, OracleEvent } from "../types.js";
@@ -224,12 +221,10 @@ export class OracleEventProcessor {
 }
 
 const oracleEventProcessor = new OracleEventProcessor()
-export default oracleEventProcessor
-`
+export default oracleEventProcessor`
   
     const custom: string = 
-`
-import {
+`import {
     DOMAIN_CACHE_START_DATE,
     ${NAME}_PROGRAM_ID_PK,
   } from '../constants.js'
@@ -241,7 +236,7 @@ import {
     OracleQueueAccountDataRaw,
   } from '../types.js'
   import { sha256 } from 'js-sha256'
-  import { ACCOUNT_DATA_LAYOUT } from '../layouts/accounts.js'
+  import { ACCOUNTS_DATA_LAYOUT } from '../layouts/accounts.js'
   import {
     Utils,
     SolanaRPC,
@@ -454,8 +449,7 @@ import {
     DOMAIN_CACHE_START_DATE,
     oracleEventDAL,
   )
-  export default ${name}Program
-`
+  export default ${name}Program`
   
     return { aggregator, processor, custom }
   }

@@ -3,30 +3,24 @@ export function renderDALFiles(name: string){
     const com = '`'
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
     const main: string = 
-`
-export * from './common.js'
-export * from './event.js
-export * from './fetcherPool.js'
+`export * from './common.js'
 export * from './fetcherState.js'
-`
+export * from './fetcherPool.js'`
   
     const common: string =
-`
-import config from '../../config.js'
+`import config from '../../config.js'
 import { ProgramName } from '../constants.js'
 
-exoport enum EventDAL {
+export enum EventDAL {
   Event = 'event'
 }
 
-export const dbFolder = ${com}${dollar}{config.DB_FOLDER}/${dollar}{ProgramName.${Name}}${com}
-`
+export const dbFolder = ${com}${dollar}{config.DB_FOLDER}/${dollar}{ProgramName.${Name}}${com}`
   
     const eventDAL: string = 
-`
-import { EntityStorage } from '@aleph-indexer/core'
+`import { EntityStorage } from '@aleph-indexer/core'
 import { OracleEvent } from '../types.js'
-import { dbPath as path, EventDAL } from './common.js'
+import { dbFolder as path, EventDAL } from './common.js'
 
 export type OracleEventStorage = EntityStorage<OracleEvent>
 
@@ -47,29 +41,24 @@ export const oracleEventDAL = new EntityStorage<OracleEvent>({
       ],
     }
   ],
-})
-`
+})`
 
 const fetcherPool: string = 
-`
-import { FetcherPoolLevelStorage } from '@aleph-indexer/core'
+`import { FetcherPoolLevelStorage } from '@aleph-indexer/core'
 import { OracleInitInstruction } from '../types.js'
-import { dbPath as path } from './common.js'
+import { dbFolder as path } from './common.js'
 
 export const fetcherPoolDAL =
   new FetcherPoolLevelStorage<OracleInitInstruction>({
     name: 'fetcher_pool',
     path,
-  })
-`
+  })`
 
     const fetcherState: string = 
-`
-import { FetcherStateLevelStorage } from '@aleph-indexer/core'
+`import { FetcherStateLevelStorage } from '@aleph-indexer/core'
 import { dbFolder as path } from './common.js'
 
-export const fetcherStateDAL = new FetcherStateLevelStorage({ path })
-`
+export const fetcherStateDAL = new FetcherStateLevelStorage({ path })`
   
     return { main, common, eventDAL, fetcherPool, fetcherState }
   }

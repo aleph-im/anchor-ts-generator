@@ -26,7 +26,7 @@ export enum {{name}} {
 {{/eventTypeEnum}}
 
 // ------------------- INSTRUCTION CODES -------------------
-export const IX_METHOD_CODE: Record<string,{{eventTypeEnum.name}} | undefined> = {
+export const IX_METHOD_CODE: Record<string, {{eventTypeEnum.name}} | undefined> = {
 {{#instructions}}
   [{{code}}]: {{eventTypeEnum.name}}.{{name}},
 {{/instructions}}

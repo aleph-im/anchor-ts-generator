@@ -76,6 +76,9 @@ export const solanaMainPublic = solanaMainPublicRPCRoundRobin.getProxy()`
 `export * from "../../ts/types.js"
 export * from "../../ts/events.js"
 export * from "../../ts/instructions.js"
+export * from "../../ts/accounts.js"
+
+import { InstructionType } from "../../ts/instructions.js"
 
 // ------------------- PARSED ------------------
 

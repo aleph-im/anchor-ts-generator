@@ -17,7 +17,7 @@ export default ${name}server
 `
 import { EntityStorage } from '@aleph-indexer/core'
 import { Aggregator } from '../domain/aggregator.js'
-import { ${name}}Program } from '../domain/switchboard.js'
+import { ${name}Program } from '../domain/${name}.js'
 import {
   GlobalOracleStats,
   HourlyOracleStats,

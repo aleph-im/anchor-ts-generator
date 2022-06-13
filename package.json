@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@metaplex-foundation/solita": "github:yourtrading-ai/solita#modifying_dist",
+    "bs58": "^5.0.0",
     "form-data": "^4.0.0",
     "mustache": "^4.2.0",
     "nodemon": "^2.0.15"

@@ -31,11 +31,14 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.indexerDir))
     mkdirSync(paths.indexerDir)
-  const { config, pkg, run, tsconfig } = renderRootFiles(fileName)
+  const { config, docker, pkg, readme, run, tsconfig, typesdts } = renderRootFiles(fileName)
   writeFileSync(paths.indexerFile('config.ts'), config);
+  writeFileSync(paths.indexerFile('docker-compose.yaml'), docker);
   writeFileSync(paths.indexerFile('package.json'), pkg);
+  writeFileSync(paths.indexerFile('README.md'), readme);
   writeFileSync(paths.indexerFile('run.ts'), run);
   writeFileSync(paths.indexerFile('tsconfig.json'), tsconfig);
+  writeFileSync(paths.indexerFile('types.d.ts'), typesdts);
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
@@ -70,8 +73,9 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.indexersDir))
     mkdirSync(paths.indexersDir)
-  const aggregatorIndexers = renderIndexersFiles(fileName)
+  const { aggregatorIndexers, customIndexer } = renderIndexersFiles(fileName)
   writeFileSync(paths.indexersFile('aggregator'), aggregatorIndexers);
+  writeFileSync(paths.indexersFile(fileName), customIndexer);
 
   if(!existsSync(paths.layaoutsDir))
     mkdirSync(paths.layaoutsDir)
@@ -81,8 +85,9 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
-  const event = renderParsersFiles(fileName, eventsView)
-  writeFileSync(paths.parsersFile('event'), event);
+  const { aggregatorParser, instructionParser } = renderParsersFiles(fileName, eventsView)
+  writeFileSync(paths.parsersFile('aggregator'), aggregatorParser);
+  writeFileSync(paths.parsersFile('instruction'), instructionParser);
 
   if(!existsSync(paths.utilsDir))
     mkdirSync(paths.utilsDir)
