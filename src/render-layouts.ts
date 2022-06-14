@@ -1,6 +1,5 @@
 import { ViewInstructions } from './types'
 import { sha256 } from 'js-sha256'
-import bs58 from "bs58"
 
 export function renderLayoutsFiles(instructionsView: ViewInstructions | undefined){
     const accountLayouts: string = 
@@ -28,13 +27,13 @@ export function getInstructionType(data: Buffer): InstructionType | undefined {
    // return IX_METHOD_CODE[method]
 }
 
-export const ixMap = new Map<string, InstructionType | undefined >([
+export const IX_MAP_DISCRIMINATOR = new Map<string, InstructionType | undefined >([
 `
     if(instructionsView != undefined) {
         for(let i = 0; i < instructionsView.instructions.length; i++){
-            const ixDiscriminator = Buffer.from(sha256.digest(`instruction:${instructionsView.instructions[i].name}`)).slice(0, 8)
+            const ixDiscriminator = Array.from(instructionDiscriminator(instructionsView.instructions[i].name))
             ixLayouts += 
-`   ["${bs58.encode(ixDiscriminator)}", InstructionType.${instructionsView.instructions[i].name}],
+`   ["${ixDiscriminator}", InstructionType.${instructionsView.instructions[i].name}],
 `
         }
     }
@@ -43,4 +42,15 @@ export const ixMap = new Map<string, InstructionType | undefined >([
 `;
 
     return { accountLayouts, ixLayouts }
+  }
+
+  const SIGHASH_GLOBAL_NAMESPACE = 'global'
+
+  function instructionDiscriminator(name: string): Buffer {
+    return sighash(SIGHASH_GLOBAL_NAMESPACE, name)
+  }
+
+  function sighash(nameSpace: string, ixName: string): Buffer {
+    let preimage = `${nameSpace}:${ixName}`
+    return Buffer.from(sha256.digest(preimage)).slice(0, 8)
   }

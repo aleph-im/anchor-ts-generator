@@ -33,11 +33,14 @@ export class AggregatorEventParser {
       
       const parsed = (ix as AlephParsedEvent<types.InstructionType, any>)
 
-      const baseEvent = {
+      const baseEvent: types.OracleEvent = {
         ...parsed.info,
         id,
         timestamp,
-        type: parsed.type,
+        type: parsed?.type,
+        aggregator: info.address,
+        programId: ixCtx.parentIx?.programId ?? info.programId,
+        queue: info.oracleQueue,
       }
 
       try {
