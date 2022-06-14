@@ -96,7 +96,6 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
   writeFileSync(paths.utilsFile('index'), utilsIndex);
   writeFileSync(paths.utilsFile('utils'), utils);
 }
-
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {
   let typesView, instructionsView, eventsView, accountsView = null
 
