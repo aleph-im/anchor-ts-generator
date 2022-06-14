@@ -44,7 +44,7 @@ export const IX_MAP_DISCRIMINATOR = new Map<string, InstructionType | undefined 
     return { accountLayouts, ixLayouts }
   }
 
-  const SIGHASH_GLOBAL_NAMESPACE = 'global'
+  const SIGHASH_GLOBAL_NAMESPACE = 'instruction'
 
   function instructionDiscriminator(name: string): Buffer {
     return sighash(SIGHASH_GLOBAL_NAMESPACE, name)
