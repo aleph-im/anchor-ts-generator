@@ -2,7 +2,7 @@ export enum TemplateType {
   Types = "types",
   Instructions = "instructions",
   Events = "events",
-  Accounts = "accounts",
+  Accounts = "accounts"
 }
 
 // -------------------- VIEW --------------------
@@ -64,6 +64,17 @@ export type ViewEvents = {
   events: ViewStruct[]
 }
 
+export type ViewAccounts = {
+  typeImports: string[]
+  accounts: _ViewAccount[]
+  rustTypeImports: string[]
+}
+
+export type _ViewAccount = {
+  name: string
+  code: number
+  data: ViewStruct
+}
 // -------------------- RAW IDL --------------------
 export type Idl = {
   version: string;

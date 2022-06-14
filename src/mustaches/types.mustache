@@ -30,15 +30,3 @@ export type {{name}} = {
 }
 
 {{/types}}
-
-
-// ------------------- DATA LAYOUT -------------------
-export const IX_DATA_LAYOUT: Partial<Record<{{eventTypeEnum.name}}, any>> = {
-{{#types}}
-  ["{{name}}"]: anchorStruct([
-  {{#fields}}
-    {{rustType}}({{#length}}{{length}}, {{/length}}'{{name}}'),
-  {{/fields}}
-  ]),
-{{/types}}
-}
