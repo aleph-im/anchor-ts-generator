@@ -13,6 +13,7 @@ import { renderDALFiles } from './render-dal.js'
 import { renderDomainFiles } from './render-domain.js'
 import { renderIndexersFiles } from './render-indexers.js'
 import { renderLayoutsFiles } from './render-layouts.js'
+import { renderUtilsFiles } from "./render-utils.js";
 
 export default function generate(fileName: string, toGenerate: TemplateType[]) {
   const paths = new Paths(`./`, fileName)
@@ -91,6 +92,9 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.utilsDir))
     mkdirSync(paths.utilsDir)
+  const { utilsIndex, utils } = renderUtilsFiles(fileName)
+  writeFileSync(paths.utilsFile('index'), utilsIndex);
+  writeFileSync(paths.utilsFile('utils'), utils);
 }
 
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {

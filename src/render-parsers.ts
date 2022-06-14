@@ -9,64 +9,83 @@ export function renderParsersFiles(name: string, eventsView: ViewEvents | undefi
     const NAME = name.toUpperCase()
     let aggregatorParser: string = 
 `import { InstructionContext, AlephParsedEvent } from '@aleph-indexer/core'
-import { AggregatorInfo, InstructionType, OracleEvent, ParsedEvent } from "../types.js";
+import * as types from "../types.js";
 import { ${NAME}_PROGRAM_ID } from "../constants.js";
 
 export class AggregatorEventParser {
   constructor(
-    protected rpc = solana,
+    /*protected rpc = solana,
     protected dalFactory: ${Name}DALFactory = ${name}DALFactory,
     protected ${name}DAL: ${Name}LevelStorage = ${name}LevelStorage,
-    protected cache: Record<string, { mint: string; owner: string }> = {}, // bad
+    protected cache: Record<string, { mint: string; owner: string }> = {},*/
   ) {}
 
-  async parse(ixCtx: InstructionContext, info: AggregatorInfo): OracleEvent {
+  async parse(ixCtx: InstructionContext, info: types.AggregatorInfo) {
     const { ix, parentIx, parentTx } = ixCtx
+    if(ix.programId.toString() === ${NAME}_PROGRAM_ID){
+      const id = ${com}${dollar}{parentTx.signature}${dollar}{
+        parentIx ? ${com}:${dollar}{parentIx.index.toString().padStart(2, '0')}${com} : ''
+      }:${dollar}{ix.index.toString().padStart(2, '0')}${com}
 
-    const id = ${com}${dollar}{parentTx.signature}${dollar}{
-      parentIx ? ${com}:${dollar}{parentIx.index.toString().padStart(2, '0')}${com} : ''
-    }:${dollar}{ix.index.toString().padStart(2, '0')}${com}
+      const timestamp = parentTx.blockTime
+        ? parentTx.blockTime * 1000
+        : parentTx.slot
+      
+      const parsed = (ix as AlephParsedEvent<types.InstructionType, any>)
 
-    const timestamp = parentTx.blockTime
-      ? parentTx.blockTime * 1000
-      : parentTx.slot
+      const baseEvent = {
+        ...parsed.info,
+        id,
+        timestamp,
+        type: parsed.type,
+      }
 
-    const type = (parentIx as AlephParsedEvent<InstructionType, any>).parsed
-    switch (type) {
+      try {
+        switch (parsed.type) {
 `
     if(eventsView != undefined){
       for(let i = 0; i < eventsView.events.length; i++){
         aggregatorParser += 
-`       
-        case ParsedEvent.${eventsView.events[i].name}: {
-          const { `
+`          case types.EventType.${eventsView.events[i].name}: {
+            const {`
+        let eventFields = ''
         for(let j = 0; j < eventsView.events[i].fields.length; j++){
-          aggregatorParser += ` ${eventsView.events[i].fields[j].name},`
+          eventFields += ` ${eventsView.events[i].fields[j].name},`
         }
-        aggregatorParser += ` } = type.info
-          const res: ${eventsView.events[i].name} = {
+        aggregatorParser += eventFields.slice(0, eventFields.length - 1) + ` } = parsed.info
+            const res: types.${eventsView.events[i].name} = {
+`
+        eventFields = 
+`              ...baseEvent,
 `
         for(let j = 0; j < eventsView.events[i].fields.length; j++){
-          aggregatorParser += `
-          ${eventsView.events[i].fields[j].name},`
-        }
-        aggregatorParser +=
+          eventFields += 
+`              ${eventsView.events[i].fields[j].name},
 `
+        }
+
+        aggregatorParser += eventFields.slice(0, eventFields.length - 2) +
+`
+            }
+            return res
           }
-          return res
-        }
 `
       }
     } 
     aggregatorParser += `
-      default: {
-        console.log('NOT PARSED IX TYPE', (parsed as any).type)
-        console.log(id)
-        return
+          default: {
+            console.log('NOT PARSED IX TYPE', (parsed as any).type)
+            console.log(id)
+            //return
+          }
+        }
+      } catch (e) {
+        console.log('error -> ', parsed.type, id, e)
+        throw e
       }
     }
-  }
-} 
+  } 
+}
 
 export const aggregatorEventParser = new AggregatorEventParser()
 export default aggregatorEventParser`

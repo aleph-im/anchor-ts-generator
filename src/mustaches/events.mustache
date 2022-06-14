@@ -20,6 +20,12 @@ export type {{name}} = {
 
 {{/events}}
 
+export enum EventType {
+{{#events}}
+  {{name}} = '{{name}}',
+{{/events}}
+}
+
 export type ParsedEvent =
 {{#events}}
   {{name}} |
