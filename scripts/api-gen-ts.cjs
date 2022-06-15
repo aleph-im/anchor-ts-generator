@@ -24,6 +24,16 @@ const generatedSchemaDir = path.join(
   "graphql",
   "schema"
 );
+const generatedApolloServerDir = path.join(
+    __dirname,
+    "..",
+    "output",
+    PROGRAM_NAME,
+    "apolloServer",
+    "src",
+    "graphql",
+    "test"
+);
 
 const { spawn } = require("child_process");
 const { Solita, Schema } = require("@metaplex-foundation/solita");
@@ -46,6 +56,7 @@ const anchor = spawn("anchor", ["build", "--idl", generatedIdlDir])
       path.join(generatedIdlDir, `${PROGRAM_NAME}.json`)
     );
     generateTypeScriptSDK();
+    generateApolloServer();
     generateSchema();
   });
 
@@ -67,6 +78,14 @@ async function generateTypeScriptSDK() {
   console.error("Success!");
 }
 
+async function generateApolloServer() {
+  console.error("Generating ApolloServer to %s", generatedApolloServerDir);
+
+
+  console.error("Success!");
+  //process.exit(0);
+}
+
 async function generateSchema() {
   await sleep(700); // weird but easy functional solution to manage multithread processes
   console.error("Generating Schema to %s", generatedSchemaDir);
@@ -83,6 +102,8 @@ async function generateSchema() {
   console.error("Success!");
   process.exit(0);
 }
+
+
 
 function sleep(ms) {
   return new Promise((resolve) => {

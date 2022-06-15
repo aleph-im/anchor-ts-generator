@@ -39,5 +39,8 @@
     "**/__tests__",
     "**/__mocks__"
   ],
-  "include": ["./src/**/*.ts"]
+  "include": ["./src/**/*.ts"],
+  "ts-node": {
+    "esm": true
+  }
 }
