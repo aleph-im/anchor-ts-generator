@@ -2,7 +2,7 @@ export function renderIndexersFiles(name: string){
     const dollar = '$'
     const com = '`'
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-    const aggregatorIndexers: string = 
+    const poolIndexers: string = 
 `
 import {
     SolanaRPC,
@@ -11,21 +11,21 @@ import {
     InstructionContext,
     EntityStorage,
 } from '@aleph-indexer/core'
-import { AggregatorInfo, OracleEvent } from '../types.js'
-import { AggregatorEventParser } from '../parsers/aggregator.js'
-import { Aggregator } from '../domain/aggregator.js'
-import { oracleEventDAL } from '../dal/event.js'
+import { RawEvent, PoolInfo } from '../types.js'
+import { PoolEventParser } from '../parsers/poool.js'
+import { Pool } from '../domain/pool.js'
+import { rawEventDAL } from '../dal/event.js'
 
-export class ${Name}AggregatorIndexer extends TransactionFetcher {
+export class ${Name}PoolIndexer extends TransactionFetcher {
     constructor(
-        protected info: AggregatorInfo,
+        protected info: PoolInfo,
         protected solanaRpc: SolanaRPC,
         protected solanaMainPublicRpc: SolanaRPC,
-        protected domain: Aggregator,
-        protected eventDAL: EntityStorage<OracleEvent> = oracleEventDAL,
+        protected domain: Pool,
+        protected eventDAL: EntityStorage<RawEvent> = rawEventDAL,
         protected fetcherStateDAL: FetcherStateLevelStorage,
-        protected eventParser: AggregatorEventParser,
-        public id = aggregatorAccount:${com}${dollar}{info.address}${com},
+        protected eventParser: PoolEventParser,
+        public id = pooolAccount:${com}${dollar}{info.address}${com},
     ) {
         super(
         {
@@ -49,7 +49,7 @@ export class ${Name}AggregatorIndexer extends TransactionFetcher {
 
     async run(): Promise<boolean> {
         console.log(
-            ${com}[${dollar}{this.info.address} | ${dollar}{this.info.name}] aggregator indexer started...${com},
+            ${com}[${dollar}{this.info.address} | ${dollar}{this.info.name}] pool indexer started...${com},
         )
         await super.run()
         return true
@@ -64,7 +64,7 @@ export class ${Name}AggregatorIndexer extends TransactionFetcher {
     protected async indexInstructions(
         ixsCtx: InstructionContext[],
     ): Promise<void> {
-        const parsedIxs: OracleEvent[] = []
+        const parsedIxs: RawEvent[] = []
 
         for (const ixCtx of ixsCtx) {
             const parsed = this.eventParser.parse(ixCtx, this.info)
@@ -75,7 +75,7 @@ export class ${Name}AggregatorIndexer extends TransactionFetcher {
 
         for (const event of parsedIxs) {
             if (!event) continue
-            await this.domain.computeAggregatorEvent(event)
+            await this.domain.computePoolEvent(event)
         }
     }
 }  
@@ -88,20 +88,20 @@ export class ${Name}AggregatorIndexer extends TransactionFetcher {
     EntityStorage,
   } from '@aleph-indexer/core'
   import { solanaRPCRoundRobin, solanaMainPublicRPCRoundRobin } from '../solanaRpc.js'
-  import { ${Name}AggregatorIndexer } from './aggregatorIndexer.js'
+  import { ${Name}PoolIndexer } from './poolIndexer.js'
   import { ProgramName } from '../constants.js'
   import { fetcherStateLevelStorage } from '../dal/fetcherState.js'
   import {
-    aggregatorEventParser,
-    AggregatorEventParser,
-  } from '../parsers/aggregator.js'
-  import { OracleEvent } from '../types.js'
+    poolEventParser,
+    poolEventParser,
+  } from '../parsers/pool.js'
+  import { RawEvent } from '../types.js'
   import {
     ${name}Program,
     ${Name}Program,
   } from '../domain/${name}.js'
-  import { oracleEventDAL } from '../dal/event.js'
-  import { Aggregator } from '../domain/aggregator.js'
+  import { rawEventDAL } from '../dal/event.js'
+  import { Pool } from '../domain/pool.js'
   import { initParsers } from "../parsers/instruction.js";
   
   export class ${Name}Indexer {
@@ -109,12 +109,12 @@ export class ${Name}AggregatorIndexer extends TransactionFetcher {
       protected domain: ${Name}Program = ${name}Program,
       protected solanaRpcRR: SolanaRPCRoundRobin = solanaRPCRoundRobin,
       protected solanaMainRpcRR: SolanaRPCRoundRobin = solanaMainPublicRPCRoundRobin,
-      protected eventDAL: EntityStorage<OracleEvent> = oracleEventDAL,
+      protected eventDAL: EntityStorage<RawEvent> = rawEventDAL,
       protected fetcherStateDAL: FetcherStateLevelStorage = fetcherStateLevelStorage,
-      protected oracleParser: AggregatorEventParser = aggregatorEventParser,
-      protected aggregatorIndexers: Record<
+      protected oracleParser: PoolEventParser = poolEventParser,
+      protected poolIndexers: Record<
         string,
-        ${Name}AggregatorIndexer
+        ${Name}PoolIndexer
       > = {},
     ) {}
   
@@ -139,19 +139,19 @@ export class ${Name}AggregatorIndexer extends TransactionFetcher {
       initParsers()
   
       await this.domain.init()
-      const aggregatorMap = await this.domain.getPools()
+      const poolMap = await this.domain.getPools()
   
-      const aggregators = Object.values(aggregatorMap)
+      const pools = Object.values(poolMap)
   
       await Promise.all(
-        aggregators.map(async (aggregator) =>
-          this.addAggregatorIndexer(aggregator)),
+        pools.map(async (pool) =>
+          this.addPoolIndexer(pool)),
       )
     }
   
     async run(): Promise<void> {
       await Promise.all(
-        Object.entries(this.aggregatorIndexers)
+        Object.entries(this.poolIndexers)
           .map(async ([key, indexer]) =>
           {
             await indexer.run()
@@ -168,29 +168,29 @@ export class ${Name}AggregatorIndexer extends TransactionFetcher {
     }
   
     protected async runDiscovery(run = true): Promise<void> {
-      const newAggregators = await this.domain.discoverAggregators()
-      console.log(newAggregators.length)
+      const newPools = await this.domain.discoverPools()
+      console.log(newPools.length)
       await Promise.allSettled(
-        newAggregators.map(async (domain: any) => {
-          const indexer = await this.addAggregatorIndexer(domain)
+        newPools.map(async (domain: any) => {
+          const indexer = await this.addPoolIndexer(domain)
           if (run) await indexer.run()
         }),
       )
     }
   
-    protected async addAggregatorIndexer(
-      aggregator: Aggregator,
-    ): Promise<${Name}AggregatorIndexer> {
-      const { address } = aggregator.info
+    protected async addPoolIndexer(
+      pool: Pool,
+    ): Promise<${Name}PoolIndexer> {
+      const { address } = pool.info
   
-      if (this.aggregatorIndexers[address])
-        return this.aggregatorIndexers[address]
+      if (this.poolIndexers[address])
+        return this.poolIndexers[address]
   
-      const indexer = new ${Name}AggregatorIndexer(
-        aggregator.info,
+      const indexer = new ${Name}PoolIndexer(
+        pool.info,
         this.solanaRpcRR.getClient(),
         this.solanaMainRpcRR.getClient(),
-        aggregator,
+        pool,
         this.eventDAL,
         this.fetcherStateDAL,
         this.oracleParser,
@@ -198,10 +198,10 @@ export class ${Name}AggregatorIndexer extends TransactionFetcher {
   
       await indexer.init()
   
-      this.aggregatorIndexers[address] = indexer
+      this.poolIndexers[address] = indexer
   
       return indexer
     }
   }`
-    return { aggregatorIndexers, customIndexer }
+    return { poolIndexers, customIndexer }
   }

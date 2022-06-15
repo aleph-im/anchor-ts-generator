@@ -8,13 +8,13 @@
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "start": "npm i && node ./dist/index.js && node ./scripts/api-gen-ts.cjs",
+    "start": "npm run clean:all && npm i && node ./dist/index.js",
     "prepare": "npm run build",
     "postinstall": "npm run build",
     "build": "npm run clean:ts && npm run build:ts ",
     "build:ts": "tsc -p ./tsconfig.json",
     "clean:ts": "rm -rf ./dist",
-    "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json && rm -rf ./generated"
+    "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json && rm -rf ./output"
   },
   "license": "MIT",
   "bin": {
@@ -25,7 +25,8 @@
     "bs58": "^5.0.0",
     "form-data": "^4.0.0",
     "mustache": "^4.2.0",
-    "nodemon": "^2.0.15"
+    "nodemon": "^2.0.16",
+    "snake-case": "^3.0.4"
   },
   "devDependencies": {
     "@types/mustache": "^4.1.2",

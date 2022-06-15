@@ -19,12 +19,12 @@ export const dbFolder = ${com}${dollar}{config.DB_FOLDER}/${dollar}{ProgramName.
   
     const eventDAL: string = 
 `import { EntityStorage } from '@aleph-indexer/core'
-import { OracleEvent } from '../types.js'
+import { RawEvent } from '../types.js'
 import { dbFolder as path, EventDAL } from './common.js'
 
-export type OracleEventStorage = EntityStorage<OracleEvent>
+export type RawEventStorage = EntityStorage<RawEvent>
 
-export const oracleEventDAL = new EntityStorage<OracleEvent>({
+export const RawEventDAL = new EntityStorage<RawEvent>({
   name: EventDAL.Event,
   path,
   primaryKey: [{ get: (e) => e.id, length: EntityStorage.VariableLength }],
@@ -34,9 +34,9 @@ export const oracleEventDAL = new EntityStorage<OracleEvent>({
       key: [{ get: (e) => e.timestamp, length: EntityStorage.TimestampLength }],
     },
     {
-      name: 'aggregator_timestamp',
+      name: 'pool_timestamp',
       key: [
-        { get: (e) => e.aggregator, length: EntityStorage.AddressLength },
+        { get: (e) => e.pool, length: EntityStorage.AddressLength },
         { get: (e) => e.timestamp, length: EntityStorage.TimestampLength },
       ],
     }
@@ -45,11 +45,11 @@ export const oracleEventDAL = new EntityStorage<OracleEvent>({
 
 const fetcherPool: string = 
 `import { FetcherPoolLevelStorage } from '@aleph-indexer/core'
-import { OracleInitInstruction } from '../types.js'
+import { RawEvent } from '../types.js'
 import { dbFolder as path } from './common.js'
 
 export const fetcherPoolDAL =
-  new FetcherPoolLevelStorage<OracleInitInstruction>({
+  new FetcherPoolLevelStorage<RawEvent>({
     name: 'fetcher_pool',
     path,
   })`

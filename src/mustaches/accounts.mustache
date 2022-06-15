@@ -24,14 +24,6 @@ export enum AccountType {
 {{/accounts}}
 }
 
-// ------------------- ACCOUNTS CODES -------------------
-
-export const ACCOUNTS_CODE: Record<string, AccountType | undefined> = {
-{{#accounts}}
-  [{{code}}]: AccountType.{{name}},
-{{/accounts}}
-}
-
 // ------------------- DATA LAYOUT -------------------
 
 export const ACCOUNTS_DATA_LAYOUT: Partial<Record< AccountType, any>> = {

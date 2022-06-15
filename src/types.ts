@@ -29,7 +29,7 @@ export type ViewEnum = {
 }
 
 export type ViewStruct = {
-  name: string
+  name: string | undefined
   fields: ViewField[]
 }
 
@@ -65,14 +65,11 @@ export type ViewEvents = {
 }
 
 export type ViewAccounts = {
-  typeImports: string[]
   accounts: _ViewAccount[]
-  rustTypeImports: string[]
 }
 
 export type _ViewAccount = {
   name: string
-  code: number
   data: ViewStruct
 }
 // -------------------- RAW IDL --------------------
