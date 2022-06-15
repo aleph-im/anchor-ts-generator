@@ -2,7 +2,7 @@ import generate from "./generator.js";
 import {TemplateType} from "./types.js";
 
 async function main() {
-  generate("club_program_v020.json",
+  generate("club_program_v020",
     [
       TemplateType.Types,
       TemplateType.Instructions,

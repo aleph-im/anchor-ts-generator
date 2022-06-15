@@ -2130,5 +2130,8 @@
       "name": "SellPermissionGovernanceOnlyForBuyAction",
       "msg": "Sell permission governance only for Buy action"
     }
-  ]
+  ],
+  "metadata": {
+    "address": "lololololololo"
+  }
 }
