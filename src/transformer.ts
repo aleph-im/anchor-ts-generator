@@ -59,9 +59,15 @@ export default class IdlTransformer {
       const name = ix.name.slice(0, 1).toUpperCase() + ix.name.slice(1);
       eventTypeEnum.variants.push(name);
 
-      const data = viewTypes.types.find(value =>
-        value.name === (ix.args[0].type as IdlTypeDefined).defined
-      ) as ViewStruct
+      console.log()
+      let data = undefined;
+      if (ix.args.length > 1 || (ix.args.length === 1 && typeof(ix.args[0].type) === 'string') || ix.args.length === 0) {
+        data = this.toViewStruct(ix.args)
+      } else {
+        data = viewTypes.types.find(value =>
+          value.name === (ix.args[0].type as IdlTypeDefined).defined
+        ) as ViewStruct
+      }
 
       for (const field of data.fields) {
         if(!this.ignoreImports.has(field.type) && !typeImports.has(field.type))
@@ -237,14 +243,14 @@ export default class IdlTransformer {
     };
   }
 
-  protected toViewStruct(type: IdlTypeDef | IdlEvent): ViewStruct {
+  protected toViewStruct(type: IdlTypeDef | IdlEvent | IdlField[]): ViewStruct {
     let viewFields: ViewField[] = [];
     const fields = ((type as IdlTypeDef)?.type as IdlTypeDefTyStruct)?.fields ??
-      (type as IdlEvent).fields;
+      (type as IdlEvent).fields ?? type;
     for (const field of fields)
       viewFields.push(this.toViewField(field));
     return {
-      name: type.name,
+      name: (type as IdlTypeDef).name ?? (type as IdlEvent).name,
       fields: viewFields
     };
   }

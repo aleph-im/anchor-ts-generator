@@ -29,7 +29,7 @@ export type ViewEnum = {
 }
 
 export type ViewStruct = {
-  name: string
+  name: string | undefined
   fields: ViewField[]
 }
 

@@ -2,7 +2,7 @@ import generate from "./generator.js";
 import {TemplateType} from "./types.js";
 
 async function main() {
-  generate("switchboard_v2",
+  generate("club_program_v020.json",
     [
       TemplateType.Types,
       TemplateType.Instructions,

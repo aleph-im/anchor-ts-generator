@@ -2,3 +2,5 @@
 /output/
 node_modules
 generated
+/node_modules/
+.idea
