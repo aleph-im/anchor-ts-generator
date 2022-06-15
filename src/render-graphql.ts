@@ -9,29 +9,29 @@ import { ${name}Resolvers } from './resolvers'
 
 const typeDefs = readFileSync('./schema/schema.graphql', 'utf8')
 
-export const ${name}server = new ApolloServer({ typeDefs, ${name}Resolvers })
-export default ${name}server
+export const graphQLServer = new ApolloServer({ typeDefs, ${name}Resolvers })
+export default graphQLServer
 `
 
     const resolvers: string =
 `
 import { EntityStorage } from '@aleph-indexer/core'
-import { Aggregator } from '../domain/aggregator.js'
+import { Pool } from '../domain/pool.js'
 import { ${name}Program } from '../domain/${name}.js'
 import {
   GlobalOracleStats,
   HourlyOracleStats,
-  AggregatorInfo,
+  PoolInfo,
   OracleEvent,
 } from '../types.js'
 
-export type AggregatorFilters = {
+export type PoolFilters = {
   oracleQueue: string
-  aggregators?: string[]
+  pools?: string[]
 }
 
 export type EventsFilters = {
-  aggregator: string
+  pool: string
   startDate?: number
   endDate?: number
   limit?: number
@@ -43,20 +43,20 @@ export type EventsFilters = {
 export const ${name}Resolvers = {
   Query: {
 
-    getAggregators({
+    getPools({
       oracleQueue,
-      aggregators,
-    }: AggregatorFilters): Promise<AggregatorInfo[]> {
-      const result = await this.filterAggregators({
+      pools,
+    }: PoolFilters): Promise<PoolInfo[]> {
+      const result = await this.filterPools({
         oracleQueue,
-        aggregators,
+        pools,
       })
   
       return result.map(({ info, stats }) => ({ ...info, stats }))
     }
 
     getEvents({
-      aggregator,
+      pool,
       startDate = 0,
       endDate = Date.now(),
       limit = 1000,
@@ -69,8 +69,8 @@ export const ${name}Resolvers = {
       const result: OracleEvent[] = []
   
       const events = this.eventDAL
-        .useIndex('aggregator_timestamp')
-        .getAllFromTo([aggregator, startDate], [aggregator, endDate], {
+        .useIndex('pool_timestamp')
+        .getAllFromTo([pool, startDate], [pool, endDate], {
           reverse,
           limit: limit + skip,
         })
@@ -90,20 +90,20 @@ export const ${name}Resolvers = {
       return result
     }
 
-    getAggregatorHourlyStats(
+    getPoolHourlyStats(
       reserveAddress: string,
     ): Promise<HourlyOracleStats> {
-      const reserve = await this.getAggregatorByAddress(reserveAddress)
+      const reserve = await this.getPoolByAddress(reserveAddress)
       return reserve.getHourlyStats()
     }
 
     getGlobalStats({
       oracleQueue,
-      aggregators,
+      pools,
     }: GlobalStatsFilters): Promise<GlobalOracleStats> {
-      const result = await this.filterAggregators({
+      const result = await this.filterPools({
         oracleQueue,
-        aggregators,
+        pools,
       })
   
       const addresses = result.map(({ info }) => info.address)
@@ -112,10 +112,10 @@ export const ${name}Resolvers = {
     }
   }
 
-  getAggregatorByAddress(address: string): Promise<Aggregator> {
-    const aggregator = await this.domain.getPool(address)
-    if (!aggregator) throw new Error(${com}Aggregator ${dollar}{address} does not exists${com})
-    return aggregator
+  getPoolByAddress(address: string): Promise<Pool> {
+    const pool = await this.domain.getPool(address)
+    if (!pool) throw new Error(${com}Pool ${dollar}{address} does not exists${com})
+    return pool
   }
 }
 `

@@ -138,34 +138,20 @@ export default class IdlTransformer {
     if (idl === undefined)
       idl = this.idl.accounts as IdlTypeDef[]
 
-    let typeImports: Set<string> = new Set([])
-    let rustTypeImports: Set<string> = new Set([])
     let accounts: _ViewAccount[] = [];
-    let code = 0;
     
     for (const account of idl) {
       const name = account.name.slice(0, 1).toUpperCase() + account.name.slice(1);
 
       const data = this.toViewStruct(account)
 
-      for (const field of data.fields) {
-        if(!this.ignoreImports.has(field.type) && !typeImports.has(field.type))
-          typeImports.add(field.type)
-        if(!rustTypeImports.has(field.rustType))
-          rustTypeImports.add(field.rustType)
-      }
-
       accounts.push({
         name,
-        code,
         data,
       });
-      code++;
     }
     this._viewAccounts = {
-      typeImports: [...typeImports.values()],
-      accounts,
-      rustTypeImports: [...rustTypeImports.values()],
+      accounts
     };
     console.log(this._viewAccounts)
     return this._viewAccounts;

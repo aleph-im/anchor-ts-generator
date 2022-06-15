@@ -30,6 +30,10 @@ export class Paths {
     return path.join(this.tsDir, `${name}.ts`)
   }
 
+  get tsSolitaDir() {
+    return path.join(this.projectDir.toString(), 'ts-solita')
+  }
+
   get indexerDir() {
     return path.join(this.projectDir.toString(), 'indexer')
   }
@@ -73,6 +77,10 @@ export class Paths {
   graphqlFile(name: string) {
     return path.join(this.graphqlDir, `${name}.ts`)
   }
+  get graphSchemaDir() {
+    return path.join(this.graphqlDir.toString(), 'schema')
+  }
+
 
   get indexersDir() {
     return path.join(this.srcDir.toString(), 'indexers')

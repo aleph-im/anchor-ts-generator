@@ -1,6 +1,5 @@
 /dist/
 /output/
-node_modules
-generated
 /node_modules/
+generated
 .idea
