@@ -24,16 +24,20 @@ type Query {
   accounts(type: AccountType, address: String): [Account]
 }
 
-type Instruction {
-    
+interface Instruction {
+    id: String
+    type: InstructionType
+    timestamp: Int
+    programId: String
+    account: String
+}
+
+type CreateInstruction implements Instruction {
+    foo: String
+    bar: String
 }
 
 interface Account {
-    some: String
-    other: Int
-    stuff: String
-    from: Int
-    chain: String
     stats: AccessStats
 }
 
