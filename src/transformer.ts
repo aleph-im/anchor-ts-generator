@@ -17,8 +17,8 @@ import {
   ViewInstructions,
   ViewStruct,
   ViewTypes,
-// ViewAccounts, //L unsed after commenting out
-  _ViewAccount
+  _ViewAccount,
+  ViewAccounts
 } from "./types.js";
 import { primitivesMap } from "./constants.js";
 
@@ -26,7 +26,7 @@ export default class IdlTransformer {
   private _viewTypes: ViewTypes | undefined = undefined;
   private _viewEvents: ViewEvents | undefined = undefined;
   private _viewInstructions: ViewInstructions | undefined = undefined;
-  //private _viewAccounts: ViewAccounts | undefined = undefined; //L wasnt used after commenting out
+  private _viewAccounts: ViewAccounts | undefined = undefined; //L wasnt used after commenting out
 
   constructor(
     protected idl: Idl,
@@ -133,7 +133,7 @@ export default class IdlTransformer {
     };
     return this._viewEvents;
   }
-/*
+
   public generateViewAccounts(idl?: IdlTypeDef[]): ViewAccounts {
     if (idl === undefined)
       idl = this.idl.accounts as IdlTypeDef[]
@@ -157,7 +157,6 @@ export default class IdlTransformer {
     return this._viewAccounts;
   }
 
-  */ //L double declaration, dont know why
   // ---------------------------------------------
   // ----------------- PROTECTED -----------------
   // ---------------------------------------------
