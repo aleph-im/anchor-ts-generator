@@ -8,29 +8,39 @@
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "start": "npm run clean:all && npm i && node ./dist/index.js",
+    "start": "npm run clean:all && npm i && node ./dist/index.js && npm run runApolloServer",
     "prepare": "npm run build",
     "postinstall": "npm run build",
     "build": "npm run clean:ts && npm run build:ts ",
     "build:ts": "tsc -p ./tsconfig.json",
     "clean:ts": "rm -rf ./dist",
-    "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json && rm -rf ./output"
+    "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json && rm -rf ./output",
+    "generateApolloGQL": "graphql-codegen --config ./src/apolloServer/codegen.yaml",
+    "generateServer": "ts-node ./src/mustaches/apolloServer.js",
+    "generateIndex": "ts-node ./src/apolloServer/index.ts",
+    "runServer": "ts-node ./output/switchboard_v2/graphql/apolloServerGenerated.ts",
+    "runApolloServer": "npm run generateApolloGQL && npm run runServer"
   },
   "license": "MIT",
   "bin": {
     "anchor-ts": "./dist/index.js"
   },
   "dependencies": {
+    "@graphql-codegen/typescript": "^2.5.0",
+    "@graphql-codegen/typescript-resolvers": "^2.6.5",
     "@metaplex-foundation/solita": "github:yourtrading-ai/solita#modifying_dist",
+    "apollo-server": "^3.8.2",
     "bs58": "^5.0.0",
     "form-data": "^4.0.0",
     "mustache": "^4.2.0",
-    "nodemon": "^2.0.16"
+    "nodemon": "^2.0.16",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.3"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^2.6.2",
     "@types/mustache": "^4.1.2",
-    "@types/node": "^17.0.23",
-    "typescript": "^4.6.3"
+    "@types/node": "^17.0.23"
   },
   "engines": {
     "node": ">=17.7.2",

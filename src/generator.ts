@@ -15,6 +15,10 @@ import { renderDomainFiles } from './render-domain.js'
 import { renderIndexersFiles } from './render-indexers.js'
 import { renderLayoutsFiles } from './render-layouts.js'
 import { renderUtilsFiles } from "./render-utils.js";
+import { generateIndexGraphql } from "./apolloServer/index.js";
+import { generateApolloServer } from "./mustaches/apolloServer.js";
+//import { startServer } from "./output/switchboard_v2/graphql/apolloServerGenerated.js";
+
 
 export default async function generate(fileName: string, toGenerate: TemplateType[]) {
   const paths = new Paths(`./`, fileName)
@@ -99,6 +103,16 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.tsSolitaDir)
   await generateSolitaTypeScript(paths, fileName);
+
+  //generate exports for resolvers and types
+  generateIndexGraphql();
+
+  //generate mustache apolloServer
+ // fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
+  generateApolloServer();
+
+  //fire up the apolloServer
+  //startServer();
 }
 
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {

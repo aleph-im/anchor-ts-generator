@@ -17,8 +17,8 @@ import {
   ViewInstructions,
   ViewStruct,
   ViewTypes,
-  ViewAccounts,
-  _ViewAccount
+  _ViewAccount,
+  ViewAccounts
 } from "./types.js";
 import { primitivesMap } from "./constants.js";
 
@@ -26,7 +26,7 @@ export default class IdlTransformer {
   private _viewTypes: ViewTypes | undefined = undefined;
   private _viewEvents: ViewEvents | undefined = undefined;
   private _viewInstructions: ViewInstructions | undefined = undefined;
-  private _viewAccounts: ViewAccounts | undefined = undefined;
+  private _viewAccounts: ViewAccounts | undefined = undefined; //L wasnt used after commenting out
 
   constructor(
     protected idl: Idl,
