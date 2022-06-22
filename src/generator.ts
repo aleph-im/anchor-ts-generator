@@ -14,6 +14,11 @@ import { renderDomainFiles } from './render-domain.js'
 import { renderIndexersFiles } from './render-indexers.js'
 import { renderLayoutsFiles } from './render-layouts.js'
 import { renderUtilsFiles } from "./render-utils.js";
+//import {generateIndexGraphql} from "./apolloServer";
+import { generateIndexGraphql } from "./apolloServer/index.js";
+//import { output } from './apolloServer.js';
+
+//import fs from "fs";
 
 export default function generate(fileName: string, toGenerate: TemplateType[]) {
   const paths = new Paths(`./`, fileName)
@@ -95,6 +100,14 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
   const { utilsIndex, utils } = renderUtilsFiles(fileName)
   writeFileSync(paths.utilsFile('index'), utilsIndex);
   writeFileSync(paths.utilsFile('utils'), utils);
+
+  //generate exports for resolvers and types
+  module.exports.generateIndexGraphql();
+
+  //generate mustache apolloServer
+ // fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
+  module.exports.generateApolloServer();
+  console.log("test")
 }
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {
   let typesView, instructionsView, eventsView, accountsView = null

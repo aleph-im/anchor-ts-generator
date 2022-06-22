@@ -36,8 +36,13 @@ const outputTemplate= "\n" +
 "    console.log(`🚀  Server ready at ${url.port}`))\n" +
 "    "
 
-var output = Mustache.render(outputTemplate, view);
-fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
+const output = Mustache.render(outputTemplate, view);
+
+
+export function generateApolloServer(){
+    fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
+    console.log("Wrote apollo file")
+}
 
 /*
 var view = {

@@ -4,6 +4,7 @@
 const PROGRAM_NAME = "switchboard_v2";
 const PROGRAM_ID = "D7ko992PKYLDKFy3fWCQsePvWF3Z7CmvoDHnViGf8bfm";
 
+
 const path = require("path");
 const generatedIdlDir = path.join(__dirname, "..", "idl");
 const generatedSDKDir = path.join(
@@ -81,9 +82,12 @@ async function generateTypeScriptSDK() {
 async function generateApolloServer() {
   console.error("Generating ApolloServer to %s", generatedApolloServerDir);
 
+     "graphql-codegen --config ./src/apolloServer/codegen.yaml",
+      "ts-node ./src/mustaches/apolloServer.js",
+      "ts-node ./src/apolloServer/index.ts",
+      "ts-node ./output/switchboard_v2/graphql/apolloServerGenerated.ts",
 
   console.error("Success!");
-  //process.exit(0);
 }
 
 async function generateSchema() {

@@ -1,5 +1,17 @@
 import * as fs from 'fs';
 //const dir = './graphql';
+
+
+export function generateIndexGraphql(){
+    //generate the exportfile for the generated resolvers and types
+    fs.writeFileSync('./output/switchboard_v2/graphql/index.ts',
+        'export * from \'./resolvers.js\'\n' +
+        'export * from \'./types.js\'\n' );
+    console.log("Wrote index file")
+
+}
+
+
 /*
 if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
@@ -10,7 +22,5 @@ if (!fs.existsSync(dir)){
        // 'export * from \'./schema\'');
 }
 */
-fs.writeFileSync('./output/switchboard_v2/graphql/index.ts',
-    'export * from \'./resolvers\'\n' +
-    'export * from \'./types\'\n' );
+
 
