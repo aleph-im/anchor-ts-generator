@@ -1,3 +1,4 @@
+import { Solita, Schema } from "@metaplex-foundation/solita"
 import { Idl, TemplateType } from "./types.js";
 import { existsSync, mkdirSync, writeFileSync, readFileSync, realpathSync } from "fs";
 import { PACKAGE_ROOT } from "./constants.js";
