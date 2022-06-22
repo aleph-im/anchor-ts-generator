@@ -1,5 +1,5 @@
 // Hardcoded data store
-export const books = [
+export const graphQlData = [
     {
         title: 'The Awakening',
         author: 'Kate Chopin',

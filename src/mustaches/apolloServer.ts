@@ -1,18 +1,18 @@
 //var Mustache = require('mustache');
 import Mustache from 'mustache';
 import fs from "fs";
+import { queryData } from "./../apolloServer/query.js";
 
 //Fuse in the variable query
 //TODO: Needs to be imported later
 const view = {
-query: "    books() {\n" +
-"            return books;\n"
+query: queryData
 };
 
 //All the hardcoded nonechanging infos for apolloServer
 const outputTemplate= "\n" +
 "import { ApolloServer } from 'apollo-server'\n" +
-"import { books } from '../../../src/apolloServer/data.js'   //hardcoded data\n" +
+"import { graphQlData } from '../../../src/apolloServer/data.js'   //hardcoded data\n" +
 "import { Resolvers } from './resolvers.js'\n" +
 "import { readFileSync } from 'fs'\n" +
 "\n" +
@@ -27,23 +27,22 @@ const outputTemplate= "\n" +
 "};\n" +
 "\n" +
 "\n" +
-    "export function startServer() {\n" +
+//    "export function startServer() {\n" +
 "// Pass schema definition and resolvers to the\n" +
 "// ApolloServer constructor\n" +
 "const server = new ApolloServer({ typeDefs, resolvers })\n" +
 "\n" +
 "// Launch the server\n" +
 "server.listen().then( url =>\n" +
-"    console.log(`🚀  Server ready at ${url.port}`))\n" +
-"} "
+"    console.log(`🚀  Server ready at ${url.port}`))\n"
+//"} "
 
 const output = Mustache.render(outputTemplate, view);
 
 
 export function generateApolloServer(){
-    //fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
-    fs.writeFileSync('./src/apolloServer/apolloServerGenerated.ts',output);
-    console.log("Wrote apolloServerGenerated")
+    fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
+    //fs.writeFileSync('./src/apolloServer/apolloServerGenerated.ts',output);
 }
 
 /*

@@ -8,7 +8,7 @@
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "start": "npm i && node ./dist/index.js && node ./scripts/api-gen-ts.cjs",
+    "start": "npm i && node ./dist/index.js && node ./scripts/api-gen-ts.cjs && npm run runApolloServer",
     "prepare": "npm run build",
     "postinstall": "npm run build",
     "build": "npm run clean:ts && npm run build:ts ",
