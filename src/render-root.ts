@@ -54,8 +54,6 @@ services:
     "@switchboard-xyz/switchboard-v2": "^0.0.71"
   }
 }`
-  let readme: string = 
-`# ${Name} Indexer`
 
   let run: string = 
 `import os from 'os'
@@ -65,7 +63,7 @@ import { Settings } from 'luxon'
 Settings.defaultZone = 'utc'
 
 import config from './config.js'
-import ${name}server from './src/graphql/index.js'
+import graphQLServer from './src/graphql/index.js'
 import { ${Name}Indexer } from './src/indexers/${name}.js'
 import * as v8 from "v8";
 import { round } from "lodash-es";
@@ -132,14 +130,7 @@ process.on('unhandledRejection', (e) => {
 }`
 
 let typesdts: string = 
-`declare module '@solana/web3.js' {
-  interface Connection {
-    public _rpcRequest(method: string, args: any[]): Promise<any>
-    public _rpcBatchRequest(requests: any[]): Promise<any>
-  }
-}
+`export * from '../../types'`
 
-declare module 'graphql-type-long'`
-
-  return { config, docker, pkg, readme, run, tsconfig, typesdts }
+  return { config, docker, pkg, run, tsconfig, typesdts }
 }
