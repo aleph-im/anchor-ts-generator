@@ -59,9 +59,15 @@ export default class IdlTransformer {
       const name = ix.name.slice(0, 1).toUpperCase() + ix.name.slice(1);
       eventTypeEnum.variants.push(name);
 
-      const data = viewTypes.types.find(value =>
-        value.name === (ix.args[0].type as IdlTypeDefined).defined
-      ) as ViewStruct
+      console.log()
+      let data = undefined;
+      if (ix.args.length > 1 || (ix.args.length === 1 && typeof(ix.args[0].type) === 'string') || ix.args.length === 0) {
+        data = this.toViewStruct(ix.args)
+      } else {
+        data = viewTypes.types.find(value =>
+          value.name === (ix.args[0].type as IdlTypeDefined).defined
+        ) as ViewStruct
+      }
 
       for (const field of data.fields) {
         if(!this.ignoreImports.has(field.type) && !typeImports.has(field.type))
@@ -108,23 +114,6 @@ export default class IdlTransformer {
     return this._viewTypes;
   }
 
-    public generateViewAccounts(idl?: IdlTypeDef[]): ViewTypes {
-    if (idl === undefined)
-      idl = this.idl.accounts as IdlTypeDef[]
-    let view: ViewTypes = {
-      enums: [],
-      types: []
-    };
-    for (const type of idl) {
-      if (type.type.kind === "struct")
-        view.types = [...view.types, this.toViewStruct(type)];
-      else if (type.type.kind === "enum")
-        view.enums = [...view.enums, this.toViewEnum(type)];
-    }
-    this._viewTypes = view;
-    return this._viewTypes;
-  }
-
   public generateViewEvents(idl?: IdlEvent[]): ViewEvents {
     if (idl === undefined)
       idl = this.idl.events as IdlEvent[];
@@ -149,34 +138,20 @@ export default class IdlTransformer {
     if (idl === undefined)
       idl = this.idl.accounts as IdlTypeDef[]
 
-    let typeImports: Set<string> = new Set([])
-    let rustTypeImports: Set<string> = new Set([])
     let accounts: _ViewAccount[] = [];
-    let code = 0;
     
     for (const account of idl) {
       const name = account.name.slice(0, 1).toUpperCase() + account.name.slice(1);
 
       const data = this.toViewStruct(account)
 
-      for (const field of data.fields) {
-        if(!this.ignoreImports.has(field.type) && !typeImports.has(field.type))
-          typeImports.add(field.type)
-        if(!rustTypeImports.has(field.rustType))
-          rustTypeImports.add(field.rustType)
-      }
-
       accounts.push({
         name,
-        code,
         data,
       });
-      code++;
     }
     this._viewAccounts = {
-      typeImports: [...typeImports.values()],
-      accounts,
-      rustTypeImports: [...rustTypeImports.values()],
+      accounts
     };
     console.log(this._viewAccounts)
     return this._viewAccounts;
@@ -238,14 +213,14 @@ export default class IdlTransformer {
     };
   }
 
-  protected toViewStruct(type: IdlTypeDef | IdlEvent): ViewStruct {
+  protected toViewStruct(type: IdlTypeDef | IdlEvent | IdlField[]): ViewStruct {
     let viewFields: ViewField[] = [];
     const fields = ((type as IdlTypeDef)?.type as IdlTypeDefTyStruct)?.fields ??
-      (type as IdlEvent).fields;
+      (type as IdlEvent).fields ?? type;
     for (const field of fields)
       viewFields.push(this.toViewField(field));
     return {
-      name: type.name,
+      name: (type as IdlTypeDef).name ?? (type as IdlEvent).name,
       fields: viewFields
     };
   }

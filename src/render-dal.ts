@@ -34,9 +34,9 @@ export const oracleEventDAL = new EntityStorage<OracleEvent>({
       key: [{ get: (e) => e.timestamp, length: EntityStorage.TimestampLength }],
     },
     {
-      name: 'aggregator_timestamp',
+      name: 'pool_timestamp',
       key: [
-        { get: (e) => e.aggregator, length: EntityStorage.AddressLength },
+        { get: (e) => e.pool, length: EntityStorage.AddressLength },
         { get: (e) => e.timestamp, length: EntityStorage.TimestampLength },
       ],
     }

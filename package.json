@@ -8,12 +8,14 @@
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "start": "npm i && node ./dist/index.js && node ./scripts/api-gen-ts.cjs && npm run runApolloServer",
+    "start": "npm run clean:all && npm i && node ./dist/index.js",
+    "start": "npm run clean:all && npm i && node ./dist/index.js && npm run runApolloServer",
     "prepare": "npm run build",
     "postinstall": "npm run build",
     "build": "npm run clean:ts && npm run build:ts ",
     "build:ts": "tsc -p ./tsconfig.json",
     "clean:ts": "rm -rf ./dist",
+    "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json && rm -rf ./output"
     "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json && rm -rf ./generated",
     "generateApolloGQL": "graphql-codegen --config ./src/apolloServer/codegen.yaml",
     "generateServer": "ts-node ./src/mustaches/apolloServer.js",
@@ -33,7 +35,7 @@
     "bs58": "^5.0.0",
     "form-data": "^4.0.0",
     "mustache": "^4.2.0",
-    "nodemon": "^2.0.15",
+    "nodemon": "^2.0.16"
     "ts-node": "^10.8.1",
     "typescript": "^4.7.3"
   },

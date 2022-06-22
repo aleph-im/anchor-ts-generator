@@ -19,7 +19,7 @@ import { generateApolloServer } from "./mustaches/apolloServer.js";
 //import { startServer } from "./output/switchboard_v2/graphql/apolloServerGenerated.js";
 
 
-export default function generate(fileName: string, toGenerate: TemplateType[]) {
+export default async function generate(fileName: string, toGenerate: TemplateType[]) {
   const paths = new Paths(`./`, fileName)
   const idl = parseIdl(paths.idlFile(fileName))
 
@@ -36,20 +36,18 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.indexerDir))
     mkdirSync(paths.indexerDir)
-  const { config, docker, pkg, readme, run, tsconfig, typesdts } = renderRootFiles(fileName)
+  const { config, docker, pkg, run, tsconfig, typesdts } = renderRootFiles(fileName)
   writeFileSync(paths.indexerFile('config.ts'), config);
   writeFileSync(paths.indexerFile('docker-compose.yaml'), docker);
   writeFileSync(paths.indexerFile('package.json'), pkg);
-  writeFileSync(paths.indexerFile('README.md'), readme);
   writeFileSync(paths.indexerFile('run.ts'), run);
   writeFileSync(paths.indexerFile('tsconfig.json'), tsconfig);
   writeFileSync(paths.indexerFile('types.d.ts'), typesdts);
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
-  const { constants, solanarpc, types } = renderSrcFiles(fileName)
+  const { constants, types } = renderSrcFiles(fileName)
   writeFileSync(paths.srcFile('constants'), constants);
-  writeFileSync(paths.srcFile('solanaRpc'), solanarpc);
   writeFileSync(paths.srcFile('types'), types);
 
   if(!existsSync(paths.dalDir))
@@ -63,8 +61,8 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.domainDir))
     mkdirSync(paths.domainDir)
-  const { aggregator, processor, custom } = renderDomainFiles(fileName)
-  writeFileSync(paths.domainFile('aggregator'), aggregator);
+  const { pool, processor, custom } = renderDomainFiles(fileName)
+  writeFileSync(paths.domainFile('pool'), pool);
   writeFileSync(paths.domainFile('processor'), processor);
   writeFileSync(paths.domainFile(fileName), custom);
   
@@ -78,8 +76,8 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.indexersDir))
     mkdirSync(paths.indexersDir)
-  const { aggregatorIndexers, customIndexer } = renderIndexersFiles(fileName)
-  writeFileSync(paths.indexersFile('aggregator'), aggregatorIndexers);
+  const { poolIndexers, customIndexer } = renderIndexersFiles(fileName)
+  writeFileSync(paths.indexersFile('pool'), poolIndexers);
   writeFileSync(paths.indexersFile(fileName), customIndexer);
 
   if(!existsSync(paths.layaoutsDir))
@@ -90,8 +88,8 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
-  const { aggregatorParser, instructionParser } = renderParsersFiles(fileName, eventsView)
-  writeFileSync(paths.parsersFile('aggregator'), aggregatorParser);
+  const { poolParser, instructionParser } = renderParsersFiles(fileName, eventsView)
+  writeFileSync(paths.parsersFile('pool'), poolParser);
   writeFileSync(paths.parsersFile('instruction'), instructionParser);
 
   if(!existsSync(paths.utilsDir))
@@ -99,6 +97,11 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
   const { utilsIndex, utils } = renderUtilsFiles(fileName)
   writeFileSync(paths.utilsFile('index'), utilsIndex);
   writeFileSync(paths.utilsFile('utils'), utils);
+
+  await generateSchema(paths, fileName);
+  if(!existsSync(paths.parsersDir))
+    mkdirSync(paths.tsSolitaDir)
+  await generateSolitaTypeScript(paths, fileName);
 
   //generate exports for resolvers and types
   generateIndexGraphql();
@@ -110,6 +113,7 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
   //fire up the apolloServer
   //startServer();
 }
+
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {
   let typesView, instructionsView, eventsView, accountsView = null
 
@@ -200,4 +204,24 @@ function generateAccounts(idl: Idl) {
 function parseIdl(path: string): Idl {
   console.log(realpathSync(path))
   return JSON.parse(readFileSync(path, "utf8"))
+}
+
+async function generateSolitaTypeScript(paths: Paths, name: string) {
+  console.log("Generating TypeScript SDK to %s", paths.tsSolitaDir);
+  const idl = JSON.parse(readFileSync(paths.idlFile(name), "utf8"));
+
+  const gen = new Solita(idl, { formatCode: true });
+  await gen.renderAndWriteTo(paths.tsSolitaDir);
+
+  console.log("Success on TS generation!");
+}
+
+async function generateSchema(paths: Paths, name: string) {
+  console.log("Generating Schema to %s", paths.graphqlDir);
+  const idl = JSON.parse(readFileSync(paths.idlFile(name), "utf8"));
+
+  const gen = new Schema(idl, { formatCode: false });
+  await gen.renderAndWriteTo(paths.graphSchemaDir);
+
+  console.log("Success on Schema generation!");
 }
