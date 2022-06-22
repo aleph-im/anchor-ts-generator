@@ -16,6 +16,8 @@ import { renderLayoutsFiles } from './render-layouts.js'
 import { renderUtilsFiles } from "./render-utils.js";
 //import {generateIndexGraphql} from "./apolloServer";
 import { generateIndexGraphql } from "./apolloServer/index.js";
+import { generateApolloServer } from "./mustaches/apolloServer.js";
+//import { startServer } from "./output/switchboard_v2/graphql/apolloServerGenerated.js";
 //import { output } from './apolloServer.js';
 
 //import fs from "fs";
@@ -102,12 +104,14 @@ export default function generate(fileName: string, toGenerate: TemplateType[]) {
   writeFileSync(paths.utilsFile('utils'), utils);
 
   //generate exports for resolvers and types
-  module.exports.generateIndexGraphql();
+  generateIndexGraphql();
 
   //generate mustache apolloServer
  // fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
-  module.exports.generateApolloServer();
-  console.log("test")
+  generateApolloServer();
+
+  //fire up the apolloServer
+  //startServer();
 }
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {
   let typesView, instructionsView, eventsView, accountsView = null

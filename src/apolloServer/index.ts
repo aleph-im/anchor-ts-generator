@@ -1,13 +1,15 @@
 import * as fs from 'fs';
-//const dir = './graphql';
+const dir = './output/switchboard_v2/graphql';
 
 
 export function generateIndexGraphql(){
     //generate the exportfile for the generated resolvers and types
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir)
+    }
     fs.writeFileSync('./output/switchboard_v2/graphql/index.ts',
         'export * from \'./resolvers.js\'\n' +
         'export * from \'./types.js\'\n' );
-    console.log("Wrote index file")
 
 }
 

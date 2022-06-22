@@ -39,7 +39,7 @@
     "**/__tests__",
     "**/__mocks__"
   ],
-  "include": ["./src/**/*.ts"],
+  "include": ["./src/**/*.ts", "./output/switchboard_v2/graphql/apolloServerGenerated.ts"],
   "ts-node": {
     "esm": true
   }

@@ -19,7 +19,7 @@
     "generateServer": "ts-node ./src/mustaches/apolloServer.js",
     "generateIndex": "ts-node ./src/apolloServer/index.ts",
     "runServer": "ts-node ./output/switchboard_v2/graphql/apolloServerGenerated.ts",
-    "runApolloServer": "npm run generateApolloGQL &&  npm run generateServer && npm run generateIndex && npm run runServer"
+    "runApolloServer": "npm run generateApolloGQL && npm run runServer"
   },
   "license": "MIT",
   "bin": {

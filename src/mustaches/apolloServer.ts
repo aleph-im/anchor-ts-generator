@@ -27,6 +27,7 @@ const outputTemplate= "\n" +
 "};\n" +
 "\n" +
 "\n" +
+    "export function startServer() {\n" +
 "// Pass schema definition and resolvers to the\n" +
 "// ApolloServer constructor\n" +
 "const server = new ApolloServer({ typeDefs, resolvers })\n" +
@@ -34,14 +35,15 @@ const outputTemplate= "\n" +
 "// Launch the server\n" +
 "server.listen().then( url =>\n" +
 "    console.log(`🚀  Server ready at ${url.port}`))\n" +
-"    "
+"} "
 
 const output = Mustache.render(outputTemplate, view);
 
 
 export function generateApolloServer(){
-    fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
-    console.log("Wrote apollo file")
+    //fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
+    fs.writeFileSync('./src/apolloServer/apolloServerGenerated.ts',output);
+    console.log("Wrote apolloServerGenerated")
 }
 
 /*
