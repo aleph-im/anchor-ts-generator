@@ -1,6 +1,6 @@
 import {
   ViewEvents,
-} from "./types.js";
+} from "./types";
 
 export function renderParsersFiles(name: string, eventsView: ViewEvents | undefined){
     const dollar = '$'
@@ -9,8 +9,8 @@ export function renderParsersFiles(name: string, eventsView: ViewEvents | undefi
     const NAME = name.toUpperCase()
     let parser: string = 
 `import { InstructionContext, AlephParsedEvent } from '@aleph-indexer/core'
-import * as types from "../types.js";
-import { ${NAME}_PROGRAM_ID } from "../constants.js";
+import * as types from "../types";
+import { ${NAME}_PROGRAM_ID } from "../constants";
 
 export class EventParser {
   constructor(
@@ -98,13 +98,13 @@ const instructionParser: string =
   PARSERS as _PARSERS,
   InstructionParser,
 } from '@aleph-indexer/core'
-import { ProgramName, ${NAME}_PROGRAM_ID } from '../constants.js'
+import { ProgramName, ${NAME}_PROGRAM_ID } from '../constants'
 import {
   getInstructionType,
   IX_ACCOUNTS_LAYOUT,
   IX_DATA_LAYOUT,
-} from '../layouts/instructions.js'
-import { InstructionType } from '../types.js'
+} from '../layouts/instructions'
+import { InstructionType } from '../types'
 
 export const PARSERS = _PARSERS
 

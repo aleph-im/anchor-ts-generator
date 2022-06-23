@@ -17,14 +17,14 @@ export default graphQLServer
     const resolvers: string =
 `
 import { EntityStorage } from '@aleph-indexer/core'
-import { Account } from '../domain/account.js'
-import { ${name}Program } from '../domain/${name}.js'
+import { Account } from '../domain/account'
+import { ${name}Program } from '../domain/${name}'
 import {
   GlobalOracleStats,
   HourlyStats,
   InstructionEvent, 
   ${Name}AccountInfo
-} from "../types.js";
+} from "../types";
 
 export type AggregatorFilters = {
   oracleQueue: string

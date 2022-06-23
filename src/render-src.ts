@@ -20,13 +20,13 @@ export const DOMAIN_CACHE_START_DATE = config.INDEX_START_DATE
 
 
     let types: string = 
-`export * from "../../ts/types.js"
-export * from "../../ts/events.js"
-export * from "../../ts/instructions.js"
-export * from "../../ts/accounts.js"
-export { ParsedInstructions } from "../../ts-solita/index.js"
-export { InstructionType } from "../../ts/instructions.js"
-export { AccountType } from "../../ts/accounts.js"
+`export * from "./layouts/ts/types"
+export * from "./layouts/ts/events"
+export * from "./layouts/ts/instructions"
+export * from "./layouts/ts/accounts"
+export { ParsedInstructions } from "./layouts/solita"
+export { InstructionType } from "./layouts/ts/instructions"
+export { AccountType } from "./layouts/ts/accounts"
 
 import {
 `
@@ -40,10 +40,10 @@ import {
   }
   types +=
 `
-} from "../../ts-solita/index.js"
+} from "./layouts/solita"
 
-import { InstructionType } from "../../ts/instructions.js"
-import { AccountType } from "../../ts/accounts.js"
+import { InstructionType } from "./layouts/ts/instructions"
+import { AccountType } from "./layouts/ts/accounts"
 
 export enum IndexersType {
 `

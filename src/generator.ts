@@ -26,9 +26,7 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   if(!existsSync(paths.projectDir))
     mkdirSync(paths.projectDir)
 
-  if(!existsSync(paths.tsDir))
-    mkdirSync(paths.tsDir)
-  const { typesView, instructionsView, eventsView, accountsView } = generateFromTemplateType(idl, toGenerate, paths)
+  const { typesView, instructionsView, eventsView, accountsView, textAndTemplate } = generateFromTemplateType(idl, toGenerate)
   console.log(typesView, instructionsView, eventsView, accountsView)
 
   if(!existsSync(paths.indexerDir))
@@ -80,6 +78,11 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   writeFileSync(paths.layoutsFile('accounts'), accountLayouts);
   writeFileSync(paths.layoutsFile('instructions'), ixLayouts);
 
+  if(!existsSync(paths.tsDir))
+    mkdirSync(paths.tsDir)
+    for (const x of textAndTemplate)
+    writeFileSync(paths.tsFile(x[0]), x[1])
+
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
   const { parser, instructionParser } = renderParsersFiles(fileName, eventsView)
@@ -98,16 +101,17 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   await generateSolitaTypeScript(paths, fileName);
 }
 
-function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: Paths) {
+function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
   let typesView, instructionsView, eventsView, accountsView = undefined
-
+  let textAndTemplate: [TemplateType, string][] = []
   for (const templateType of toGenerate) {
     switch (templateType) {
       case TemplateType.Types:
         if (idl.types && idl.instructions) {
           const { template, view } = generateTypes(idl)
           const text = Mustache.render(template, view);
-          writeFileSync(paths.tsFile(templateType), text)
+          //writeFileSync(paths.tsFile(templateType), text)
+          textAndTemplate.push([templateType, text])
           typesView = view
         }
         else console.log("No IDL types detected")
@@ -118,7 +122,8 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: P
           const { template, view } = generateInstructions(idl)
           const text = Mustache.render(template, view);
           // TODO: Modularize to enum.mustache
-          writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
+          //writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
+          textAndTemplate.push([templateType, text.slice(0, text.length-2)])
           instructionsView = view
         }
         else console.log("Missing IDL types or instructions")
@@ -129,28 +134,30 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: P
           const { template, view } = generateEvents(idl)
           const text = Mustache.render(template, view)
           // TODO: Modularize to enum.mustache
-          writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
+          //writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
+          textAndTemplate.push([templateType, text.slice(0, text.length-2)])
           eventsView = view
         }
         else console.log("Missing IDL events or instructions")
         break
 
-        case TemplateType.Accounts:
-          if (idl.accounts && idl.events){
-            const { template, view } = generateAccounts(idl)
-            const text = Mustache.render(template, view)
-            // TODO: Modularize to enum.mustache
-            writeFileSync(paths.tsFile(templateType), text.slice(0, text.length))
-            accountsView = view
-          }
-          else console.log("Missing IDL accounts or events")
-          break
+      case TemplateType.Accounts:
+        if (idl.accounts && idl.events){
+          const { template, view } = generateAccounts(idl)
+          const text = Mustache.render(template, view)
+          textAndTemplate.push([templateType, text])
+          // TODO: Modularize to enum.mustache
+          //writeFileSync(paths.tsFile(templateType), text.slice(0, text.length))
+          accountsView = view
+        }
+        else console.log("Missing IDL accounts or events")
+        break
   
       default:
         console.log(`template type ${templateType} not supported`)
     }
   }
-  return { typesView, instructionsView, eventsView, accountsView }
+  return { typesView, instructionsView, eventsView, accountsView, textAndTemplate }
 }
 
 function generateTypes(idl: Idl) {

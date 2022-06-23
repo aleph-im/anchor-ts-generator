@@ -19,7 +19,7 @@ import {
   ViewTypes,
   ViewAccounts,
   _ViewAccount
-} from "./types.js";
+} from "./types";
 import { primitivesMap } from "./constants.js";
 
 export default class IdlTransformer {

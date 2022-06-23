@@ -10,8 +10,8 @@ import {
   HourlyStats,
   ${Name}AccountInfo, 
   ${Name}AccountStats
-} from "../types.js";
-import eventProcessor, { EventProcessor } from './processor.js'
+} from "../types";
+import eventProcessor, { EventProcessor } from './processor'
 
 const { sortTimeStatsMap } = Utils
 
@@ -154,7 +154,7 @@ export class Account extends SolanaPool<${Name}AccountInfo, ${Name}AccountStats>
     const processor: string =
 `import { Utils } from '@aleph-indexer/core'
 import { DateTimeUnit } from 'luxon'
-import { AccountTimeStat, InstructionEvent, ${Name}AccountStats } from "../types.js";
+import { AccountTimeStat, InstructionEvent, ${Name}AccountStats } from "../types";
 
 const splitIt = Utils.splitDurationIntoIntervals
 
@@ -198,9 +198,9 @@ const eventProcessor = new EventProcessor()
 export default eventProcessor`
   
     const custom: string = 
-`import { DOMAIN_CACHE_START_DATE, ${NAME}_PROGRAM_ID, ${NAME}_PROGRAM_ID_PK } from "../constants.js";
-import { AccountType, GlobalOracleStats, InstructionEvent, ${Name}AccountInfo } from "../types.js";
-import { ACCOUNT_DISCRIMINATOR, ACCOUNTS_DATA_LAYOUT } from "../layouts/accounts.js";
+`import { DOMAIN_CACHE_START_DATE, ${NAME}_PROGRAM_ID, ${NAME}_PROGRAM_ID_PK } from "../constants";
+import { AccountType, GlobalOracleStats, InstructionEvent, ${Name}AccountInfo } from "../types";
+import { ACCOUNT_DISCRIMINATOR, ACCOUNTS_DATA_LAYOUT } from "../layouts/accounts";
 import {
   EntityStorage,
   SolanaPools,
@@ -210,10 +210,10 @@ import {
   Utils
 } from "@aleph-indexer/core";
 import { DateTime } from "luxon";
-import { Account } from "./account.js";
-import { oracleEventDAL } from "../dal/event.js";
+import { Account } from "./account";
+import { oracleEventDAL } from "../dal/event";
 import bs58 from "bs58";
-import { AccountInfo, PublicKey } from "@solana/web3.js";
+import { AccountInfo, PublicKey } from "@solana/web3";
 
 export class ${Name}Program extends SolanaPools<Account> {
   private _stats: GlobalOracleStats = this.getNewGlobalStats()

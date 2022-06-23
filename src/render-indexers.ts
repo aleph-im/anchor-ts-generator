@@ -11,10 +11,10 @@ export function renderIndexersFiles(name: string){
   InstructionContext,
   EntityStorage,
 } from '@aleph-indexer/core'
-import { InstructionEvent, ${Name}AccountInfo } from "../types.js";
-import { AggregatorEventParser } from '../parsers/aggregator.js'
-import { Account } from '../domain/account.js'
-import { oracleEventDAL } from '../dal/event.js'
+import { InstructionEvent, ${Name}AccountInfo } from "../types";
+import { AggregatorEventParser } from '../parsers/aggregator'
+import { Account } from '../domain/account'
+import { oracleEventDAL } from '../dal/event'
 
 export class AccountIndexer extends TransactionFetcher {
   constructor(
@@ -88,21 +88,21 @@ const customIndexer =
   EntityStorage,
   solanaPrivateRPCRoundRobin,
 } from '@aleph-indexer/core'
-import { AccountIndexer } from './accountIndexer.js'
-import { ProgramName } from '../constants.js'
-import { fetcherStateLevelStorage } from '../dal/fetcherState.js'
+import { AccountIndexer } from './accountIndexer'
+import { ProgramName } from '../constants'
+import { fetcherStateLevelStorage } from '../dal/fetcherState'
 import {
   aggregatorEventParser,
   AggregatorEventParser,
-} from '../parsers/aggregator.js'
-import { InstructionEvent } from '../types.js'
+} from '../parsers/aggregator'
+import { InstructionEvent } from '../types'
 import {
   ${name}Program,
   ${Name}Program,
-} from '../domain/${name}.js'
-import { oracleEventDAL } from '../dal/event.js'
-import { Account } from '../domain/account.js'
-import { initParsers } from "../parsers/instruction.js";
+} from '../domain/${name}'
+import { oracleEventDAL } from '../dal/event'
+import { Account } from '../domain/account'
+import { initParsers } from "../parsers/instruction";
 
 export class ${Name}Indexer {
   constructor(
