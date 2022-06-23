@@ -9,27 +9,38 @@ export function renderLayoutsFiles(instructionsView: ViewInstructions | undefine
       for(let i = 0; i < accountsView.accounts.length; i++){
         accountLayouts += 
 `  ${accountsView.accounts[i].name.charAt(0).toLowerCase().concat(accountsView.accounts[i].name.slice(1))}Discriminator,
+  ${accountsView.accounts[i].name.charAt(0).toLowerCase().concat(accountsView.accounts[i].name.slice(1))}Beet,
 `
       }  
 
-    }
+    }  
     accountLayouts +=
 `} from '../../../ts-solita'
-export { AccountType, ACCOUNTS_DATA_LAYOUT } from '../../../ts/accounts.js'
 import { AccountType } from '../types.js'
 
-export const ACCOUNT_METHOD_CODE: Map<string, AccountType | undefined > = 
-  new Map<string, AccountType | undefined > ([
+export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {
 `
     if(accountsView != undefined) {
         for(let i = 0; i < accountsView.accounts.length; i++){
             accountLayouts += 
-`   [Buffer.from(${accountsView.accounts[i].name.charAt(0).toLowerCase().concat(accountsView.accounts[i].name.slice(1))}Discriminator).toString('ascii'), AccountType.${accountsView.accounts[i].name}],
+`   [AccountType.${accountsView.accounts[i].name}]: Buffer.from(${accountsView.accounts[i].name.charAt(0).toLowerCase().concat(accountsView.accounts[i].name.slice(1))}Discriminator),
 `
         }
     }
     accountLayouts += 
-`])`
+`}
+
+export const ACCOUNTS_DATA_LAYOUT: Partial<Record< AccountType, any>> = {
+`
+    if(accountsView != undefined) {
+        for(let i = 0; i < accountsView.accounts.length; i++){
+            accountLayouts += 
+`   [AccountType.${accountsView.accounts[i].name}]: ${accountsView.accounts[i].name.charAt(0).toLowerCase().concat(accountsView.accounts[i].name.slice(1))}Beet,
+`
+        }
+    }
+    accountLayouts += 
+`}`
 
     let ixLayouts: string =
 `import { 
@@ -47,12 +58,12 @@ import { InstructionType } from '../types.js'
 export { IX_DATA_LAYOUT, IX_ACCOUNTS_LAYOUT } from '../../../ts/instructions.js'
 
 export function getInstructionType(data: Buffer): InstructionType | undefined {
-  const discriminator = new Buffer(data.slice(0, 8).readUInt8())
+  const discriminator = data.slice(0, 8)
   return IX_METHOD_CODE.get(discriminator.toString('ascii'))
 }
 
 export const IX_METHOD_CODE: Map<string, InstructionType | undefined > = 
-  new Map<string, InstructionType | undefined > ([
+  new Map<string, InstructionType | undefined >([
 `
     if(instructionsView != undefined) {
         for(let i = 0; i < instructionsView.instructions.length; i++){
@@ -62,7 +73,7 @@ export const IX_METHOD_CODE: Map<string, InstructionType | undefined > =
         }
     }
     ixLayouts += 
-`])
+`]);
 `;
 
     return { accountLayouts, ixLayouts }

@@ -1,6 +1,7 @@
 export function renderGraphQLFiles(name: string){
   const dollar = '$'
   const com = '`'
+  const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
   const index: string = 
 `
 import { ApolloServer } from 'apollo-server'
@@ -16,17 +17,22 @@ export default graphQLServer
     const resolvers: string =
 `
 import { EntityStorage } from '@aleph-indexer/core'
-import { Pool } from '../domain/pool.js'
+import { Account } from '../domain/account.js'
 import { ${name}Program } from '../domain/${name}.js'
-import { RawEvent } from '../types.js'
+import {
+  GlobalOracleStats,
+  HourlyStats,
+  InstructionEvent, 
+  ${Name}AccountInfo
+} from "../types.js";
 
-export type PoolFilters = {
+export type AggregatorFilters = {
   oracleQueue: string
-  pools?: string[]
+  aggregators?: string[]
 }
 
 export type EventsFilters = {
-  pool: string
+  aggregator: string
   startDate?: number
   endDate?: number
   limit?: number
@@ -34,10 +40,8 @@ export type EventsFilters = {
   reverse?: boolean
 }
 
-
 export const ${name}Resolvers = {
   Query: {
-
     getPools({
       oracleQueue,
       pools,

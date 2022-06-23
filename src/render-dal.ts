@@ -4,28 +4,27 @@ export function renderDALFiles(name: string){
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
     const main: string = 
 `export * from './common.js'
-export * from './fetcherState.js'
-export * from './fetcherPool.js'`
+export * from './fetcherState.js'`
   
     const common: string =
-`import config from '../../config.js'
+`import { config } from '@aleph-indexer/core'
 import { ProgramName } from '../constants.js'
 
-export enum EventDAL {
-  Event = 'event'
+export enum InstructionDAL {
+  Instruction = 'instruction',
 }
 
-export const dbFolder = ${com}${dollar}{config.DB_FOLDER}/${dollar}{ProgramName.${Name}}${com}`
-  
-    const eventDAL: string = 
+export const dbPath = ${com}${dollar}{config.DB_FOLDER}/${dollar}{ProgramName.${Name}}${com}`
+
+const instruction: string = 
 `import { EntityStorage } from '@aleph-indexer/core'
-import { RawEvent } from '../types.js'
-import { dbFolder as path, EventDAL } from './common.js'
+import { InstructionEvent } from '../types.js'
+import { dbPath as path, InstructionDAL } from './common.js'
 
-export type RawEventStorage = EntityStorage<RawEvent>
+export type InstructionStorage = EntityStorage<InstructionEvent>
 
-export const RawEventDAL = new EntityStorage<RawEvent>({
-  name: EventDAL.Event,
+export const instructionEventDAL = new EntityStorage<InstructionEvent>({
+  name: InstructionDAL.Instruction,
   path,
   primaryKey: [{ get: (e) => e.id, length: EntityStorage.VariableLength }],
   indexes: [
@@ -34,31 +33,20 @@ export const RawEventDAL = new EntityStorage<RawEvent>({
       key: [{ get: (e) => e.timestamp, length: EntityStorage.TimestampLength }],
     },
     {
-      name: 'pool_timestamp',
+      name: 'account_timestamp',
       key: [
-        { get: (e) => e.pool, length: EntityStorage.AddressLength },
+        { get: (e) => e.account, length: EntityStorage.AddressLength },
         { get: (e) => e.timestamp, length: EntityStorage.TimestampLength },
       ],
     }
   ],
 })`
 
-const fetcherPool: string = 
-`import { FetcherPoolLevelStorage } from '@aleph-indexer/core'
-import { RawEvent } from '../types.js'
-import { dbFolder as path } from './common.js'
-
-export const fetcherPoolDAL =
-  new FetcherPoolLevelStorage<RawEvent>({
-    name: 'fetcher_pool',
-    path,
-  })`
-
     const fetcherState: string = 
 `import { FetcherStateLevelStorage } from '@aleph-indexer/core'
-import { dbFolder as path } from './common.js'
+import { dbPath as path } from './common.js'
 
-export const fetcherStateDAL = new FetcherStateLevelStorage({ path })`
+export const fetcherStateLevelStorage = new FetcherStateLevelStorage({ path })`
   
-    return { main, common, eventDAL, fetcherPool, fetcherState }
+    return { main, common, instruction, fetcherState }
   }

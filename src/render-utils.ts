@@ -10,7 +10,7 @@ export function renderUtilsFiles(fileName: string){
     AlephParsedParsedInstruction,
     RawInstruction,
 } from '@aleph-indexer/core'
-import { RawEvent } from '../types.js'
+import { InstructionEvent } from '../types.js'
 import { ${NAME}_PROGRAM_ID } from '../constants.js'
   
 export function isParsedIx(
@@ -22,7 +22,7 @@ export function isParsedIx(
 export function isOracleProgramInstruction(
     ix: RawInstruction | AlephParsedInstruction | AlephParsedInnerInstruction,
     account: string = ${NAME}_PROGRAM_ID,
-): ix is RawEvent {
+): ix is InstructionEvent {
     return ix.programId === account
 }
   

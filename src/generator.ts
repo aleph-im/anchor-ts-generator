@@ -43,23 +43,22 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
-  const { constants, types } = renderSrcFiles(fileName)
+  const { constants, types } = renderSrcFiles(fileName, accountsView)
   writeFileSync(paths.srcFile('constants'), constants);
   writeFileSync(paths.srcFile('types'), types);
 
   if(!existsSync(paths.dalDir))
     mkdirSync(paths.dalDir)
-  const { main, common, eventDAL, fetcherPool, fetcherState } = renderDALFiles(fileName)
+  const { main, common, instruction, fetcherState } = renderDALFiles(fileName)
   writeFileSync(paths.dalFile('index'), main);
   writeFileSync(paths.dalFile('common'), common);
-  writeFileSync(paths.dalFile('event'), eventDAL);
-  writeFileSync(paths.dalFile('fetcherPool'), fetcherPool);
+  writeFileSync(paths.dalFile('instruction'), instruction);
   writeFileSync(paths.dalFile('fetcherState'), fetcherState);
 
   if(!existsSync(paths.domainDir))
     mkdirSync(paths.domainDir)
-  const { pool, processor, custom } = renderDomainFiles(fileName)
-  writeFileSync(paths.domainFile('pool'), pool);
+  const { account, processor, custom } = renderDomainFiles(fileName)
+  writeFileSync(paths.domainFile('account'), account);
   writeFileSync(paths.domainFile('processor'), processor);
   writeFileSync(paths.domainFile(fileName), custom);
   
@@ -71,9 +70,9 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
 
   if(!existsSync(paths.indexersDir))
     mkdirSync(paths.indexersDir)
-  const { poolIndexers, customIndexer } = renderIndexersFiles(fileName)
-  writeFileSync(paths.indexersFile('pool'), poolIndexers);
+  const { indexerAccount, customIndexer } = renderIndexersFiles(fileName)
   writeFileSync(paths.indexersFile(fileName), customIndexer);
+  writeFileSync(paths.indexersFile("accountIndexer"), indexerAccount);
 
   if(!existsSync(paths.layaoutsDir))
     mkdirSync(paths.layaoutsDir)
@@ -83,8 +82,8 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
-  const { poolParser, instructionParser } = renderParsersFiles(fileName, eventsView)
-  writeFileSync(paths.parsersFile('pool'), poolParser);
+  const { parser, instructionParser } = renderParsersFiles(fileName, eventsView)
+  writeFileSync(paths.parsersFile('parser'), parser);
   writeFileSync(paths.parsersFile('instruction'), instructionParser);
 
   if(!existsSync(paths.utilsDir))
@@ -141,7 +140,7 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[], paths: P
             const { template, view } = generateAccounts(idl)
             const text = Mustache.render(template, view)
             // TODO: Modularize to enum.mustache
-            writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
+            writeFileSync(paths.tsFile(templateType), text.slice(0, text.length))
             accountsView = view
           }
           else console.log("Missing IDL accounts or events")
