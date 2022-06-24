@@ -15,8 +15,8 @@ export function renderLayoutsFiles(instructionsView: ViewInstructions | undefine
 
     }  
     accountLayouts +=
-`} from './solita'
-import { AccountType } from '../types'
+`} from './solita/index.js'
+import { AccountType } from '../types.js'
 
 export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {
 `
@@ -52,10 +52,11 @@ export const ACCOUNTS_DATA_LAYOUT: Partial<Record< AccountType, any>> = {
 `
       }
     }
+
     ixLayouts +=
-`} from './solita'
-import { InstructionType } from '../types'
-export { IX_DATA_LAYOUT, IX_ACCOUNTS_LAYOUT } from './layouts/ts/instructions'
+`} from './solita/index.js'
+import { InstructionType } from '../types.js'
+export { IX_DATA_LAYOUT, IX_ACCOUNTS_LAYOUT } from './ts/instructions.js'
 
 export function getInstructionType(data: Buffer): InstructionType | undefined {
   const discriminator = data.slice(0, 8)
@@ -72,6 +73,7 @@ export const IX_METHOD_CODE: Map<string, InstructionType | undefined > =
 `
         }
     }
+
     ixLayouts += 
 `]);
 `;
