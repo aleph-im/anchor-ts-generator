@@ -2,7 +2,8 @@ import generate from "./generator.js";
 import {TemplateType} from "./types.js";
 
 async function main() {
-  await generate("switchboard_v2",
+  const filename = process.argv[2] ?? "switchboard_v2"
+  await generate(filename,
     [
       TemplateType.Types,
       TemplateType.Instructions,
