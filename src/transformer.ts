@@ -53,12 +53,14 @@ export default class IdlTransformer {
 
     let typeImports: Set<string> = new Set([])
     let rustTypeImports: Set<string> = new Set([])
+    let beetImports: Set<string> = new Set([])
     let instructions: ViewInstruction[] = [];
     let code = 0;
     for (const ix of idl) {
       const name = ix.name.slice(0, 1).toUpperCase() + ix.name.slice(1);
       eventTypeEnum.variants.push(name);
-
+      beetImports.add(ix.name + 'Struct')
+      const beet = ix.name + 'Struct';
       console.log()
       let data = undefined;
       if (ix.args.length > 1 || (ix.args.length === 1 && typeof(ix.args[0].type) === 'string') || ix.args.length === 0) {
@@ -79,18 +81,21 @@ export default class IdlTransformer {
         name,
         code,
         data,
+        
         accounts: ix.accounts.map(account => {
           return {
             name: account.name,
             multiple: !!(account as IdlAccounts).accounts
           }
-        })
+        }),
+        beet
       });
       code++;
     }
     this._viewInstructions = {
       typeImports: [...typeImports.values()],
       rustTypeImports: [...rustTypeImports.values()],
+      beetImports: [...beetImports.values()],
       eventTypeEnum,
       instructions
     };

@@ -48,10 +48,12 @@ export type ViewInstruction = {
   code: number
   data: ViewStruct
   accounts: ViewAccount[]
+  beet: string
 }
 
 export type ViewInstructions = {
   typeImports: string[]
+  beetImports: string[]
   rustTypeImports: string[]
   eventTypeEnum: ViewEnum
   instructions: ViewInstruction[]
