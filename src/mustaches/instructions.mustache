@@ -9,12 +9,12 @@ import {
   {{.}},
 {{/typeImports}}
 } from "./types.js";
+
 import {
-  anchorStruct,
-{{#rustTypeImports}}
+{{#beetImports}}
   {{.}},
-{{/rustTypeImports}}
-} from '@aleph-indexer/layout';
+{{/beetImports}}
+} from '../solita/index.js';
 
 // ------------------- INSTRUCTION TYPE -------------------
 {{#eventTypeEnum}}
@@ -35,11 +35,7 @@ export const IX_METHOD_CODE: Record<string, {{eventTypeEnum.name}} | undefined> 
 // ------------------- DATA LAYOUT -------------------
 export const IX_DATA_LAYOUT: Partial<Record<{{eventTypeEnum.name}}, any>> = {
 {{#instructions}}
-  [{{eventTypeEnum.name}}.{{name}}]: anchorStruct([
-  {{#data.fields}}
-    {{rustType}}({{#length}}{{length}}, {{/length}}'{{name}}'),
-  {{/data.fields}}
-  ]),
+  [{{eventTypeEnum.name}}.{{name}}]: {{beet}},
 {{/instructions}}
 }
 
