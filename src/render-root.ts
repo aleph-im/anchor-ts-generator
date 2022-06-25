@@ -1,11 +1,5 @@
 export function renderRootFiles(name: string){
   const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-  let config: string = 
-`import dotenv from 'dotenv-defaults'
-dotenv.config()
-
-export default process.env`
-
   let docker: string = 
 `version: '2'
 
@@ -37,17 +31,22 @@ services:
   "name": "@aleph-indexer/${name}",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index",
-  "module": "dist/index",
-  "types": "dist/index.d",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
+    "build": "tsc -p ./tsconfig.json && npm run postbuild",
+    "postbuild": "cp ./src/graphql/schema.graphql ./dist/src/graphql/schema.graphql",
+    "test": "echo \\"Error: no test specified\\" && exit 1",
     "up": "docker-compose up -d",
     "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name error-devnet up -d"
   },
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
+    "@aleph-indexer/beet": "1.0.0",
+    "@aleph-indexer/beet-solana": "1.0.0",
     "@aleph-indexer/core": "1.0.0",
     "@aleph-indexer/layout": "1.0.0",
     "@switchboard-xyz/switchboard-v2": "^0.0.71"
@@ -61,8 +60,8 @@ import { Settings } from 'luxon'
 
 Settings.defaultZone = 'utc'
 
-import config from './config'
-import graphQLServer from './src/graphql/index'
+import { config } from '@aleph-indexer/core'
+import graphQLServer from './src/graphql/index.js'
 import { ${Name}Indexer } from './src/indexers/${name}'
 import * as v8 from "v8";
 import { round } from "lodash-es";
@@ -82,7 +81,9 @@ async function main() {
     'Current max heap size:',
     round(v8.getHeapStatistics().total_available_size / 1024 / 1024),
     'MB')
-  graphQLServer.start(config.PORT ? parseInt(config.PORT) : 8080)
+  await graphQLServer.listen({
+    port: config.PORT ? parseInt(config.PORT) : 8080
+  })
   const indexer = new ${Name}Indexer()
   await indexer.init()
   await indexer.run()
@@ -100,36 +101,24 @@ process.on('unhandledRejection', (e) => {
 
   let tsconfig: string = 
 `{
-  "compilerOptions": {
-    "target": "ES2021",
-    "lib": [
-      "ESNext",
-    ],
-    "module": "esnext",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "declaration": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "outDir": "dist",
-    "declarationMap": true,
-    "allowJs": true,
-  },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "scripts",
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "**/__tests__",
-    "**/__mocks__"
-  ]
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "dist"
+    },
+    "exclude": [
+        "node_modules",
+        "dist",
+        "scripts",
+        "tests",
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/__tests__",
+        "**/__mocks__"
+    ]
 }`
 
 let typesdts: string = 
 `export * from '../../types'`
 
-  return { config, docker, pkg, run, tsconfig, typesdts }
+  return {docker, pkg, run, tsconfig, typesdts }
 }

@@ -32,8 +32,7 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
 
   if(!existsSync(paths.indexerDir))
     mkdirSync(paths.indexerDir)
-  const { config, docker, pkg, run, tsconfig, typesdts } = renderRootFiles(fileName)
-  writeFileSync(paths.indexerFile('config.ts'), config);
+  const {docker, pkg, run, tsconfig, typesdts } = renderRootFiles(fileName)
   writeFileSync(paths.indexerFile('docker-compose.yaml'), docker);
   writeFileSync(paths.indexerFile('package.json'), pkg);
   writeFileSync(paths.indexerFile('run.ts'), run);
