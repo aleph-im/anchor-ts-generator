@@ -20,10 +20,7 @@ export const DOMAIN_CACHE_START_DATE = config.INDEX_START_DATE
 
 
     let types: string = 
-`export * from "./layouts/ts/types"
-export * from "./layouts/ts/events"
-export * from "./layouts/ts/instructions"
-export * from "./layouts/ts/accounts"
+`export * from "./layouts/ts/instructions"
 export { ParsedInstructions } from "./layouts/solita"
 export { InstructionType } from "./layouts/ts/instructions"
 export { AccountType } from "./layouts/ts/accounts"

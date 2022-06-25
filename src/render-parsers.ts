@@ -1,10 +1,4 @@
-import {
-  ViewEvents,
-} from "./types";
-
-export function renderParsersFiles(name: string, eventsView: ViewEvents | undefined){
-    const dollar = '$'
-    const com = '`'
+export function renderParsersFiles(name: string){
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
     const NAME = name.toUpperCase()
     let parser: string = 

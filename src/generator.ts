@@ -82,11 +82,12 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   if(!existsSync(paths.tsDir))
     mkdirSync(paths.tsDir)
     for (const x of textAndTemplate)
-    writeFileSync(paths.tsFile(x[0]), x[1])
+      if(x[0] == TemplateType.Instructions)
+        writeFileSync(paths.tsFile(x[0]), x[1])
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
-  const { parser, instructionParser } = renderParsersFiles(fileName, eventsView)
+  const { parser, instructionParser } = renderParsersFiles(fileName)
   writeFileSync(paths.parsersFile('parser'), parser);
   writeFileSync(paths.parsersFile('instruction'), instructionParser);
 
