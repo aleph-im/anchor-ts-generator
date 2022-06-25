@@ -48,8 +48,7 @@ services:
     "@aleph-indexer/beet": "1.0.0",
     "@aleph-indexer/beet-solana": "1.0.0",
     "@aleph-indexer/core": "1.0.0",
-    "@aleph-indexer/layout": "1.0.0",
-    "@switchboard-xyz/switchboard-v2": "^0.0.71"
+    "@aleph-indexer/layout": "1.0.0"
   }
 }`
 
