@@ -2,27 +2,27 @@ export function renderDomainFiles(name: string){
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
     const NAME = name.toUpperCase()
 
-    const pool: string = 
+    const account: string = 
 `import { DateTime, Interval } from 'luxon'
 import { Utils, SolanaPool, EntityStorage } from '@aleph-indexer/core'
 import {
-  OracleEvent,
-  PoolInfo,
-  HourlyOracleStats,
-  PoolStats,
-} from '../types.js'
-import oracleEventProcessor, { OracleEventProcessor } from './processor.js'
+  InstructionEvent,
+  HourlyStats,
+  ${Name}AccountInfo, 
+  ${Name}AccountStats
+} from "../types";
+import eventProcessor, { EventProcessor } from './processor'
 
 const { sortTimeStatsMap } = Utils
 
-export class Pool extends SolanaPool<PoolInfo, PoolStats> {
+export class Account extends SolanaPool<${Name}AccountInfo, ${Name}AccountStats> {
   private _shouldUpdate = true
 
   constructor(
-    public info: PoolInfo,
+    public info: ${Name}AccountInfo,
     protected startDate: number,
-    protected eventDAL: EntityStorage<OracleEvent>,
-    protected processor: OracleEventProcessor = oracleEventProcessor,
+    protected eventDAL: EntityStorage<InstructionEvent>,
+    protected processor: EventProcessor = eventProcessor
   ) {
     super(info, {
       requestsStatsByHour: {},
@@ -32,12 +32,6 @@ export class Pool extends SolanaPool<PoolInfo, PoolStats> {
       requests7d: 0,
       requestsTotal: 0,
 
-      updates1h: 0,
-      updates24h: 0,
-      updates7d: 0,
-      updatesTotal: 0,
-
-      activelyUsed: false,
       accessingPrograms: new Set<string>([]),
     })
   }
@@ -49,19 +43,19 @@ export class Pool extends SolanaPool<PoolInfo, PoolStats> {
 
   protected async initEvents(): Promise<void> {
     const events = this.eventDAL
-      .useIndex('pool_timestamp')
+      .useIndex('account_timestamp')
       .getAllFromTo([this.info.address, this.startDate], [this.info.address], {
         reverse: false,
       })
 
     let count = 0
     for await (const { value: event } of events) {
-      await this.computePoolEvent(event)
+      await this.computeEvent(event)
 
       count++
       if (!(count % 1000))
         console.log(
-          'Init oracle pool',
+          'Init address domain',
           this.info.name,
           this.info.address,
           count,
@@ -70,17 +64,17 @@ export class Pool extends SolanaPool<PoolInfo, PoolStats> {
     }
   }
 
-  async computePoolEvent(event: OracleEvent): Promise<void> {
+  async computeEvent(event: InstructionEvent): Promise<void> {
     if (event.timestamp <= this.startDate) return
 
-    if(!this.stats.accessingPrograms.has(event.programId))
-      this.stats.accessingPrograms.add(event.programId)
+    if(!this.info.stats.accessingPrograms.has(event.programId))
+      this.info.stats.accessingPrograms.add(event.programId)
 
-    this.processor.processPoolEvent(
+    this.processor.processEvent(
       event,
       'hour',
       1,
-      this.stats
+      this.info.stats
     )
 
     this._shouldUpdate = true
@@ -97,44 +91,32 @@ export class Pool extends SolanaPool<PoolInfo, PoolStats> {
     const it24h = Interval.before(endOfCurrentHour, { hours: 24 })
     const it7d = Interval.before(endOfCurrentHour, { hours: 24 * 7 })
 
-    const timeStats = this.processor.sortPoolTimeStats(
-      this.stats.requestsStatsByHour,
+    const timeStats = this.processor.sortTimeStats(
+      this.info.stats.requestsStatsByHour,
     )
 
     if (timeStats.length) {
-      this.stats.requests1h = 0
-      this.stats.requests24h = 0
-      this.stats.requests7d = 0
-      this.stats.updates1h = 0
-      this.stats.updates24h = 0
-      this.stats.updates7d = 0
+      this.info.stats.requests1h = 0
+      this.info.stats.requests24h = 0
+      this.info.stats.requests7d = 0
 
       for (const stats of timeStats) {
         const it = Interval.fromISO(stats.interval)
 
-        if (it1h.engulfs(it)) {
-          this.stats.requests1h += stats.requests
-          this.stats.updates1h += stats.updates
-        }
+        if (it1h.engulfs(it))
+          this.info.stats.requests1h += stats.requests
 
-        if (it24h.engulfs(it)) {
-          this.stats.requests24h += stats.requests
-          this.stats.updates24h += stats.updates
-        }
+        if (it24h.engulfs(it))
+          this.info.stats.requests24h += stats.requests
 
-        if (it7d.engulfs(it)) {
-          this.stats.requests7d += stats.requests
-          this.stats.updates7d += stats.updates
-        }
+        if (it7d.engulfs(it))
+          this.info.stats.requests7d += stats.requests
 
-        this.stats.requestsTotal += stats.requests
-        this.stats.updatesTotal += stats.updates
+        this.info.stats.requestsTotal += stats.requests
       }
     }
 
-    this.stats.activelyUsed = this.stats.requestsTotal !== 0
-
-    this.stats.lastRequest = await this.eventDAL.getLastValue()
+    this.info.stats.lastRequest = await this.eventDAL.getLastValue()
   }
 
   clearStatsCache(now: DateTime = DateTime.now()): void | Promise<void> {
@@ -145,21 +127,21 @@ export class Pool extends SolanaPool<PoolInfo, PoolStats> {
       .startOf('hour')
       .toMillis()
 
-    const timeStats = this.processor.sortPoolTimeStats(
-      this.stats.requestsStatsByHour,
+    const timeStats = this.processor.sortTimeStats(
+      this.info.stats.requestsStatsByHour,
     )
     const leftBound = DateTime.fromMillis(startOfCache)
 
     for (const stats of timeStats) {
       if (Interval.fromISO(stats.interval).isAfter(leftBound)) break
-      delete this.stats.requestsStatsByHour[stats.interval]
+      delete this.info.stats.requestsStatsByHour[stats.interval]
     }
 
     this._shouldUpdate = true
   }
 
-  async getHourlyStats(): Promise<HourlyOracleStats> {
-    const statsMap = this.stats.requestsStatsByHour
+  async getHourlyStats(): Promise<HourlyStats> {
+    const statsMap = this.info.stats.requestsStatsByHour
     const stats = sortTimeStatsMap(statsMap)
 
     return {
@@ -172,18 +154,17 @@ export class Pool extends SolanaPool<PoolInfo, PoolStats> {
     const processor: string =
 `import { Utils } from '@aleph-indexer/core'
 import { DateTimeUnit } from 'luxon'
-import { ${NAME}_PROGRAM_ID } from '../constants.js'
-import { PoolStats, PoolTimeStat, OracleEvent } from "../types.js";
+import { AccountTimeStat, InstructionEvent, ${Name}AccountStats } from "../types";
 
 const splitIt = Utils.splitDurationIntoIntervals
 
-export class OracleEventProcessor {
-  processPoolEvent(
-    event: OracleEvent,
+export class EventProcessor {
+  processEvent(
+    event: InstructionEvent,
     intervalUnit: DateTimeUnit,
     intervalSize = 1,
-    stats: PoolStats,
-  ): Record<string, PoolTimeStat> {
+    stats: ${Name}AccountStats,
+  ): Record<string, AccountTimeStat> {
     const [interval] = splitIt(
       event.timestamp,
       event.timestamp + 1,
@@ -194,25 +175,18 @@ export class OracleEventProcessor {
 
     const map = stats.requestsStatsByHour
     let stat = (map[intervalISO] =
-      map[intervalISO] || ({} as PoolTimeStat))
+      map[intervalISO] || ({} as AccountTimeStat))
 
-    const isInvokedByOwnerProgram = (event.programId === ${NAME}_PROGRAM_ID)
-    //stat.requests = (stat.requests || 0) + 1
-    if(stat.requests === undefined)
-      stat.requests = 0
     stat.interval = intervalISO
     stat.uniqueProgramIds = stats.accessingPrograms.size
-    if (isInvokedByOwnerProgram)
-      stat.updates = (stat.updates || 0) + 1
-    else
-      stat.requests = (stat.requests || 0) + 1 //L
+    stat.requests = (stat.requests || 0) + 1 //L
     return map
   }
 
-  sortPoolTimeStats(
-    timeStatsMap: Record<string, PoolTimeStat>,
+  sortTimeStats(
+    timeStatsMap: Record<string, AccountTimeStat>,
     reverse = false,
-  ): PoolTimeStat[] {
+  ): AccountTimeStat[] {
     const op = reverse ? -1 : 1
     return Object.values(timeStatsMap).sort(
       (a, b) => a.interval.localeCompare(b.interval) * op,
@@ -220,236 +194,215 @@ export class OracleEventProcessor {
   }
 }
 
-const oracleEventProcessor = new OracleEventProcessor()
-export default oracleEventProcessor`
+const eventProcessor = new EventProcessor()
+export default eventProcessor`
   
     const custom: string = 
-`import {
-    DOMAIN_CACHE_START_DATE,
-    ${NAME}_PROGRAM_ID_PK,
-  } from '../constants.js'
-  import {
-    PoolAccountDataRaw,
-    PoolInfo,
-    GlobalOracleStats,
-    OracleEvent,
-    OracleQueueAccountDataRaw,
-  } from '../types.js'
-  import { sha256 } from 'js-sha256'
-  import { ACCOUNTS_DATA_LAYOUT } from '../layouts/accounts.js'
-  import {
-    Utils,
-    SolanaRPC,
-    SolanaRPCRoundRobin,
-    SolanaPools,
-    EntityStorage,
-  } from '@aleph-indexer/core'
-  import { DateTime } from 'luxon'
-  import { Pool } from './pool.js'
-  import { solanaRPCRoundRobin } from '../solanaRpc.js'
-  import { oracleEventDAL } from '../dal/event.js'
-  import bs58 from 'bs58'
-  import { filterZeroBytes } from '../utils/utils.js'
-  
-  export class ${Name}Program extends SolanaPools<Pool> {
-    private _stats: GlobalOracleStats = this.getNewGlobalStats()
-  
-    public queues?: Map<string, OracleQueueAccountDataRaw>
-    public pools?: Map<string, PoolAccountDataRaw[]>
-  
-    constructor(
-      protected startDate: number,
-      protected eventDAL: EntityStorage<OracleEvent>,
-      protected solanaRpcRR: SolanaRPCRoundRobin = solanaRPCRoundRobin,
-    ) {
-      super()
-    }
-  
-    async getOracleQueueAccounts(
-      solana: SolanaRPC,
-    ): Promise<OracleQueueAccountDataRaw[]> {
-      const oracleQueueAccountDiscriminator = Buffer.from(
-        sha256.digest('account:OracleQueueAccountData'),
-      ).slice(0, 8)
-      const connection = await solana.getConnection()
-      const resp = await connection.getProgramAccounts(
-        ${NAME}_PROGRAM_ID_PK,
-        {
-          filters: [
-            {
-              memcmp: {
-                bytes: bs58.encode(oracleQueueAccountDiscriminator),
-                offset: 0,
-              },
+`import { DOMAIN_CACHE_START_DATE, ${NAME}_PROGRAM_ID, ${NAME}_PROGRAM_ID_PK } from "../constants";
+import { AccountType, GlobalOracleStats, InstructionEvent, ${Name}AccountInfo } from "../types";
+import { ACCOUNT_DISCRIMINATOR, ACCOUNTS_DATA_LAYOUT } from "../layouts/accounts";
+import {
+  EntityStorage,
+  SolanaPools,
+  solanaPrivateRPCRoundRobin,
+  SolanaRPC,
+  SolanaRPCRoundRobin,
+  Utils
+} from "@aleph-indexer/core";
+import { DateTime } from "luxon";
+import { Account } from "./account";
+import { oracleEventDAL } from "../dal/event";
+import bs58 from "bs58";
+import { AccountInfo, PublicKey } from "@solana/web3";
+
+export class ${Name}Program extends SolanaPools<Account> {
+  private _stats: GlobalOracleStats = this.getNewGlobalStats()
+
+  constructor(
+    protected accountTypes: Set<AccountType> = new Set(Object.values(AccountType)),
+    protected startDate: number,
+    protected eventDAL: EntityStorage<InstructionEvent>,
+    protected solanaRpcRR: SolanaRPCRoundRobin = solanaPrivateRPCRoundRobin,
+  ) {
+    super()
+  }
+
+  async getAllAccountsOfType(
+    type: AccountType
+  ): Promise<${Name}AccountInfo[]> {
+    const connection = await this.solanaRpcRR.getClient().getConnection()
+    const resp = await connection.getProgramAccounts(
+      ${NAME}_PROGRAM_ID_PK,
+      {
+        filters: [
+          {
+            memcmp: {
+              bytes: bs58.encode(ACCOUNT_DISCRIMINATOR[type]),
+              offset: 0,
             },
-          ],
-        },
-      )
-      this.queues = new Map(
-        resp.map((value) => [
-          value.pubkey.toBase58(),
-          ACCOUNT_DATA_LAYOUT.OracleQueueAccountData.decode(
-            value.account.data,
-          ) as OracleQueueAccountDataRaw,
-        ]),
-      )
-      return [...this.queues.values()]
+          },
+        ],
+      },
+    )
+    return resp.map((value) =>
+      this.deserializeAccountResponse(value, type)
+    )
+  }
+
+  deserializeAccountResponse(
+    resp: {pubkey: PublicKey, account: AccountInfo<Buffer>},
+    type: AccountType
+  ): ${Name}AccountInfo {
+    const data = ACCOUNTS_DATA_LAYOUT[type].deserialize(
+      resp.account.data,
+    )[0]
+    const address = resp.pubkey.toBase58()
+    // Parsing names from on-chain account data can be complicated at times...
+    let name: string = address
+    if (Object.hasOwn(data, "name")) {
+      if((data as any).name instanceof Uint8Array)
+        name = ((data as any).name as Uint8Array).toString()
+      if((data as any).name instanceof String)
+        name = (data as any).name
     }
-  
-    async getPoolAccounts(solana: SolanaRPC): Promise<PoolInfo[]> {
-      if (!this.queues) await this.getOracleQueueAccounts(solana)
-  
-      const poolAccountDiscriminator = Buffer.from(
-        sha256.digest('account:PoolAccountData'),
-      ).slice(0, 8)
-      const connection = await solana.getConnection()
-      const resp = await connection.getProgramAccounts(
-        ${NAME}_PROGRAM_ID_PK,
-        {
-          filters: [
-            {
-              memcmp: {
-                bytes: bs58.encode(poolAccountDiscriminator),
-                offset: 0,
-              },
-            },
-          ],
-        },
-      )
-  
-      return resp.map((value) => {
-        const decoded = ACCOUNT_DATA_LAYOUT.PoolAccountData.decode(
-          value.account.data,
-        ) as PoolAccountDataRaw
-  
-        if (this.queues?.get(decoded.queuePubkey.toBase58()) === undefined) {
-          return undefined
-        }
-        return {
-          name: filterZeroBytes(decoded.name).toString('ascii'),
-          address: value.pubkey.toBase58(),
-          programId: value.account.owner.toBase58(),
-          oracleQueue: decoded.queuePubkey.toBase58(),
-          permissioned: !(
-            this.queues?.get(
-              decoded.queuePubkey.toBase58(),
-            ) as OracleQueueAccountDataRaw
-          ).unpermissionedFeedsEnabled,
-        }
-      }).filter(value => value !== undefined) as PoolInfo[]
-    }
-  
-    addPool(info: PoolInfo): Pool {
-      if (this.poolExists(info.address)) return this.pools[info.address]
-  
-      const reserve = new Pool(info, this.startDate, this.eventDAL)
-  
-      this.addPool(reserve)
-  
-      return reserve
-    }
-  
-    async discoverPools(
-      index?: number,
-      total?: number,
-    ): Promise<Pool[]> {
-      const newPools = await this.getPoolAccounts(
-        this.solanaRpcRR.getClient(),
-      )
-      console.log(newPools)
-      const result: Pool[] = []
-  
-      for (const poolInfo of newPools) {
-        if (index !== undefined && total !== undefined) {
-          const hash = Utils.murmur(poolInfo.address) % total
-          if (index !== hash) continue
-        }
-  
-        const alreadyExists = this.poolExists(poolInfo.address)
-        if (alreadyExists) continue
-  
-        const pool = this.addPool(poolInfo)
-        result.push(pool)
-      }
-  
-      return result
-    }
-  
-    async getGlobalStats(
-      poolAddresses?: string[],
-    ): Promise<GlobalOracleStats> {
-      if (!poolAddresses || poolAddresses.length === 0) {
-        return this._stats
-      }
-  
-      return this.computeGlobalStats(poolAddresses)
-    }
-  
-    // --------------------- PROTECTED ----------------------
-  
-    protected async updateStats(now: DateTime = DateTime.now()): Promise<void> {
-      console.log('Updating global stats')
-      this._stats = await this.computeGlobalStats()
-    }
-  
-    protected async computeGlobalStats(
-      poolAddresses?: string[],
-    ): Promise<GlobalOracleStats> {
-      const poolMap = await this.getPools()
-  
-      const pools = !poolAddresses
-        ? Object.values(poolMap)
-        : poolAddresses.reduce((acc, address) => {
-            const market = poolMap[address]
-            if (market) acc.push(market)
-            return acc
-          }, [] as pool[])
-  
-      const globalStats: GlobalOracleStats = this.getNewGlobalStats()
-      let uniqueProgramIds = new Set<string>([])
-  
-      for (const pool of pools) {
-        // @note: Calculate last stats from reserves
-        const { requestsTotal, accessingPrograms, updatesTotal, activelyUsed } = pool.stats
-  
-        globalStats.totalRequests += requestsTotal //L -updatesTotal
-        uniqueProgramIds = new Set([
-          ...[...accessingPrograms].filter(value => !uniqueProgramIds.has(value)),
-          ...uniqueProgramIds
-        ])
-        globalStats.totalUpdates += updatesTotal
-        globalStats.totalPools++
-        if(activelyUsed)
-          globalStats.totalActivelyUsedPools++
-      }
-  
-  
-      //globalStats.totalRequests -= globalStats.totalUpdates //L
-  
-      globalStats.totalUniqueAccessingPrograms += uniqueProgramIds.size
-      return globalStats
-    }
-  
-    protected getNewGlobalStats(): GlobalOracleStats {
-      return {
-        totalRequests: 0,
-        totalPools: 0,
-        totalActivelyUsedPools: 0,
-        totalUpdates: 0,
-        totalUniqueAccessingPrograms: 0
-      }
-    }
-  
-    protected async _loadPools(index?: number, total?: number): Promise<void> {
-      await this.discoverPools(index, total)
+    return {
+      name,
+      type,
+      address: address,
+      programId: ${NAME}_PROGRAM_ID,
+      data: data
     }
   }
+
+  addAccount(info: ${Name}AccountInfo): Account {
+    if (this.poolExists(info.address)) return this.pools[info.address]
+
+    // TODO: Generalize Account
+    const account = new Account(info, this.startDate, this.eventDAL)
+
+    this.addPool(account)
+
+    return account
+  }
+
+  /**
+   * Discovers all accounts of a certain type and adds domain objects for them.
+   * @param type
+   * @param index
+   * @param total
+   */
+  async discoverAccounts(
+    type: AccountType,
+    index?: number,
+    total?: number,
+  ): Promise<Account[]> {
+    const newAccounts = await this.getAllAccountsOfType(
+      type
+    )
+    const result: Account[] = []
+
+    for (const accountInfo of newAccounts) {
+      if (index !== undefined && total !== undefined) {
+        const hash = Utils.murmur(accountInfo.address) % total
+        if (index !== hash) continue
+      }
+
+      const alreadyExists = this.poolExists(accountInfo.address)
+      if (alreadyExists) continue
+
+      const domain = this.addAccount(accountInfo)
+      result.push(domain)
+    }
+
+    return result
+  }
+
+  async discoverAllAccounts(): Promise<Account[]> {
+    return await Promise.all([...this.accountTypes].map((type) =>
+      this.discoverAccounts(type)
+    )).then(allAccounts => allAccounts.flat())
+  }
+
+  async getGlobalStats(
+    addresses?: string[],
+  ): Promise<GlobalOracleStats> {
+    //TODO: Generalize
+    if (!addresses || addresses.length === 0) {
+      return this._stats
+    }
+
+    return this.computeGlobalStats(addresses)
+  }
+
+  // --------------------- PROTECTED ----------------------
+
+  protected async updateStats(now: DateTime = DateTime.now()): Promise<void> {
+    console.log('Updating global stats')
+    this._stats = await this.computeGlobalStats()
+  }
+
+  protected async computeGlobalStats(
+    aggregatorAddresses?: string[],
+  ): Promise<GlobalOracleStats> {
+    const aggregatorMap = await this.getPools()
+
+    const aggregators = !aggregatorAddresses
+      ? Object.values(aggregatorMap)
+      : aggregatorAddresses.reduce((acc, address) => {
+          const market = aggregatorMap[address]
+          if (market) acc.push(market)
+          return acc
+        }, [] as Account[])
+
+    const globalStats: GlobalOracleStats = this.getNewGlobalStats()
+    let uniqueProgramIds = new Set<string>([])
+
+    for (const aggregator of aggregators) {
+      // @note: Calculate last stats from reserves
+      const { requestsTotal, accessingPrograms } = aggregator.stats
+
+      globalStats.totalRequests += requestsTotal //L -updatesTotal
+      uniqueProgramIds = new Set([
+        ...[...accessingPrograms].filter(value => !uniqueProgramIds.has(value)),
+        ...uniqueProgramIds
+      ])
+    }
+
+    globalStats.totalUniqueAccessingPrograms += uniqueProgramIds.size
+    return globalStats
+  }
+
+  protected getNewGlobalStats(): GlobalOracleStats {
+    return {
+      totalRequests: 0,
+      totalAccounts: {
+        [AccountType.SbState]: 0,
+        [AccountType.AggregatorAccountData]: 0,
+        [AccountType.PermissionAccountData]: 0,
+        [AccountType.LeaseAccountData]: 0,
+        [AccountType.OracleQueueAccountData]: 0,
+        [AccountType.CrankAccountData]: 0,
+        [AccountType.OracleAccountData]: 0,
+        [AccountType.JobAccountData]: 0,
+        [AccountType.VrfAccountData]: 0,
+      },
+      totalUniqueAccessingPrograms: 0
+    }
+  }
+
+  protected async _loadPools(index?: number, total?: number): Promise<void> {
+    await Promise.all([...this.accountTypes].map((type) =>
+      this.discoverAccounts(type, index, total)
+    ))
+  }
+}
+
+export const ${name}Program = new ${Name}Program(
+  new Set([AccountType.AggregatorAccountData]),
+  DOMAIN_CACHE_START_DATE,
+  oracleEventDAL,
+)
+export default ${name}Program`
   
-  export const ${name}Program = new ${Name}Program(
-    DOMAIN_CACHE_START_DATE,
-    oracleEventDAL,
-  )
-  export default ${name}Program`
-  
-    return { pool, processor, custom }
+    return { account, processor, custom }
   }

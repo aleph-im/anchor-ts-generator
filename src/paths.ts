@@ -23,17 +23,6 @@ export class Paths {
     return path.join(this.outputDir.toString(), this.project)
   }
 
-  get tsDir() {
-    return path.join(this.projectDir.toString(), 'ts')
-  }
-  tsFile(name: string) {
-    return path.join(this.tsDir, `${name}.ts`)
-  }
-
-  get tsSolitaDir() {
-    return path.join(this.projectDir.toString(), 'ts-solita')
-  }
-
   get indexerDir() {
     return path.join(this.projectDir.toString(), 'indexer')
   }
@@ -100,6 +89,17 @@ export class Paths {
   }
   layoutsFile(name: string) {
     return path.join(this.layaoutsDir, `${name}.ts`)
+  }
+
+  get tsDir() {
+    return path.join(this.layaoutsDir.toString(), 'ts')
+  }
+  tsFile(name: string) {
+    return path.join(this.tsDir, `${name}.ts`)
+  }
+
+  get tsSolitaDir() {
+    return path.join(this.layaoutsDir.toString(), 'solita')
   }
 
   get parsersDir() {

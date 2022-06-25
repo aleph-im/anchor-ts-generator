@@ -37,12 +37,11 @@ services:
   "name": "@aleph-indexer/${name}",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.js",
+  "main": "dist/index",
+  "module": "dist/index",
+  "types": "dist/index.d",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "up": "docker-compose up -d",
     "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name error-devnet up -d"
   },
@@ -62,9 +61,9 @@ import { Settings } from 'luxon'
 
 Settings.defaultZone = 'utc'
 
-import config from './config.js'
-import graphQLServer from './src/graphql/index.js'
-import { ${Name}Indexer } from './src/indexers/${name}.js'
+import config from './config'
+import graphQLServer from './src/graphql/index'
+import { ${Name}Indexer } from './src/indexers/${name}'
 import * as v8 from "v8";
 import { round } from "lodash-es";
 
@@ -83,7 +82,7 @@ async function main() {
     'Current max heap size:',
     round(v8.getHeapStatistics().total_available_size / 1024 / 1024),
     'MB')
-  ${name}server.start(config.PORT ? parseInt(config.PORT) : 8080)
+  graphQLServer.start(config.PORT ? parseInt(config.PORT) : 8080)
   const indexer = new ${Name}Indexer()
   await indexer.init()
   await indexer.run()

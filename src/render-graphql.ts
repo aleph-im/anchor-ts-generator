@@ -1,6 +1,7 @@
 export function renderGraphQLFiles(name: string){
   const dollar = '$'
   const com = '`'
+  const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
   const index: string = 
 `
 import { ApolloServer } from 'apollo-server'
@@ -16,22 +17,22 @@ export default graphQLServer
     const resolvers: string =
 `
 import { EntityStorage } from '@aleph-indexer/core'
-import { Pool } from '../domain/pool.js'
-import { ${name}Program } from '../domain/${name}.js'
+import { Account } from '../domain/account'
+import { ${name}Program } from '../domain/${name}'
 import {
   GlobalOracleStats,
-  HourlyOracleStats,
-  PoolInfo,
-  OracleEvent,
-} from '../types.js'
+  HourlyStats,
+  InstructionEvent, 
+  ${Name}AccountInfo
+} from "../types";
 
-export type PoolFilters = {
+export type AggregatorFilters = {
   oracleQueue: string
-  pools?: string[]
+  aggregators?: string[]
 }
 
 export type EventsFilters = {
-  pool: string
+  aggregator: string
   startDate?: number
   endDate?: number
   limit?: number
@@ -39,10 +40,8 @@ export type EventsFilters = {
   reverse?: boolean
 }
 
-
 export const ${name}Resolvers = {
   Query: {
-
     getPools({
       oracleQueue,
       pools,
@@ -62,11 +61,11 @@ export const ${name}Resolvers = {
       limit = 1000,
       skip = 0,
       reverse = true,
-    }: EventsFilters): Promise<OracleEvent[]> {
+    }: EventsFilters): Promise<RawEvent[]> {
       if (limit < 1 || limit > 1000)
         throw new Error('400 Bad Request: 1 <= limit <= 1000')
   
-      const result: OracleEvent[] = []
+      const result: RawEvent[] = []
   
       const events = this.eventDAL
         .useIndex('pool_timestamp')
@@ -120,8 +119,5 @@ export const ${name}Resolvers = {
 }
 `
 
-  const schema: string = ``
-  const GQLtypes: string = ``
-
-  return { index, resolvers, schema, GQLtypes }
+  return { index, resolvers }
 }
