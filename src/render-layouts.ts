@@ -16,7 +16,7 @@ export function renderLayoutsFiles(instructionsView: ViewInstructions | undefine
     }  
     accountLayouts +=
 `} from './solita/index.js'
-import { AccountType } from '../types.js'
+import { BeetStruct, FixableBeetStruct } from "@aleph-indexer/beet";
 
 export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {
 `
@@ -30,7 +30,11 @@ export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {
     accountLayouts += 
 `}
 
-export const ACCOUNTS_DATA_LAYOUT: Partial<Record< AccountType, any>> = {
+export const ACCOUNTS_DATA_LAYOUT: Record<
+    AccountType,
+    BeetStruct<ParsedAccounts, ParsedAccountsData> |
+    FixableBeetStruct<ParsedAccounts, ParsedAccountsData>
+> = {
 `
     if(accountsView != undefined) {
         for(let i = 0; i < accountsView.accounts.length; i++){

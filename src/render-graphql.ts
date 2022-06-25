@@ -12,6 +12,7 @@ import {
 } from "apollo-server-core";
 import path from "path";
 import { readFileSync } from "fs";
+import { makeExecutableSchema } from "graphql-tools";
 
 const schemaPath = path.resolve('./packages/${name}/dist/src/graphql/schema.graphql')
 console.log(path.resolve(schemaPath))
@@ -19,19 +20,33 @@ console.log(path.resolve(schemaPath))
 const typeDefs = readFileSync(schemaPath, 'utf8')
 
 // @note: resolver methods in resolver object need to have the same name as the query they resolve
-const resolverObj = new ${Name}GraphQLResolvers(instructionEventDAL, ${name}Program)
 const resolvers = {
-  Query: {
-    accounts: resolverObj.accounts,
-    instructionHistory: resolverObj.instructionHistory
-  }
+  Account: {
+    __resolveType(obj: any, context: any, info: any){
+      return obj.type;
+    },
+  },
+  Instruction: {
+    __resolveType(obj: any, context: any, info: any){
+      return obj.type;
+    },
+  },
+  Query: new ${Name}GraphQLResolvers(instructionEventDAL, ${name}Program)
 }
 
-export const graphQLServer = new ApolloServer({
+const schema = makeExecutableSchema({
   typeDefs,
   resolvers,
+  resolverValidationOptions: {
+    requireResolversToMatchSchema: "ignore"
+  }})
+
+export const graphQLServer = new ApolloServer({
+  schema,
   csrfPrevention: true,
   cache: "bounded",
+  introspection: true,
+
   plugins: [
     ApolloServerPluginLandingPageGraphQLPlayground(),
   ],
@@ -47,9 +62,7 @@ import {
   AccountType,
   GlobalStats,
   HourlyStats,
-  InstructionEvent, 
-  InstructionType, 
-  ${Name}AccountInfo
+  InstructionEvent, InstructionType, ${Name}AccountInfo
 } from "../types.js";
 
 export type AccountFilters = {
@@ -78,36 +91,55 @@ export class ${Name}GraphQLResolvers {
   public async accounts(filter: AccountFilters): Promise<${Name}AccountInfo[]> {
     const result = await this.filterAccounts(filter)
 
-    return result.map(({ info, stats }) => ({ ...info, stats }))
+    return result.map((account) => ( {...account.info, stats: account.stats }))
   }
 
   public async instructionHistory({
     account,
+    types,
     startDate = 0,
     endDate = Date.now(),
     limit = 1000,
     skip = 0,
     reverse = true,
-  }: InstructionFilters): Promise<InstructionEvent[]> {
+  }: InstructionFilters = {
+    account: undefined,
+    types: undefined,
+    startDate: 0,
+    endDate: Date.now(),
+    limit: 1000,
+    skip: 0,
+    reverse: true,
+  }): Promise<InstructionEvent[]> {
     if (limit < 1 || limit > 1000)
       throw new Error('400 Bad Request: 1 <= limit <= 1000')
 
     const result: InstructionEvent[] = []
 
-    const events = this.instructionDAL
-      .useIndex('account_timestamp')
-      .getAllFromTo([account, startDate], [account, endDate], {
-        reverse,
-        limit: limit + skip,
-      })
+    let events;
+    if (!!account) {
+      events = this.instructionDAL
+        .useIndex('account_timestamp')
+        .getAllFromTo([account, startDate], [account, endDate], {
+          reverse,
+          limit: limit + skip,
+        })
+    } else {
+      events = this.instructionDAL
+        .useIndex('timestamp')
+        .getAllFromTo([startDate], [endDate], {
+          reverse,
+          limit: limit + skip,
+        })
+    }
 
     for await (const { value } of events) {
-      // @note: Filter by type
-
       // @note: Skip first N events
       if (--skip >= 0) continue
 
-      result.push(value)
+      // @note: Filter by type
+      if(!!value.type && types?.includes(value.type))
+        result.push(value)
 
       // @note: Stop when after reaching the limit
       if (limit > 0 && result.length >= limit) return result
@@ -116,14 +148,14 @@ export class ${Name}GraphQLResolvers {
     return result
   }
 
-  public async getAccountHourlyStats(
+  public async hourlyStats(
     address: string,
   ): Promise<HourlyStats> {
     const account = await this.getAccountByAddress(address)
     return account.getHourlyStats()
   }
 
-  public async getGlobalStats(filters: GlobalStatsFilters): Promise<GlobalStats> {
+  public async globalStats(filters: GlobalStatsFilters): Promise<GlobalStats> {
     const result = await this.filterAccounts(filters)
     const addresses = result.map(({ info }) => info.address)
     return this.domain.getGlobalStats(addresses)
@@ -137,51 +169,26 @@ export class ${Name}GraphQLResolvers {
     return account
   }
 
-  protected async filterAccounts(
-    filter: AccountFilters): Promise<Account[]> {
+  protected async filterAccounts({
+    types,
+    accounts
+  }: AccountFilters = {types: undefined, accounts: undefined}): Promise<Account[]> {
     const accountMap = await this.domain.getAllAccountStats()
 
-    filter.accounts =
-      filter.accounts ||
+    accounts =
+      accounts ||
       Object.values(accountMap).map((account) => account.info.address)
 
-    let result = filter.accounts
+    let result = accounts
       .map((address) => accountMap[address])
       .filter((aggregator) => !!aggregator)
 
-    if (filter.types !== undefined) {
-      result = result.filter(({ info }) => filter.types!.includes(info.type))
+    if (types !== undefined) {
+      result = result.filter(({ info }) => types!.includes(info.type))
     }
 
     return result
   }
-}
-`
-
-const apolloServer = `import { ApolloServer } from 'apollo-server'
-import { graphQlData } from '../../../src/apolloServer/data.js'   //hardcoded data
-import { Resolvers } from './resolvers.js'
-import { readFileSync } from 'fs'
-
-const typeDefs = readFileSync('./schema.graphql', 'utf8')   //schema
-
-// Resolver map
-const resolvers: Resolvers = {
-    Query: {
-       books() {
-            return graphQlData;
-        }
-    },
-};
-
-
-// Pass schema definition and resolvers to the
-// ApolloServer constructor
-const server = new ApolloServer({ typeDefs, resolvers })
-
-// Launch the server
-server.listen().then( url =>
-    console.log(${com}🚀  Server ready at ${dollar}{url.port}${com}))`
-
-  return { index, resolvers, apolloServer }
+}`
+  return { index, resolvers }
 }

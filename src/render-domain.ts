@@ -4,7 +4,7 @@ export function renderDomainFiles(name: string){
 
     const account: string = 
 `import { DateTime, Interval } from 'luxon'
-import { Utils, SolanaPool, EntityStorage } from '@aleph-indexer/core'
+import { Utils, StatsCache, EntityStorage } from '@aleph-indexer/core'
 import {
   InstructionEvent,
   HourlyStats,
@@ -15,7 +15,7 @@ import eventProcessor, { EventProcessor } from './processor'
 
 const { sortTimeStatsMap } = Utils
 
-export class Account extends SolanaPool<${Name}AccountInfo, ${Name}AccountStats> {
+export class Account extends StatsCache<${Name}AccountInfo, ${Name}AccountStats> {
   private _shouldUpdate = true
 
   constructor(
@@ -36,12 +36,9 @@ export class Account extends SolanaPool<${Name}AccountInfo, ${Name}AccountStats>
     })
   }
 
-  async init(): Promise<void> {
-    console.log('Init program ', this.info.name, this.info.address)
-    await this.initEvents()
-  }
 
-  protected async initEvents(): Promise<void> {
+  async init(): Promise<void> {
+    console.log('Init stats ', this.info.name, this.info.address)
     const events = this.eventDAL
       .useIndex('account_timestamp')
       .getAllFromTo([this.info.address, this.startDate], [this.info.address], {
@@ -67,14 +64,14 @@ export class Account extends SolanaPool<${Name}AccountInfo, ${Name}AccountStats>
   async computeEvent(event: InstructionEvent): Promise<void> {
     if (event.timestamp <= this.startDate) return
 
-    if(!this.info.stats.accessingPrograms.has(event.programId))
-      this.info.stats.accessingPrograms.add(event.programId)
+    if(!this.stats.accessingPrograms.has(event.programId))
+      this.stats.accessingPrograms.add(event.programId)
 
     this.processor.processEvent(
       event,
       'hour',
       1,
-      this.info.stats
+      this.stats
     )
 
     this._shouldUpdate = true
@@ -92,31 +89,31 @@ export class Account extends SolanaPool<${Name}AccountInfo, ${Name}AccountStats>
     const it7d = Interval.before(endOfCurrentHour, { hours: 24 * 7 })
 
     const timeStats = this.processor.sortTimeStats(
-      this.info.stats.requestsStatsByHour,
+      this.stats.requestsStatsByHour,
     )
 
     if (timeStats.length) {
-      this.info.stats.requests1h = 0
-      this.info.stats.requests24h = 0
-      this.info.stats.requests7d = 0
+      this.stats.requests1h = 0
+      this.stats.requests24h = 0
+      this.stats.requests7d = 0
 
       for (const stats of timeStats) {
         const it = Interval.fromISO(stats.interval)
 
         if (it1h.engulfs(it))
-          this.info.stats.requests1h += stats.requests
+          this.stats.requests1h += stats.requests
 
         if (it24h.engulfs(it))
-          this.info.stats.requests24h += stats.requests
+          this.stats.requests24h += stats.requests
 
         if (it7d.engulfs(it))
-          this.info.stats.requests7d += stats.requests
+          this.stats.requests7d += stats.requests
 
-        this.info.stats.requestsTotal += stats.requests
+        this.stats.requestsTotal += stats.requests
       }
     }
 
-    this.info.stats.lastRequest = await this.eventDAL.getLastValue()
+    this.stats.lastRequest = await this.eventDAL.getLastValue()
   }
 
   clearStatsCache(now: DateTime = DateTime.now()): void | Promise<void> {
@@ -128,20 +125,20 @@ export class Account extends SolanaPool<${Name}AccountInfo, ${Name}AccountStats>
       .toMillis()
 
     const timeStats = this.processor.sortTimeStats(
-      this.info.stats.requestsStatsByHour,
+      this.stats.requestsStatsByHour,
     )
     const leftBound = DateTime.fromMillis(startOfCache)
 
     for (const stats of timeStats) {
       if (Interval.fromISO(stats.interval).isAfter(leftBound)) break
-      delete this.info.stats.requestsStatsByHour[stats.interval]
+      delete this.stats.requestsStatsByHour[stats.interval]
     }
 
     this._shouldUpdate = true
   }
 
   async getHourlyStats(): Promise<HourlyStats> {
-    const statsMap = this.info.stats.requestsStatsByHour
+    const statsMap = this.stats.requestsStatsByHour
     const stats = sortTimeStatsMap(statsMap)
 
     return {
@@ -199,24 +196,23 @@ export default eventProcessor`
   
     const custom: string = 
 `import { DOMAIN_CACHE_START_DATE, ${NAME}_PROGRAM_ID, ${NAME}_PROGRAM_ID_PK } from "../constants";
-import { AccountType, GlobalOracleStats, InstructionEvent, ${Name}AccountInfo } from "../types";
+import { AccountType, GlobalStats, InstructionEvent, ${Name}AccountInfo } from "../types";
 import { ACCOUNT_DISCRIMINATOR, ACCOUNTS_DATA_LAYOUT } from "../layouts/accounts";
 import {
   EntityStorage,
-  SolanaPools,
+  Domain,
   solanaPrivateRPCRoundRobin,
-  SolanaRPC,
   SolanaRPCRoundRobin,
   Utils
 } from "@aleph-indexer/core";
 import { DateTime } from "luxon";
-import { Account } from "./account";
-import { oracleEventDAL } from "../dal/event";
+import { Account } from "./account.js";
+import { instructionEventDAL } from "../dal/instruction.js";
 import bs58 from "bs58";
-import { AccountInfo, PublicKey } from "@solana/web3";
+import { AccountInfo, PublicKey } from "@solana/web3.js";
 
-export class ${Name}Program extends SolanaPools<Account> {
-  private _stats: GlobalOracleStats = this.getNewGlobalStats()
+export class ${Name}Program extends Domain<Account> {
+  private _stats: GlobalStats = this.getNewGlobalStats()
 
   constructor(
     protected accountTypes: Set<AccountType> = new Set(Object.values(AccountType)),
@@ -275,12 +271,11 @@ export class ${Name}Program extends SolanaPools<Account> {
   }
 
   addAccount(info: ${Name}AccountInfo): Account {
-    if (this.poolExists(info.address)) return this.pools[info.address]
+    if (this.accountStatsExists(info.address)) return this.accountStatsCaches[info.address]
 
-    // TODO: Generalize Account
     const account = new Account(info, this.startDate, this.eventDAL)
 
-    this.addPool(account)
+    this.addAccountStats(account)
 
     return account
   }
@@ -307,10 +302,10 @@ export class ${Name}Program extends SolanaPools<Account> {
         if (index !== hash) continue
       }
 
-      const alreadyExists = this.poolExists(accountInfo.address)
+      const alreadyExists = this.accountStatsExists(accountInfo.address)
       if (alreadyExists) continue
 
-      const domain = this.addAccount(accountInfo)
+      const domain = this.addAccountByInfo(accountInfo)
       result.push(domain)
     }
 
@@ -325,7 +320,7 @@ export class ${Name}Program extends SolanaPools<Account> {
 
   async getGlobalStats(
     addresses?: string[],
-  ): Promise<GlobalOracleStats> {
+  ): Promise<GlobalStats> {
     //TODO: Generalize
     if (!addresses || addresses.length === 0) {
       return this._stats
@@ -342,24 +337,24 @@ export class ${Name}Program extends SolanaPools<Account> {
   }
 
   protected async computeGlobalStats(
-    aggregatorAddresses?: string[],
-  ): Promise<GlobalOracleStats> {
-    const aggregatorMap = await this.getPools()
+    accountAddresses?: string[],
+  ): Promise<GlobalStats> {
+    const accountMap = await this.getAllAccountStats()
 
-    const aggregators = !aggregatorAddresses
-      ? Object.values(aggregatorMap)
-      : aggregatorAddresses.reduce((acc, address) => {
-          const market = aggregatorMap[address]
+    const accounts = !accountAddresses
+      ? Object.values(accountMap)
+      : accountAddresses.reduce((acc, address) => {
+          const market = accountMap[address]
           if (market) acc.push(market)
           return acc
         }, [] as Account[])
 
-    const globalStats: GlobalOracleStats = this.getNewGlobalStats()
+    const globalStats: GlobalStats = this.getNewGlobalStats()
     let uniqueProgramIds = new Set<string>([])
 
-    for (const aggregator of aggregators) {
+    for (const account of accounts) {
       // @note: Calculate last stats from reserves
-      const { requestsTotal, accessingPrograms } = aggregator.stats
+      const { requestsTotal, accessingPrograms } = account.stats
 
       globalStats.totalRequests += requestsTotal //L -updatesTotal
       uniqueProgramIds = new Set([
@@ -372,7 +367,7 @@ export class ${Name}Program extends SolanaPools<Account> {
     return globalStats
   }
 
-  protected getNewGlobalStats(): GlobalOracleStats {
+  protected getNewGlobalStats(): GlobalStats {
     return {
       totalRequests: 0,
       totalAccounts: {
@@ -390,7 +385,7 @@ export class ${Name}Program extends SolanaPools<Account> {
     }
   }
 
-  protected async _loadPools(index?: number, total?: number): Promise<void> {
+  protected async _loadCaches(index?: number, total?: number): Promise<void> {
     await Promise.all([...this.accountTypes].map((type) =>
       this.discoverAccounts(type, index, total)
     ))

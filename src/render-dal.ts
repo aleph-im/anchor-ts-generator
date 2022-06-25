@@ -18,8 +18,8 @@ export const dbPath = ${com}${dollar}{config.DB_FOLDER}/${dollar}{ProgramName.${
 
 const instruction: string = 
 `import { EntityStorage } from '@aleph-indexer/core'
-import { InstructionEvent } from '../types'
-import { dbPath as path, InstructionDAL } from './common'
+import { InstructionEvent } from '../types.js'
+import { dbPath as path, InstructionDAL } from './common.js'
 
 export type InstructionStorage = EntityStorage<InstructionEvent>
 

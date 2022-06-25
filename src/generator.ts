@@ -63,10 +63,9 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   if(!existsSync(paths.graphqlDir))
     mkdirSync(paths.graphqlDir)
   await generateSchema(paths, fileName);
-  const { index, resolvers, apolloServer } = renderGraphQLFiles(fileName)
+  const { index, resolvers } = renderGraphQLFiles(fileName)
   writeFileSync(paths.graphqlFile('index'), index);
   writeFileSync(paths.graphqlFile('resolvers'), resolvers);
-  writeFileSync(paths.graphqlFile('apolloServer'), apolloServer);
 
   if(!existsSync(paths.indexersDir))
     mkdirSync(paths.indexersDir)
@@ -90,12 +89,6 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   const { parser, instructionParser } = renderParsersFiles(fileName, eventsView)
   writeFileSync(paths.parsersFile('parser'), parser);
   writeFileSync(paths.parsersFile('instruction'), instructionParser);
-
-  /*if(!existsSync(paths.utilsDir))
-    mkdirSync(paths.utilsDir)
-  const { utilsIndex, utils } = renderUtilsFiles(fileName)
-  writeFileSync(paths.utilsFile('index'), utilsIndex);
-  writeFileSync(paths.utilsFile('utils'), utils);*/ //not needed anymore - said mike
 
   if(!existsSync(paths.tsSolitaDir))
     mkdirSync(paths.tsSolitaDir)

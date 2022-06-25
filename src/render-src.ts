@@ -97,7 +97,7 @@ export type HourlyStats = {
   statsMap: Record<string, AccountTimeStat>
 }
 
-export type GlobalOracleStats = {
+export type GlobalStats = {
   totalAccounts: Record<AccountType, number>
   totalRequests: number
   totalUniqueAccessingPrograms: number

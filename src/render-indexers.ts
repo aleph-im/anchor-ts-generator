@@ -12,9 +12,9 @@ export function renderIndexersFiles(name: string){
   EntityStorage,
 } from '@aleph-indexer/core'
 import { InstructionEvent, ${Name}AccountInfo } from "../types";
-import { AggregatorEventParser } from '../parsers/aggregator'
-import { Account } from '../domain/account'
-import { oracleEventDAL } from '../dal/event'
+import { AccountEventParser } from '../parsers/accountEvent.js'
+import { Account } from '../domain/account.js'
+import { instructionEventDAL } from '../dal/instruction.js'
 
 export class AccountIndexer extends TransactionFetcher {
   constructor(
@@ -23,7 +23,7 @@ export class AccountIndexer extends TransactionFetcher {
     protected domain: Account,
     protected eventDAL: EntityStorage<InstructionEvent> = oracleEventDAL,
     protected fetcherStateDAL: FetcherStateLevelStorage,
-    protected eventParser: AggregatorEventParser,
+    protected eventParser: AccountEventParser,
     public id = ${com}${dollar}{info.type}:${dollar}{info.address}${com},
   ) {
     super(
@@ -87,31 +87,32 @@ const customIndexer =
   FetcherStateLevelStorage,
   EntityStorage,
   solanaPrivateRPCRoundRobin,
+  solanaMainPublicRPCRoundRobin
 } from '@aleph-indexer/core'
-import { AccountIndexer } from './accountIndexer'
-import { ProgramName } from '../constants'
-import { fetcherStateLevelStorage } from '../dal/fetcherState'
+import { AccountIndexer } from './accountIndexer.js'
+import { ProgramName } from '../constants.js'
+import { fetcherStateLevelStorage } from '../dal/fetcherState.js'
 import {
-  aggregatorEventParser,
-  AggregatorEventParser,
-} from '../parsers/aggregator'
-import { InstructionEvent } from '../types'
+  accountEventParser,
+  AccountEventParser,
+} from '../parsers/accountEvent.js'
+import { InstructionEvent } from '../types.js'
 import {
   ${name}Program,
   ${Name}Program,
 } from '../domain/${name}'
-import { oracleEventDAL } from '../dal/event'
-import { Account } from '../domain/account'
-import { initParsers } from "../parsers/instruction";
+import { instructionEventDAL } from '../dal/instruction.js'
+import { Account } from '../domain/account.js'
+import { initParsers } from "../parsers/instruction.js";
 
 export class ${Name}Indexer {
   constructor(
     protected domain: ${Name}Program = ${name}Program,
     protected solanaRpcRR: SolanaRPCRoundRobin = solanaPrivateRPCRoundRobin,
     //protected solanaMainRpcRR: SolanaRPCRoundRobin = solanaMainPublicRPCRoundRobin,
-    protected eventDAL: EntityStorage<InstructionEvent> = oracleEventDAL,
+    protected eventDAL: EntityStorage<InstructionEvent> = instructionEventDAL,
     protected fetcherStateDAL: FetcherStateLevelStorage = fetcherStateLevelStorage,
-    protected oracleParser: AggregatorEventParser = aggregatorEventParser,
+    protected eventParser: AccountEventParser = accountEventParser,
     protected aggregatorIndexers: Record<
       string,
       AccountIndexer
@@ -139,7 +140,7 @@ export class ${Name}Indexer {
     initParsers()
 
     await this.domain.init()
-    const aggregatorMap = await this.domain.getPools()
+    const aggregatorMap = await this.domain.getAllAccountStats()
 
     const aggregators = Object.values(aggregatorMap)
 
@@ -191,7 +192,7 @@ export class ${Name}Indexer {
       account,
       this.eventDAL,
       this.fetcherStateDAL,
-      this.oracleParser,
+      this.eventParser,
     )
 
     await indexer.init()
