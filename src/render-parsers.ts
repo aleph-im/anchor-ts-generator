@@ -9,108 +9,95 @@ export function renderParsersFiles(name: string, eventsView: ViewEvents | undefi
     const NAME = name.toUpperCase()
     let parser: string = 
 `import { InstructionContext, AlephParsedEvent } from '@aleph-indexer/core'
-import * as types from "../types";
-import { ${NAME}_PROGRAM_ID } from "../constants";
+import { InstructionEvent, InstructionType, ${Name}AccountInfo } from "../types.js";
 
-export class EventParser {
-  constructor(
-    /*protected rpc = solana,
-    protected dalFactory: ${Name}DALFactory = ${name}DALFactory,
-    protected ${name}DAL: ${Name}LevelStorage = ${name}LevelStorage,
-    protected cache: Record<string, { mint: string; owner: string }> = {},*/
-  ) {}
+export class AccountEventParser {
+  constructor() {}
 
-  async parse(ixCtx: InstructionContext, info: types.AccountData) {
+  parse(ixCtx: InstructionContext, info: SwitchboardAccountInfo): InstructionEvent {
     const { ix, parentIx, parentTx } = ixCtx
-    if(ix.programId.toString() === ${NAME}_PROGRAM_ID){
-      const id = ${com}${dollar}{parentTx.signature}${dollar}{
-        parentIx ? ${com}:${dollar}{parentIx.index.toString().padStart(2, '0')}${com} : ''
-      }:${dollar}{ix.index.toString().padStart(2, '0')}${com}
 
-      const timestamp = parentTx.blockTime
-        ? parentTx.blockTime * 1000
-        : parentTx.slot
-      
-      const parsed = (ix as AlephParsedEvent<types.InstructionType, any>)
+    const id = \`\${parentTx.signature}\${
+      parentIx ? \`:\${parentIx.index.toString().padStart(2, '0')}\` : ''
+    }:\${ix.index.toString().padStart(2, '0')}\`
 
-      const baseEvent: types.InstructionEvent = {
-        ...parsed.info,
-        id,
-        timestamp,
-        type: parsed?.type,
-        account: info.address,
-        programId: ixCtx.parentIx?.programId ?? info.programId,
-      }
+    const timestamp = parentTx.blockTime
+      ? parentTx.blockTime * 1000
+      : parentTx.slot
 
-      try {
-        switch (parsed.type) {
-`
-    if(eventsView != undefined){
-      for(let i = 0; i < eventsView.events.length; i++){
-        parser += 
-`          case types.EventType.${eventsView.events[i].name}: {
-            const {`
-        let eventFields = ''
-        for(let j = 0; j < eventsView.events[i].fields.length; j++){
-          eventFields += ` ${eventsView.events[i].fields[j].name},`
-        }
-        parser += eventFields.slice(0, eventFields.length - 1) + ` } = parsed.info
-            const res: types.${eventsView.events[i].name} = {
-`
-        eventFields = 
-`              ...baseEvent,
-`
-        for(let j = 0; j < eventsView.events[i].fields.length; j++){
-          eventFields += 
-`              ${eventsView.events[i].fields[j].name},
-`
-        }
+    let parsed
+    if(parentIx !== undefined)
+      parsed = (parentIx as AlephParsedEvent<InstructionType, any>).parsed
+    else
+      parsed = (ix as AlephParsedEvent<InstructionType, any>).parsed
 
-        parser += eventFields.slice(0, eventFields.length - 2) +
-`
-            }
-            return res
-          }
-`
-      }
-    } 
-    parser += `
-          default: {
-            console.log('NOT PARSED IX TYPE', (parsed as any).type)
-            console.log(id)
-            //return
-          }
-        }
-      } catch (e) {
-        console.log('error -> ', parsed.type, id, e)
-        throw e
-      }
+    return {
+      id,
+      timestamp,
+      type: parsed?.type,
+      account: info.address,
+      programId: ixCtx.parentIx?.programId ?? info.programId,
+      accounts: parsed.info.accounts,
+      data: parsed.info.data
     }
-  } 
+  }
 }
 
-export const eventParser = new EventParser()
-export default eventParser`
+export const accountEventParser = new AccountEventParser()
+export default accountEventParser`
 
 const instructionParser: string = 
 `import {
   Parsers,
   PARSERS as _PARSERS,
   InstructionParser,
+  RawInstruction,
+  AlephParsedInstruction,
+  AlephParsedParsedInstruction
 } from '@aleph-indexer/core'
-import { ProgramName, ${NAME}_PROGRAM_ID } from '../constants'
+import { ProgramName, ${NAME}_PROGRAM_ID } from '../constants.js'
 import {
   getInstructionType,
   IX_ACCOUNTS_LAYOUT,
   IX_DATA_LAYOUT,
-} from '../layouts/instructions'
-import { InstructionType } from '../types'
+} from '../layouts/instructions.js'
+import { InstructionType } from '../types.js'
 
 export const PARSERS = _PARSERS
 
 export class BeetInstructionParser<EventTypeEnum extends string>
   extends InstructionParser<EventTypeEnum>
 {
+  parse(
+    rawIx: RawInstruction | AlephParsedInstruction
+  ): RawInstruction | AlephParsedInstruction {
+    if (!this.isCompatibleInstruction(rawIx)) return rawIx
+
+    const decoded = this.getInstructionData(rawIx)
+    if (!decoded) return rawIx
+
+    const type = this.getInstructionType(decoded)
+    if (!type) return rawIx
+
+    const parsedIx: AlephParsedParsedInstruction = rawIx as any
+    parsedIx.program = this.programName
+
+    parsedIx.parsed = {
+      type,
+      info: {
+        ...(rawIx as any).parsed?.info,
+        data: {
+        ...this.parseInstructionData(type, decoded),
+        },
+        accounts: {
+          ...this.parseInstructionAccounts(type, parsedIx)
+        },
+      },
+    }
+
+    return parsedIx
+  }
+  
   protected parseInstructionData(type: EventTypeEnum, data: Buffer): any {
     try {
       const template = this.dataLayouts[type]
@@ -125,7 +112,7 @@ export class BeetInstructionParser<EventTypeEnum extends string>
 
 export function initParsers(): void {
   const PROGRAMS = PARSERS['PROGRAMS'] as Parsers
-  PROGRAMS[${NAME}_PROGRAM_ID] = new InstructionParser<InstructionType>(
+  PROGRAMS[${NAME}_PROGRAM_ID] = new BeetInstructionParser<InstructionType>(
     ${NAME}_PROGRAM_ID,
     ProgramName.${Name},
     PARSERS,
