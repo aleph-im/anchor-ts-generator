@@ -62,7 +62,7 @@ Settings.defaultZone = 'utc'
 
 import { config } from '@aleph-indexer/core'
 import graphQLServer from './src/graphql/index.js'
-import { ${Name}Indexer } from './src/indexers/${name}'
+import { ${Name}Indexer } from './src/indexers/${name}.js'
 import * as v8 from "v8";
 import { round } from "lodash-es";
 

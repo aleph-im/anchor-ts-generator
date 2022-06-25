@@ -14,7 +14,7 @@ import { renderDALFiles } from './render-dal.js'
 import { renderDomainFiles } from './render-domain.js'
 import { renderIndexersFiles } from './render-indexers.js'
 import { renderLayoutsFiles } from './render-layouts.js'
-import { renderUtilsFiles } from "./render-utils.js";
+//import { renderUtilsFiles } from "./render-utils.js";
 
 
 export default async function generate(fileName: string, toGenerate: TemplateType[]) {
@@ -91,11 +91,11 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   writeFileSync(paths.parsersFile('parser'), parser);
   writeFileSync(paths.parsersFile('instruction'), instructionParser);
 
-  if(!existsSync(paths.utilsDir))
+  /*if(!existsSync(paths.utilsDir))
     mkdirSync(paths.utilsDir)
   const { utilsIndex, utils } = renderUtilsFiles(fileName)
   writeFileSync(paths.utilsFile('index'), utilsIndex);
-  writeFileSync(paths.utilsFile('utils'), utils);
+  writeFileSync(paths.utilsFile('utils'), utils);*/ //not needed anymore - said mike
 
   if(!existsSync(paths.tsSolitaDir))
     mkdirSync(paths.tsSolitaDir)
