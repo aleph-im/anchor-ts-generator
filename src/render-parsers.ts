@@ -108,6 +108,21 @@ import { InstructionType } from '../types'
 
 export const PARSERS = _PARSERS
 
+export class BeetInstructionParser<EventTypeEnum extends string>
+  extends InstructionParser<EventTypeEnum>
+{
+  protected parseInstructionData(type: EventTypeEnum, data: Buffer): any {
+    try {
+      const template = this.dataLayouts[type]
+      if (!template) return {}
+
+      return this.dataLayouts[type].deserialize(data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+}
+
 export function initParsers(): void {
   const PROGRAMS = PARSERS['PROGRAMS'] as Parsers
   PROGRAMS[${NAME}_PROGRAM_ID] = new InstructionParser<InstructionType>(

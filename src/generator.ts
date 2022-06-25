@@ -15,9 +15,6 @@ import { renderDomainFiles } from './render-domain.js'
 import { renderIndexersFiles } from './render-indexers.js'
 import { renderLayoutsFiles } from './render-layouts.js'
 import { renderUtilsFiles } from "./render-utils.js";
-import { generateIndexGraphql } from "./apolloServer/index.js";
-import { generateApolloServer } from "./mustaches/apolloServer.js";
-//import { startServer } from "./output/switchboard_v2/graphql/apolloServerGenerated.js";
 
 
 export default async function generate(fileName: string, toGenerate: TemplateType[]) {
@@ -66,9 +63,11 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   
   if(!existsSync(paths.graphqlDir))
     mkdirSync(paths.graphqlDir)
-  const { index, resolvers } = renderGraphQLFiles(fileName)
+  await generateSchema(paths, fileName);
+  const { index, resolvers, apolloServer } = renderGraphQLFiles(fileName)
   writeFileSync(paths.graphqlFile('index'), index);
   writeFileSync(paths.graphqlFile('resolvers'), resolvers);
+  writeFileSync(paths.graphqlFile('apolloServer'), apolloServer);
 
   if(!existsSync(paths.indexersDir))
     mkdirSync(paths.indexersDir)
@@ -99,20 +98,12 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   writeFileSync(paths.utilsFile('index'), utilsIndex);
   writeFileSync(paths.utilsFile('utils'), utils);
 
-  await generateSchema(paths, fileName);
-  if(!existsSync(paths.parsersDir))
+  if(!existsSync(paths.tsSolitaDir))
     mkdirSync(paths.tsSolitaDir)
   await generateSolitaTypeScript(paths, fileName);
 
-  //generate exports for resolvers and types
-  generateIndexGraphql();
-
-  //generate mustache apolloServer
- // fs.writeFileSync('./output/switchboard_v2/graphql/apolloServerGenerated.ts',output);
-  generateApolloServer();
-
-  //fire up the apolloServer
-  //startServer();
+  if(!existsSync(paths.graphqlDir))
+    mkdirSync(paths.tsSolitaDir)
 }
 
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
@@ -226,7 +217,7 @@ async function generateSchema(paths: Paths, name: string) {
   const idl = JSON.parse(readFileSync(paths.idlFile(name), "utf8"));
 
   const gen = new Schema(idl, { formatCode: false });
-  await gen.renderAndWriteTo(paths.graphSchemaDir);
+  await gen.renderAndWriteTo(paths.graphqlDir);
 
   console.log("Success on Schema generation!");
 }

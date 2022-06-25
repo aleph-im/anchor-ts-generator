@@ -8,18 +8,13 @@
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "start": "npm run clean:all && npm i && node ./dist/index.js && npm run runApolloServer",
+    "start": "npm run clean:all && npm i && node ./dist/index.js",
     "prepare": "npm run build",
     "postinstall": "npm run build",
     "build": "npm run clean:ts && npm run build:ts ",
     "build:ts": "tsc -p ./tsconfig.json",
     "clean:ts": "rm -rf ./dist",
-    "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json && rm -rf ./output",
-    "generateApolloGQL": "graphql-codegen --config ./src/apolloServer/codegen.yaml",
-    "generateServer": "ts-node ./src/mustaches/apolloServer.js",
-    "generateIndex": "ts-node ./src/apolloServer/index.ts",
-    "runServer": "ts-node ./output/switchboard_v2/graphql/apolloServerGenerated.ts",
-    "runApolloServer": "npm run generateApolloGQL && npm run runServer"
+    "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json && rm -rf ./output"
   },
   "license": "MIT",
   "bin": {
