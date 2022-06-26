@@ -21,7 +21,7 @@ export class AccountIndexer extends TransactionFetcher {
     protected info: ${Name}AccountInfo,
     protected solanaRpc: SolanaRPC,
     protected domain: Account,
-    protected eventDAL: EntityStorage<InstructionEvent> = oracleEventDAL,
+    protected eventDAL: EntityStorage<InstructionEvent> = instructionEventDAL,
     protected fetcherStateDAL: FetcherStateLevelStorage,
     protected eventParser: AccountEventParser,
     public id = ${com}${dollar}{info.type}:${dollar}{info.address}${com},

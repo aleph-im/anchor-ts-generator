@@ -88,7 +88,9 @@ export class ${Name}GraphQLResolvers {
     protected domain: ${Name}Program,
   ) {}
 
-  public async accounts(filter: AccountFilters): Promise<${Name}AccountInfo[]> {
+  public async accounts(
+    filter: AccountFilters
+  ): Promise<${Name}AccountInfo[]> {
     const result = await this.filterAccounts(filter)
 
     return result.map((account) => ( {...account.info, stats: account.stats }))

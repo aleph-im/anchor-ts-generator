@@ -8,7 +8,7 @@ import { InstructionEvent, InstructionType, ${Name}AccountInfo } from "../types.
 export class AccountEventParser {
   constructor() {}
 
-  parse(ixCtx: InstructionContext, info: SwitchboardAccountInfo): InstructionEvent {
+  parse(ixCtx: InstructionContext, info: ${Name}AccountInfo): InstructionEvent {
     const { ix, parentIx, parentTx } = ixCtx
 
     const id = \`\${parentTx.signature}\${

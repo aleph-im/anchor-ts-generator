@@ -4,7 +4,9 @@ export function renderSrcFiles(name: string, accountsView: ViewAccounts | undefi
   const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
   const NAME = name.toUpperCase()
   let constants: string = 
-`export enum ProgramName {
+`import { PublicKey } from '@solana/web3.js'
+import { config } from '@aleph-indexer/core'
+export enum ProgramName {
   ${Name} = '${name}',
 }
 
@@ -21,9 +23,13 @@ export const DOMAIN_CACHE_START_DATE = config.INDEX_START_DATE
 
     let types: string = 
 `export * from "./layouts/ts/instructions"
-export { ParsedInstructions } from "./layouts/solita"
-export { InstructionType } from "./layouts/ts/instructions"
-export { AccountType } from "./layouts/ts/accounts"
+export { ParsedInstructions } from "./layouts/solita/index.js"
+export { InstructionType } from "./layouts/ts/instructions.js"
+export { AccountType } from "./layouts/ts/accounts.js"
+import { AccountType } from "./layouts/ts/accounts.js"
+import {
+  ParsedAccountInfo
+} from "@aleph-indexer/core";
 
 import {
 `
@@ -36,11 +42,11 @@ import {
     }
   }
   types +=
-`
-} from "./layouts/solita"
+`\tParsedAccountsData,
+\tParsedInstructions
+} from "./layouts/solita/index.js"
 
-import { InstructionType } from "./layouts/ts/instructions"
-import { AccountType } from "./layouts/ts/accounts"
+import { InstructionType } from "./layouts/ts/instructions.js"
 
 export enum IndexersType {
 `
@@ -54,6 +60,8 @@ export enum IndexersType {
   types +=
 `}
 
+export type SwitchboardAccountInfo = ParsedAccountInfo<AccountType, ParsedAccountsData>
+
 // ------------------- PARSED ------------------
 
 export type InstructionEvent = {
@@ -62,6 +70,8 @@ export type InstructionEvent = {
   timestamp: number
   programId: string
   account: string
+  accounts: Record<string, string>
+  data: ParsedInstructions
 }
 
 // -------------------------- STATS --------------------------
@@ -86,7 +96,7 @@ export type ${Name}AccountStats = {
 }
 
 export type ${Name}AccountInfo = AccountData & {
-  stats: ${Name}AccountStats
+  stats: ParsedAccountsData
 }
 
 export type HourlyStats = {
