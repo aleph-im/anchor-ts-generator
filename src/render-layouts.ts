@@ -17,7 +17,7 @@ export function renderLayoutsFiles(instructionsView: ViewInstructions | undefine
     accountLayouts +=
 `} from './solita/index.js'
 import { AccountType } from '../types.js';
-import { ParsedAccounts, ParsedAccountsData } from './solita'
+import { ParsedAccounts, ParsedAccountsData } from './solita/index.js'
 import { BeetStruct, FixableBeetStruct } from "@aleph-indexer/beet";
 
 export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {

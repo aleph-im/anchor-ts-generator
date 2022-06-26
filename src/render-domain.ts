@@ -10,8 +10,8 @@ import {
   HourlyStats,
   ${Name}AccountInfo, 
   ${Name}AccountStats
-} from "../types";
-import eventProcessor, { EventProcessor } from './processor'
+} from "../types.js";
+import eventProcessor, { EventProcessor } from './processor.js'
 
 const { sortTimeStatsMap } = Utils
 
@@ -198,9 +198,9 @@ const eventProcessor = new EventProcessor()
 export default eventProcessor`
   
     const custom: string = 
-`import { DOMAIN_CACHE_START_DATE, ${NAME}_PROGRAM_ID, ${NAME}_PROGRAM_ID_PK } from "../constants";
-import { AccountType, GlobalStats, InstructionEvent, ${Name}AccountInfo } from "../types";
-import { ACCOUNT_DISCRIMINATOR, ACCOUNTS_DATA_LAYOUT } from "../layouts/accounts";
+`import { DOMAIN_CACHE_START_DATE, ${NAME}_PROGRAM_ID, ${NAME}_PROGRAM_ID_PK } from "../constants.js";
+import { AccountType, GlobalStats, InstructionEvent, ${Name}AccountInfo } from "../types.js";
+import { ACCOUNT_DISCRIMINATOR, ACCOUNTS_DATA_LAYOUT } from "../layouts/accounts.js";
 import {
   EntityStorage,
   Domain,
@@ -273,7 +273,7 @@ export class ${Name}Program extends Domain<Account> {
     }
   }
 
-  addAccount(info: ${Name}AccountInfo): Account {
+  addAccountByInfo(info: ${Name}AccountInfo): Account {
     if (this.accountStatsExists(info.address)) return this.accountStatsCaches[info.address]
 
     const account = new Account(info, this.startDate, this.eventDAL)

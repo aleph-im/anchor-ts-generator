@@ -11,7 +11,7 @@ export function renderIndexersFiles(name: string){
   InstructionContext,
   EntityStorage,
 } from '@aleph-indexer/core'
-import { InstructionEvent, ${Name}AccountInfo } from "../types";
+import { InstructionEvent, ${Name}AccountInfo } from "../types.js";
 import { AccountEventParser } from '../parsers/accountEvent.js'
 import { Account } from '../domain/account.js'
 import { instructionEventDAL } from '../dal/instruction.js'
@@ -100,7 +100,7 @@ import { InstructionEvent } from '../types.js'
 import {
   ${name}Program,
   ${Name}Program,
-} from '../domain/${name}'
+} from '../domain/${name}.js'
 import { instructionEventDAL } from '../dal/instruction.js'
 import { Account } from '../domain/account.js'
 import { initParsers } from "../parsers/instruction.js";

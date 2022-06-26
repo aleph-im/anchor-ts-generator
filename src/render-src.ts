@@ -22,7 +22,7 @@ export const DOMAIN_CACHE_START_DATE = config.INDEX_START_DATE
 
 
     let types: string = 
-`export * from "./layouts/ts/instructions"
+`export * from "./layouts/ts/instructions.js"
 export { ParsedInstructions } from "./layouts/solita/index.js"
 export { InstructionType } from "./layouts/ts/instructions.js"
 export { AccountType } from "./layouts/ts/accounts.js"
@@ -95,9 +95,7 @@ export type ${Name}AccountStats = {
   lastRequest?: InstructionEvent
 }
 
-export type ${Name}AccountInfo = AccountData & {
-  stats: ParsedAccountsData
-}
+export type ${Name}AccountInfo = ParsedAccountInfo<AccountType, ParsedAccountsData>
 
 export type HourlyStats = {
   stats: AccountTimeStat[]
@@ -112,12 +110,8 @@ export type GlobalStats = {
 
 // -------------------------- ACCOUNTS --------------------------
 
-export type AccountData = {
-  name: string
-  programId: string
-  address: string
-  type: AccountType
-  data: ${Name}AccountBeetArgs
+export type AccountData = ParsedAccountInfo<AccountType, ParsedAccountsData> & {
+  stats: ${Name}AccountStats
 }
 
 export type ${Name}AccountBeet =
