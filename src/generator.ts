@@ -17,12 +17,13 @@ import { renderLayoutsFiles } from './render-layouts.js'
 //import { renderUtilsFiles } from "./render-utils.js";
 
 
+
 export default async function generate(fileName: string, toGenerate: TemplateType[]) {
   const paths = new Paths(`./`, fileName)
   const idl = parseIdl(paths.idlFile(fileName))
 
   if(!existsSync(paths.outputDir))
-    mkdirSync(paths.outputDir)
+    mkdirSync(paths.outputDir, { recursive:true})
 
   if(!existsSync(paths.projectDir))
     mkdirSync(paths.projectDir)
