@@ -22,16 +22,12 @@ export class Paths {
   get projectDir() {
     return path.join(this.outputDir.toString(), this.project)
   }
-
-  get indexerDir() {
-    return path.join(this.projectDir.toString(), 'indexer')
-  }
-  indexerFile(name: string) {
-    return path.join(this.indexerDir, name)
+  projectFile(name: string) {
+    return path.join(this.projectDir, name)
   }
 
   get srcDir() {
-    return path.join(this.indexerDir.toString(), 'src')
+    return path.join(this.projectDir.toString(), 'src')
   }
   srcFile(name: string) {
     return path.join(this.srcDir, `${name}.ts`)

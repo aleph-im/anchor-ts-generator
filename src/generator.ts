@@ -27,17 +27,15 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   if(!existsSync(paths.projectDir))
     mkdirSync(paths.projectDir)
 
+  const {docker, pkg, run, tsconfig, typesdts } = renderRootFiles(fileName)
+  writeFileSync(paths.projectFile('docker-compose.yaml'), docker);
+  writeFileSync(paths.projectFile('package.json'), pkg);
+  writeFileSync(paths.projectFile('run.ts'), run);
+  writeFileSync(paths.projectFile('tsconfig.json'), tsconfig);
+  writeFileSync(paths.projectFile('types.d.ts'), typesdts);
+
   const { typesView, instructionsView, eventsView, accountsView, textAndTemplate } = generateFromTemplateType(idl, toGenerate)
   console.log(typesView, instructionsView, eventsView, accountsView)
-
-  if(!existsSync(paths.indexerDir))
-    mkdirSync(paths.indexerDir)
-  const {docker, pkg, run, tsconfig, typesdts } = renderRootFiles(fileName)
-  writeFileSync(paths.indexerFile('docker-compose.yaml'), docker);
-  writeFileSync(paths.indexerFile('package.json'), pkg);
-  writeFileSync(paths.indexerFile('run.ts'), run);
-  writeFileSync(paths.indexerFile('tsconfig.json'), tsconfig);
-  writeFileSync(paths.indexerFile('types.d.ts'), typesdts);
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
@@ -84,11 +82,14 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
     for (const x of textAndTemplate)
       if(x[0] == TemplateType.Instructions)
         writeFileSync(paths.tsFile(x[0]), x[1])
+      else
+        if(x[0] == TemplateType.Accounts)
+          writeFileSync(paths.tsFile(x[0]), x[1])
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
   const { parser, instructionParser } = renderParsersFiles(fileName)
-  writeFileSync(paths.parsersFile('parser'), parser);
+  writeFileSync(paths.parsersFile('accountEvent'), parser);
   writeFileSync(paths.parsersFile('instruction'), instructionParser);
 
   if(!existsSync(paths.tsSolitaDir))

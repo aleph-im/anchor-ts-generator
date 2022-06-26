@@ -15,7 +15,10 @@ import eventProcessor, { EventProcessor } from './processor'
 
 const { sortTimeStatsMap } = Utils
 
-export class Account extends StatsCache<${Name}AccountInfo, ${Name}AccountStats> {
+export class Account extends StatsCache<
+  ${Name}AccountInfo, 
+  ${Name}AccountStats
+  > {
   private _shouldUpdate = true
 
   constructor(
@@ -151,7 +154,7 @@ export class Account extends StatsCache<${Name}AccountInfo, ${Name}AccountStats>
     const processor: string =
 `import { Utils } from '@aleph-indexer/core'
 import { DateTimeUnit } from 'luxon'
-import { AccountTimeStat, InstructionEvent, ${Name}AccountStats } from "../types";
+import { AccountTimeStat, InstructionEvent, ${Name}AccountStats } from "../types.js";
 
 const splitIt = Utils.splitDurationIntoIntervals
 
@@ -286,7 +289,7 @@ export class ${Name}Program extends Domain<Account> {
    * @param index
    * @param total
    */
-  async discoverAccounts(
+   async discoverAccounts(
     type: AccountType,
     index?: number,
     total?: number,
@@ -321,7 +324,6 @@ export class ${Name}Program extends Domain<Account> {
   async getGlobalStats(
     addresses?: string[],
   ): Promise<GlobalStats> {
-    //TODO: Generalize
     if (!addresses || addresses.length === 0) {
       return this._stats
     }
@@ -341,7 +343,7 @@ export class ${Name}Program extends Domain<Account> {
   ): Promise<GlobalStats> {
     const accountMap = await this.getAllAccountStats()
 
-    const accounts = !accountAddresses
+    const accounts: Account[] = !accountAddresses
       ? Object.values(accountMap)
       : accountAddresses.reduce((acc, address) => {
           const market = accountMap[address]
@@ -356,6 +358,7 @@ export class ${Name}Program extends Domain<Account> {
       // @note: Calculate last stats from reserves
       const { requestsTotal, accessingPrograms } = account.stats
 
+      globalStats.totalAccounts[account.info.type] += 1
       globalStats.totalRequests += requestsTotal //L -updatesTotal
       uniqueProgramIds = new Set([
         ...[...accessingPrograms].filter(value => !uniqueProgramIds.has(value)),
@@ -393,9 +396,9 @@ export class ${Name}Program extends Domain<Account> {
 }
 
 export const ${name}Program = new ${Name}Program(
-  new Set([AccountType.AggregatorAccountData]),
+  new Set([AccountType.OracleAccountData]),
   DOMAIN_CACHE_START_DATE,
-  oracleEventDAL,
+  instructionEventDAL,
 )
 export default ${name}Program`
   
