@@ -8,7 +8,7 @@
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "start": "npm i && node ./dist/index.js && cp -r ./output/switchboard/ ../solana-graphql-alephvm/packages/switchboard_v2/",
+    "start": "npm i && node ./dist/index.js",
     "prepare": "npm run build",
     "postinstall": "npm run build",
     "build": "npm run clean:ts && npm run build:ts ",
