@@ -17,8 +17,11 @@ export class Paths {
   }
 
   get outputDir() {
-   // return path.join(this.rootDir.toString(), 'output')
-    return dest.toString()
+    if(dest == "./"){ //If no dest was set, just put it under the root/output
+      return path.join(this.rootDir.toString(), 'output')
+    } else {
+      return dest.toString()
+    }
   }
 
   get projectDir() {
