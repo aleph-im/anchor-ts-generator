@@ -1,6 +1,4 @@
 export function renderGraphQLFiles(name: string){
-  const dollar = '$'
-  const com = '`'
   const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
   const index: string = 
 `import { ${Name}GraphQLResolvers } from './resolvers.js'
@@ -89,30 +87,38 @@ export class ${Name}GraphQLResolvers {
   ) {}
 
   public async accounts(
-    filter: AccountFilters
-  ): Promise<${Name}AccountInfo[]> {
-    const result = await this.filterAccounts(filter)
+    parent: any,
+    args: AccountFilters,
+    context: any,
+    info: any): Promise<${Name}AccountInfo[]>
+  {
+    const result = await this.filterAccounts(args)
 
     return result.map((account) => ( {...account.info, stats: account.stats }))
   }
 
-  public async instructionHistory({
-    account,
-    types,
-    startDate = 0,
-    endDate = Date.now(),
-    limit = 1000,
-    skip = 0,
-    reverse = true,
-  }: InstructionFilters = {
-    account: undefined,
-    types: undefined,
-    startDate: 0,
-    endDate: Date.now(),
-    limit: 1000,
-    skip: 0,
-    reverse: true,
-  }): Promise<InstructionEvent[]> {
+  public async instructionHistory(
+    parent: any,
+    {
+      account,
+      types,
+      startDate = 0,
+      endDate = Date.now(),
+      limit = 1000,
+      skip = 0,
+      reverse = true,
+    }: InstructionFilters = {
+      account: undefined,
+      types: undefined,
+      startDate: 0,
+      endDate: Date.now(),
+      limit: 1000,
+      skip: 0,
+      reverse: true,
+    },
+    context: any,
+    info: any
+  ): Promise<InstructionEvent[]> {
     if (limit < 1 || limit > 1000)
       throw new Error('400 Bad Request: 1 <= limit <= 1000')
 
@@ -140,7 +146,7 @@ export class ${Name}GraphQLResolvers {
       if (--skip >= 0) continue
 
       // @note: Filter by type
-      if(!!value.type && types?.includes(value.type))
+      if(!types || (!!value.type && (types as InstructionType[])?.includes(value.type)))
         result.push(value)
 
       // @note: Stop when after reaching the limit
@@ -151,14 +157,22 @@ export class ${Name}GraphQLResolvers {
   }
 
   public async hourlyStats(
-    address: string,
+    parent: any,
+    { address }: {address: string},
+    context: any,
+    info: any
   ): Promise<HourlyStats> {
     const account = await this.getAccountByAddress(address)
     return account.getHourlyStats()
   }
 
-  public async globalStats(filters: GlobalStatsFilters): Promise<GlobalStats> {
-    const result = await this.filterAccounts(filters)
+  public async globalStats(
+    parent: any,
+    args: GlobalStatsFilters,
+    context: any,
+    info: any
+  ): Promise<GlobalStats> {
+    const result = await this.filterAccounts(args)
     const addresses = result.map(({ info }) => info.address)
     return this.domain.getGlobalStats(addresses)
   }
@@ -167,7 +181,7 @@ export class ${Name}GraphQLResolvers {
   // -------------------------------- PROTECTED --------------------------------
   protected async getAccountByAddress(address: string): Promise<Account> {
     const account = await this.domain.getAccountStats(address)
-    if (!account) throw new Error(${com}Account ${dollar}{address} does not exist${com})
+    if (!account) throw new Error(\`Account \${address} does not exist\`)
     return account
   }
 
