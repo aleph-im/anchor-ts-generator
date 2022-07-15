@@ -61,16 +61,14 @@ export default class IdlTransformer {
       eventTypeEnum.variants.push(name);
       beetImports.add(ix.name + 'Struct')
       const beet = ix.name + 'Struct';
-      console.log()
       let data = undefined;
-      if (ix.args.length > 1 || (ix.args.length === 1 && typeof(ix.args[0].type) === 'string') || ix.args.length === 0) {
+      if (ix.args.length > 1 || (ix.args.length === 1 && (ix.args[0].type as IdlTypeDefined).defined === undefined) || ix.args.length === 0) {
         data = this.toViewStruct(ix.args)
       } else {
         data = viewTypes.types.find(value =>
           value.name === (ix.args[0].type as IdlTypeDefined).defined
         ) as ViewStruct
       }
-
       for (const field of data.fields) {
         if(!this.ignoreImports.has(field.type) && !typeImports.has(field.type))
           typeImports.add(field.type)
