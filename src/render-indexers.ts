@@ -2,6 +2,7 @@ export function renderIndexersFiles(name: string){
     const dollar = '$'
     const com = '`'
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
+    name = name.toLowerCase()
 
     const indexerAccount = 
 `import {
@@ -11,7 +12,7 @@ export function renderIndexersFiles(name: string){
   InstructionContext,
   EntityStorage,
 } from '@aleph-indexer/core'
-import { InstructionEvent, ${Name}AccountInfo } from "../types.js";
+import { InstructionEvent, ${Name}AccountInfo } from '../types.js'
 import { AccountEventParser } from '../parsers/accountEvent.js'
 import { Account } from '../domain/account.js'
 import { instructionEventDAL } from '../dal/instruction.js'
@@ -103,7 +104,7 @@ import {
 } from '../domain/${name}.js'
 import { instructionEventDAL } from '../dal/instruction.js'
 import { Account } from '../domain/account.js'
-import { initParsers } from "../parsers/instruction.js";
+import { initParsers } from '../parsers/instruction.js'
 
 export class ${Name}Indexer {
   constructor(

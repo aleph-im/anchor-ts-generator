@@ -1,9 +1,11 @@
 export function renderParsersFiles(name: string){
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
     const NAME = name.toUpperCase()
+    name = name.toLowerCase()
+
     let parser: string = 
 `import { InstructionContext, AlephParsedEvent } from '@aleph-indexer/core'
-import { InstructionEvent, InstructionType, ${Name}AccountInfo } from "../types.js";
+import { InstructionEvent, InstructionType, ${Name}AccountInfo } from '../types.js'
 
 export class AccountEventParser {
   constructor() {}
