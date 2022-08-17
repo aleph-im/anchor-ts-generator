@@ -1,8 +1,11 @@
 import { ViewInstructions, ViewAccounts } from './types'
 
 export function renderLayoutsFiles(instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined){
+  let accountLayouts: string | undefined = undefined
+  let ixLayouts: string | undefined = undefined
 
-    let accountLayouts: string = 
+  if(accountsView !== undefined) {
+    accountLayouts =
 `import { 
 ` 
     if(accountsView != undefined) {
@@ -22,13 +25,11 @@ import { BeetStruct, FixableBeetStruct } from "@aleph-indexer/beet";
 
 export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {
 `
-    if(accountsView != undefined) {
         for(let i = 0; i < accountsView.accounts.length; i++){
             accountLayouts += 
 `   [AccountType.${accountsView.accounts[i].name}]: Buffer.from(${accountsView.accounts[i].name.charAt(0).toLowerCase().concat(accountsView.accounts[i].name.slice(1))}Discriminator),
 `
         }
-    }
     accountLayouts += 
 `}
 
@@ -45,19 +46,18 @@ export const ACCOUNTS_DATA_LAYOUT: Record<
 `
         }
     }
-    accountLayouts += 
-`}`
-
-    let ixLayouts: string =
+    accountLayouts +=
+      `}`
+  }
+  if(instructionsView !== undefined) {
+    ixLayouts =
 `import { 
-` 
-    if(instructionsView != undefined) {
+`
       for(let i = 0; i < instructionsView.instructions.length; i++){
           ixLayouts += 
 `  ${instructionsView.instructions[i].name.charAt(0).toLowerCase().concat(instructionsView.instructions[i].name.slice(1))}InstructionDiscriminator,
 `
       }
-    }
 
     ixLayouts +=
 `} from './solita/index.js'
@@ -83,6 +83,6 @@ export const IX_METHOD_CODE: Map<string, InstructionType | undefined > =
     ixLayouts += 
 `]);
 `;
-
+  }
     return { accountLayouts, ixLayouts }
   }

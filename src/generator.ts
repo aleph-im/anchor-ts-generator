@@ -38,6 +38,14 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   const { typesView, instructionsView, eventsView, accountsView, textAndTemplate } = generateFromTemplateType(idl, toGenerate)
   console.log(typesView, instructionsView, eventsView, accountsView)
 
+  if(!existsSync(paths.layoutsDir))
+    mkdirSync(paths.layoutsDir)
+  const { accountLayouts, ixLayouts } = renderLayoutsFiles(instructionsView, accountsView)
+  if(accountLayouts)
+    writeFileSync(paths.layoutsFile('accounts'), accountLayouts);
+  if(ixLayouts)
+    writeFileSync(paths.layoutsFile('instructions'), ixLayouts);
+
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
   const { constants, types } = renderSrcFiles(fileName, accountsView)
@@ -58,25 +66,12 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
   writeFileSync(paths.domainFile('account'), account);
   writeFileSync(paths.domainFile('processor'), processor);
   writeFileSync(paths.domainFile(fileName), custom);
-  
-  if(!existsSync(paths.graphqlDir))
-    mkdirSync(paths.graphqlDir)
-  await generateSchema(paths, fileName);
-  const { index, resolvers } = renderGraphQLFiles(fileName)
-  writeFileSync(paths.graphqlFile('index'), index);
-  writeFileSync(paths.graphqlFile('resolvers'), resolvers);
 
   if(!existsSync(paths.indexersDir))
     mkdirSync(paths.indexersDir)
   const { indexerAccount, customIndexer } = renderIndexersFiles(fileName)
   writeFileSync(paths.indexersFile(fileName), customIndexer);
   writeFileSync(paths.indexersFile("accountIndexer"), indexerAccount);
-
-  if(!existsSync(paths.layaoutsDir))
-    mkdirSync(paths.layaoutsDir)
-  const { accountLayouts, ixLayouts } = renderLayoutsFiles(instructionsView, accountsView)
-  writeFileSync(paths.layoutsFile('accounts'), accountLayouts);
-  writeFileSync(paths.layoutsFile('instructions'), ixLayouts);
 
   if(!existsSync(paths.tsDir))
     mkdirSync(paths.tsDir)
@@ -99,6 +94,13 @@ export default async function generate(fileName: string, toGenerate: TemplateTyp
 
   if(!existsSync(paths.graphqlDir))
     mkdirSync(paths.tsSolitaDir)
+
+  if(!existsSync(paths.graphqlDir))
+    mkdirSync(paths.graphqlDir)
+  await generateSchema(paths, fileName);
+  const { index, resolvers } = renderGraphQLFiles(fileName)
+  writeFileSync(paths.graphqlFile('index'), index);
+  writeFileSync(paths.graphqlFile('resolvers'), resolvers);
 }
 
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
@@ -107,7 +109,7 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
   for (const templateType of toGenerate) {
     switch (templateType) {
       case TemplateType.Types:
-        if (idl.types && idl.instructions) {
+        if (idl.types) {
           const { template, view } = generateTypes(idl)
           const text = Mustache.render(template, view);
           //writeFileSync(paths.tsFile(templateType), text)
@@ -118,7 +120,7 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
         break
   
       case TemplateType.Instructions:
-        if (idl.types && idl.instructions) {
+        if (idl.instructions) {
           const { template, view } = generateInstructions(idl)
           const text = Mustache.render(template, view);
           // TODO: Modularize to enum.mustache
@@ -126,7 +128,7 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
           textAndTemplate.push([templateType, text.slice(0, text.length-2)])
           instructionsView = view
         }
-        else console.log("Missing IDL types or instructions")
+        else console.log("No IDL instructions detected")
         break
   
       case TemplateType.Events:
@@ -142,7 +144,7 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
         break
 
       case TemplateType.Accounts:
-        if (idl.accounts && idl.events){
+        if (idl.accounts){
           const { template, view } = generateAccounts(idl)
           const text = Mustache.render(template, view)
           textAndTemplate.push([templateType, text])
@@ -150,7 +152,7 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
           //writeFileSync(paths.tsFile(templateType), text.slice(0, text.length))
           accountsView = view
         }
-        else console.log("Missing IDL accounts or events")
+        else console.log("No IDL accounts detected")
         break
   
       default:

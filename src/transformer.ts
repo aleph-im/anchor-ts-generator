@@ -44,7 +44,9 @@ export default class IdlTransformer {
   ): ViewInstructions {
     if (idl === undefined)
       idl = this.idl.instructions
-    const viewTypes = this._viewTypes ?? this.generateViewTypes()
+    let viewTypes: ViewTypes | undefined
+    if(this.idl.types !== undefined)
+      viewTypes = this._viewTypes ?? this.generateViewTypes()
 
     let eventTypeEnum: ViewEnum = {
       name: enumName,
@@ -65,7 +67,8 @@ export default class IdlTransformer {
       if (ix.args.length > 1 || (ix.args.length === 1 && (ix.args[0].type as IdlTypeDefined).defined === undefined) || ix.args.length === 0) {
         data = this.toViewStruct(ix.args)
       } else {
-        data = viewTypes.types.find(value =>
+        // @note: if no types are defined, assume all args are primitives
+        data = viewTypes!.types.find(value =>
           value.name === (ix.args[0].type as IdlTypeDefined).defined
         ) as ViewStruct
       }

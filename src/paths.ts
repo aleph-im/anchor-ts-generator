@@ -79,25 +79,25 @@ export class Paths {
     return path.join(this.indexersDir, `${name}.ts`)
   }
 
-  get layaoutsDir() {
+  get layoutsDir() {
     return path.join(this.srcDir.toString(), 'layouts')
   }
   get relLayaoutsDir() {
-    return path.relative(process.cwd(), this.layaoutsDir)
+    return path.relative(process.cwd(), this.layoutsDir)
   }
   layoutsFile(name: string) {
-    return path.join(this.layaoutsDir, `${name}.ts`)
+    return path.join(this.layoutsDir, `${name}.ts`)
   }
 
   get tsDir() {
-    return path.join(this.layaoutsDir.toString(), 'ts')
+    return path.join(this.layoutsDir.toString(), 'ts')
   }
   tsFile(name: string) {
     return path.join(this.tsDir, `${name}.ts`)
   }
 
   get tsSolitaDir() {
-    return path.join(this.layaoutsDir.toString(), 'solita')
+    return path.join(this.layoutsDir.toString(), 'solita')
   }
 
   get parsersDir() {
