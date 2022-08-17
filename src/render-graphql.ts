@@ -1,5 +1,7 @@
 export function renderGraphQLFiles(name: string){
   const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
+  name = name.toLowerCase()
+
   const index: string = 
 `import { ${Name}GraphQLResolvers } from './resolvers.js'
 import { ${name}Program } from '../domain/${name}.js'
@@ -7,10 +9,10 @@ import { instructionEventDAL } from '../dal/instruction.js'
 import { ApolloServer } from 'apollo-server'
 import {
   ApolloServerPluginLandingPageGraphQLPlayground
-} from "apollo-server-core";
-import path from "path";
-import { readFileSync } from "fs";
-import { makeExecutableSchema } from "graphql-tools";
+} from 'apollo-server-core'
+import path from 'path'
+import { readFileSync } from 'fs'
+import { makeExecutableSchema } from 'graphql-tools'
 
 const schemaPath = path.resolve('./packages/${name}/dist/src/graphql/schema.graphql')
 console.log(path.resolve(schemaPath))
@@ -61,7 +63,7 @@ import {
   GlobalStats,
   HourlyStats,
   InstructionEvent, InstructionType, ${Name}AccountInfo
-} from "../types.js";
+} from '../types.js'
 
 export type AccountFilters = {
   types?: AccountType[]

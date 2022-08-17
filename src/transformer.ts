@@ -1,6 +1,16 @@
 import {
+  ViewEnum, ViewEvent, ViewEvents,
+  ViewField,
+  ViewInstruction,
+  ViewInstructions,
+  ViewStruct,
+  ViewTypes,
+  _ViewAccount,
+  ViewAccounts
+} from "./types";
+import { 
   Idl,
-  IdlAccounts, IdlEvent, IdlEventField,
+  IdlEvent, IdlEventField,
   IdlField,
   IdlInstruction,
   IdlType,
@@ -11,15 +21,7 @@ import {
   IdlTypeDefTyStruct,
   IdlTypeOption,
   IdlTypeVec,
-  ViewEnum, ViewEvent, ViewEvents,
-  ViewField,
-  ViewInstruction,
-  ViewInstructions,
-  ViewStruct,
-  ViewTypes,
-  _ViewAccount,
-  ViewAccounts
-} from "./types";
+ } from "@metaplex-foundation/solita";
 import { primitivesMap } from "./constants.js";
 
 export default class IdlTransformer {
@@ -86,7 +88,7 @@ export default class IdlTransformer {
         accounts: ix.accounts.map(account => {
           return {
             name: account.name,
-            multiple: !!(account as IdlAccounts).accounts
+            multiple: true//!!(account as IdlAccounts).accounts
           }
         }),
         beet

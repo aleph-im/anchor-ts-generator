@@ -1,5 +1,7 @@
 export function renderRootFiles(name: string){
   const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
+  name = name.toLowerCase()
+
   let docker: string = 
 `version: '2'
 
@@ -62,8 +64,8 @@ Settings.defaultZone = 'utc'
 import { config } from '@aleph-indexer/core'
 import graphQLServer from './src/graphql/index.js'
 import { ${Name}Indexer } from './src/indexers/${name}.js'
-import * as v8 from "v8";
-import { round } from "lodash-es";
+import * as v8 from 'v8'
+import { round } from 'lodash-es'
 
 // Disable event emmiter warning
 EventEmitter.defaultMaxListeners = 100000

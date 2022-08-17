@@ -2,9 +2,12 @@ export function renderDALFiles(name: string){
     const dollar = '$'
     const com = '`'
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
+    name = name.toLowerCase()
+
     const main: string = 
 `export * from './common.js'
-export * from './fetcherState.js'`
+export * from './fetcherState.js'
+`
   
     const common: string =
 `import { config } from '@aleph-indexer/core'

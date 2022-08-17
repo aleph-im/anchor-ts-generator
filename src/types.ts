@@ -75,6 +75,7 @@ export type _ViewAccount = {
   data: ViewStruct
 }
 // -------------------- RAW IDL --------------------
+
 export type Idl = {
   version: string;
   name: string;
@@ -85,12 +86,52 @@ export type Idl = {
   events?: IdlEvent[];
   errors?: IdlErrorCode[];
   constants?: IdlConstant[];
+  metadata?: {
+    address: string
+  }
 };
 
-export type IdlConstant = {
+export type IdlInstruction = {
+  name: string;
+  accounts: IdlAccount[];
+  args: IdlField[];
+};
+
+export type IdlAccount = {
+  name: string;
+  isMut: boolean;
+  isSigner: boolean;
+  desc?: string
+  optional?: boolean
+};
+
+export type IdlField = {
   name: string;
   type: IdlType;
-  value: string;
+};
+
+export type IdlState = {
+  struct: IdlTypeDef;
+  methods: IdlInstruction[];
+};
+
+export type IdlTypeDef = {
+  name: string;
+  type: IdlTypeDefTy;
+};
+
+export type IdlTypeDefTy = IdlTypeDefTyEnum | IdlTypeDefTyStruct;
+
+export type IdlTypeDefTyStruct = {
+  kind: "struct";
+  fields: IdlTypeDefStruct;
+};
+
+type IdlTypeDefStruct = Array<IdlField>;
+
+export type IdlTypeDefTyEnum = {
+  kind: "enum";
+  variants: IdlEnumVariant[];
 };
 
 export type IdlEvent = {
@@ -104,25 +145,16 @@ export type IdlEventField = {
   index: boolean;
 };
 
-export type IdlInstruction = {
+export type IdlErrorCode = {
+  code: number;
   name: string;
-  accounts: IdlAccountItem[];
-  args: IdlField[];
+  msg?: string;
 };
 
-export type IdlState = {
-  struct: IdlTypeDef;
-  methods: IdlStateMethod[];
-};
-
-export type IdlStateMethod = IdlInstruction;
-
-export type IdlAccountItem = IdlAccount | IdlAccounts;
-
-export type IdlAccount = {
+export type IdlConstant = {
   name: string;
-  isMut: boolean;
-  isSigner: boolean;
+  type: IdlType;
+  value: string;
 };
 
 // A nested/recursive version of IdlAccount.
@@ -131,29 +163,7 @@ export type IdlAccounts = {
   accounts: IdlAccountItem[];
 };
 
-export type IdlField = {
-  name: string;
-  type: IdlType;
-};
-
-export type IdlTypeDef = {
-  name: string;
-  type: IdlTypeDefTy;
-};
-
-export type IdlTypeDefTyStruct = {
-  kind: "struct";
-  fields: IdlTypeDefStruct;
-};
-
-export type IdlTypeDefTyEnum = {
-  kind: "enum";
-  variants: IdlEnumVariant[];
-};
-
-export type IdlTypeDefTy = IdlTypeDefTyEnum | IdlTypeDefTyStruct;
-
-type IdlTypeDefStruct = Array<IdlField>;
+export type IdlAccountItem = IdlAccount | IdlAccounts;
 
 export type IdlType =
   | "bool"
@@ -202,9 +212,3 @@ type IdlEnumFields = IdlEnumFieldsNamed | IdlEnumFieldsTuple;
 type IdlEnumFieldsNamed = IdlField[];
 
 type IdlEnumFieldsTuple = IdlType[];
-
-export type IdlErrorCode = {
-  code: number;
-  name: string;
-  msg?: string;
-};

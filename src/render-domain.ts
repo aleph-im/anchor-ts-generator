@@ -1,6 +1,7 @@
 export function renderDomainFiles(name: string){
     const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
     const NAME = name.toUpperCase()
+    name = name.toLowerCase()
 
     const account: string = 
 `import { DateTime, Interval } from 'luxon'
@@ -10,22 +11,22 @@ import {
   HourlyStats,
   ${Name}AccountInfo, 
   ${Name}AccountStats
-} from "../types.js";
+} from '../types.js'
 import eventProcessor, { EventProcessor } from './processor.js'
 
 const { sortTimeStatsMap } = Utils
 
 export class Account extends StatsCache<
-  ${Name}AccountInfo, 
+  ${Name}AccountInfo,
   ${Name}AccountStats
-  > {
+> {
   private _shouldUpdate = true
 
   constructor(
     public info: ${Name}AccountInfo,
     protected startDate: number,
     protected eventDAL: EntityStorage<InstructionEvent>,
-    protected processor: EventProcessor = eventProcessor
+    protected processor: EventProcessor = eventProcessor,
   ) {
     super(info, {
       requestsStatsByHour: {},
@@ -59,7 +60,7 @@ export class Account extends StatsCache<
           this.info.name,
           this.info.address,
           count,
-          'events loaded...'
+          'events loaded...',
         )
     }
   }
@@ -67,15 +68,10 @@ export class Account extends StatsCache<
   async computeEvent(event: InstructionEvent): Promise<void> {
     if (event.timestamp <= this.startDate) return
 
-    if(!this.stats.accessingPrograms.has(event.programId))
+    if (!this.stats.accessingPrograms.has(event.programId))
       this.stats.accessingPrograms.add(event.programId)
 
-    this.processor.processEvent(
-      event,
-      'hour',
-      1,
-      this.stats
-    )
+    this.processor.processEvent(event, 'hour', 1, this.stats)
 
     this._shouldUpdate = true
   }
@@ -103,14 +99,11 @@ export class Account extends StatsCache<
       for (const stats of timeStats) {
         const it = Interval.fromISO(stats.interval)
 
-        if (it1h.engulfs(it))
-          this.stats.requests1h += stats.requests
+        if (it1h.engulfs(it)) this.stats.requests1h += stats.requests
 
-        if (it24h.engulfs(it))
-          this.stats.requests24h += stats.requests
+        if (it24h.engulfs(it)) this.stats.requests24h += stats.requests
 
-        if (it7d.engulfs(it))
-          this.stats.requests7d += stats.requests
+        if (it7d.engulfs(it)) this.stats.requests7d += stats.requests
 
         this.stats.requestsTotal += stats.requests
       }
@@ -154,7 +147,7 @@ export class Account extends StatsCache<
     const processor: string =
 `import { Utils } from '@aleph-indexer/core'
 import { DateTimeUnit } from 'luxon'
-import { AccountTimeStat, InstructionEvent, ${Name}AccountStats } from "../types.js";
+import { AccountTimeStat, InstructionEvent, ${Name}AccountStats } from '../types.js';
 
 const splitIt = Utils.splitDurationIntoIntervals
 
@@ -198,27 +191,41 @@ const eventProcessor = new EventProcessor()
 export default eventProcessor`
   
     const custom: string = 
-`import { DOMAIN_CACHE_START_DATE, ${NAME}_PROGRAM_ID, ${NAME}_PROGRAM_ID_PK } from "../constants.js";
-import { AccountType, GlobalStats, InstructionEvent, ${Name}AccountInfo } from "../types.js";
-import { ACCOUNT_DISCRIMINATOR, ACCOUNTS_DATA_LAYOUT } from "../layouts/accounts.js";
+`import { 
+  DOMAIN_CACHE_START_DATE, 
+  ${NAME}_PROGRAM_ID, 
+  ${NAME}_PROGRAM_ID_PK 
+} from '../constants.js';
+import { 
+  AccountType, 
+  GlobalStats, 
+  InstructionEvent, 
+  ${Name}AccountInfo 
+} from '../types.js';
+import { 
+  ACCOUNT_DISCRIMINATOR, 
+  ACCOUNTS_DATA_LAYOUT 
+} from '../layouts/accounts.js'
 import {
   EntityStorage,
   Domain,
   solanaPrivateRPCRoundRobin,
   SolanaRPCRoundRobin,
   Utils
-} from "@aleph-indexer/core";
-import { DateTime } from "luxon";
-import { Account } from "./account.js";
-import { instructionEventDAL } from "../dal/instruction.js";
-import bs58 from "bs58";
-import { AccountInfo, PublicKey } from "@solana/web3.js";
+} from '@aleph-indexer/core'
+import { DateTime } from 'luxon'
+import { Account } from './account.js'
+import { instructionEventDAL } from '../dal/instruction.js'
+import bs58 from 'bs58'
+import { AccountInfo, PublicKey } from '@solana/web3.js'
 
 export class ${Name}Program extends Domain<Account> {
   private _stats: GlobalStats = this.getNewGlobalStats()
 
   constructor(
-    protected accountTypes: Set<AccountType> = new Set(Object.values(AccountType)),
+    protected accountTypes: Set<AccountType> = new Set(
+      Object.values(AccountType)
+    ),
     protected startDate: number,
     protected eventDAL: EntityStorage<InstructionEvent>,
     protected solanaRpcRR: SolanaRPCRoundRobin = solanaPrivateRPCRoundRobin,
@@ -227,7 +234,7 @@ export class ${Name}Program extends Domain<Account> {
   }
 
   async getAllAccountsOfType(
-    type: AccountType
+    type: AccountType,
   ): Promise<${Name}AccountInfo[]> {
     const connection = await this.solanaRpcRR.getClient().getConnection()
     const resp = await connection.getProgramAccounts(
@@ -243,38 +250,39 @@ export class ${Name}Program extends Domain<Account> {
         ],
       },
     )
-    return resp.map((value) =>
-      this.deserializeAccountResponse(value, type)
+    return resp.map(
+      (value: { pubkey: PublicKey; account: AccountInfo<Buffer> }) =>
+        this.deserializeAccountResponse(value, type),
     )
   }
 
   deserializeAccountResponse(
-    resp: {pubkey: PublicKey, account: AccountInfo<Buffer>},
-    type: AccountType
+    resp: { pubkey: PublicKey; account: AccountInfo<Buffer> },
+    type: AccountType,
   ): ${Name}AccountInfo {
-    const data = ACCOUNTS_DATA_LAYOUT[type].deserialize(
-      resp.account.data,
-    )[0]
+    const data = ACCOUNTS_DATA_LAYOUT[type].deserialize(resp.account.data)[0]
     const address = resp.pubkey.toBase58()
     // Parsing names from on-chain account data can be complicated at times...
     let name: string = address
-    if (Object.hasOwn(data, "name")) {
-      if((data as any).name instanceof Uint8Array)
+    if (Object.hasOwn(data, 'name')) {
+      if ((data as any).name instanceof Uint8Array)
         name = ((data as any).name as Uint8Array).toString()
-      if((data as any).name instanceof String)
-        name = (data as any).name
+      if ((data as any).name instanceof String) name = (data as any).name
     }
     return {
       name,
       type,
       address: address,
       programId: ${NAME}_PROGRAM_ID,
-      data: data
+      data: data,
     }
   }
 
-  addAccountByInfo(info: ${Name}AccountInfo): Account {
-    if (this.accountStatsExists(info.address)) return this.accountStatsCaches[info.address]
+  addAccountByInfo(
+    info: ${Name}AccountInfo
+  ): Account {
+    if (this.accountStatsExists(info.address)) 
+      return this.accountStatsCaches[info.address]
 
     const account = new Account(info, this.startDate, this.eventDAL)
 
@@ -294,9 +302,7 @@ export class ${Name}Program extends Domain<Account> {
     index?: number,
     total?: number,
   ): Promise<Account[]> {
-    const newAccounts = await this.getAllAccountsOfType(
-      type
-    )
+    const newAccounts = await this.getAllAccountsOfType(type)
     const result: Account[] = []
 
     for (const accountInfo of newAccounts) {

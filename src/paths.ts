@@ -1,6 +1,5 @@
 import { PathLike } from 'fs'
 import path from 'path'
-import { dest } from './index.js'
 
 export class Paths {
   constructor(readonly root: PathLike, readonly project: string) {}
@@ -17,8 +16,7 @@ export class Paths {
   }
 
   get outputDir() {
-   // return path.join(this.rootDir.toString(), 'output')
-    return dest.toString()
+   return path.join(this.rootDir.toString(), 'output')
   }
 
   get projectDir() {
