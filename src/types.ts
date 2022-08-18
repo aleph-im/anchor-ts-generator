@@ -18,6 +18,7 @@ export type ViewField = {
   name: string
   type: ViewPrimitive | string
   rustType: string
+  graphqlType: string
   optional: boolean
   multiple: boolean
   length?: number

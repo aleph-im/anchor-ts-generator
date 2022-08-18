@@ -22,7 +22,7 @@ import {
   IdlTypeOption,
   IdlTypeVec,
  } from "@metaplex-foundation/solita";
-import { primitivesMap } from "./constants.js";
+import { primitivesMap, primitivesMapGraphqQl } from "./constants.js";
 
 export default class IdlTransformer {
   private _viewTypes: ViewTypes | undefined = undefined;
@@ -182,6 +182,22 @@ export default class IdlTransformer {
       (type as IdlTypeArray).array[0]);
   }
 
+  protected toGraphQLTypes(type: IdlType): string {
+    if (type === undefined) return "undefined";
+
+    if (typeof type === "string") {
+      return primitivesMapGraphqQl[type];
+    }
+    // @note: Ascii encoded strings
+    if ((type as IdlTypeArray).array && (type as IdlTypeArray).array[0] === "u8")
+      return "GraphQLString";
+
+    return (type as IdlTypeDefined).defined ??
+      this.toGraphQLTypes((type as IdlTypeOption).option ??
+      (type as IdlTypeVec).vec ??
+      (type as IdlTypeArray).array[0]);
+  }
+
   protected toRustType(type: IdlType): string {
     let name = type as string
     if ((type as IdlTypeArray).array) name = "blob"
@@ -210,6 +226,7 @@ export default class IdlTransformer {
       name: field.name,
       type: this.toTypeScriptType(field.type) as string,
       rustType: this.toRustType(field.type),
+      graphqlType: this.toGraphQLTypes(field.type),
       optional: !!(field.type as IdlTypeOption).option,
       multiple: !!((field.type as IdlTypeVec).vec ?? (field.type as IdlTypeArray).array),
       length: (field.type as IdlTypeArray).array ?

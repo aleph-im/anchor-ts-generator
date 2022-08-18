@@ -57,8 +57,12 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
 
   if(!existsSync(paths.apiDir))
     mkdirSync(paths.apiDir)
-  const { apiTypes } = renderApiFiles(instructionsView, accountsView)
+  const { apiTypes } = renderApiFiles(instructionsView, accountsView, typesView)
+  try {
     writeFileSync(paths.apiFile('types'), format(apiTypes, DEFAULT_FORMAT_OPTS));
+  } catch (err) {
+    console.log(`Failed to format on dal folder`)
+  }
 
   if(!existsSync(paths.dalDir))
     mkdirSync(paths.dalDir)

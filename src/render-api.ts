@@ -1,6 +1,6 @@
-import { ViewAccounts, ViewInstructions } from "./types"
+import { ViewAccounts, ViewInstructions, ViewTypes } from "./types"
 
-export function renderApiFiles(instructions: ViewInstructions | undefined, accounts: ViewAccounts | undefined){
+export function renderApiFiles(instructions: ViewInstructions | undefined, accounts: ViewAccounts | undefined, types: ViewTypes | undefined){
     let apiTypes: string = 
 `import { GraphQLBoolean, GraphQLInt } from 'graphql'
 import {
@@ -41,6 +41,40 @@ if(accounts){
 })
 
 `
+if(types){
+  for(const type of types.types){
+    apiTypes +=
+`export const ${type.name} = new GraphQLObjectType({
+name: '${type.name}',
+fields: {`
+    for(const field of type.fields){
+  apiTypes +=
+`       
+  ${field.name}: { type: new GraphQLNonNull(${field.graphqlType}) },`
+    }
+apiTypes += `
+}
+})
+
+`
+  }
+  for(const type of types.enums){
+    apiTypes +=
+`export const ${type.name} = new GraphQLEnumType({
+name: '${type.name}',
+values: {`
+    for(const variant of type.variants){
+  apiTypes +=
+`       
+  ${variant}: { value: '${variant}' },`
+    }
+apiTypes += `
+}
+})
+
+`
+  }
+}
 
   for(const account of accounts.accounts){
   apiTypes += `
@@ -50,7 +84,7 @@ export const ${account.name} = new GraphQLObjectType({
   fields: {`
   for(const field of account.data.fields){
     apiTypes += `
-    ${field.name}: { type: new GraphQLNonNull(GraphQLString) },`
+    ${field.name}: { type: new GraphQLNonNull(${field.graphqlType}) },`
   }
   apiTypes +=
 ` },
