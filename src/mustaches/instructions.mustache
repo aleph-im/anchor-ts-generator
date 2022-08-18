@@ -2,8 +2,9 @@
  | Type file generated with anchor-generator |
  *********************************************/
 
-import BN from "bn.js";
-import { PublicKey } from "@solana/web3.js";
+import BN from "bn.js"
+import { PublicKey } from "@solana/web3.js"
+import { EventBase } from '@aleph-indexer/core'
 import {
 {{#typeImports}}
   {{.}},
@@ -25,6 +26,27 @@ export enum {{name}} {
 }
 {{/eventTypeEnum}}
 
+export type InstructionBase = EventBase<InstructionType>
+
+// ------------------- INSTRUCTIONS -------------------
+{{#instructions}}
+export type {{name}}Info = {
+{{#data.fields}}
+  {{name}}{{#optional}}?{{/optional}}: {{type}}{{#multiple}}[]{{/multiple}}
+{{/data.fields}}
+  accounts: {
+{{#accounts}}
+    {{name}}Account{{#multiple}}s{{/multiple}}: string{{#multiple}}[]{{/multiple}}
+{{/accounts}}
+  }
+}
+
+export type {{name}}Instruction = InstructionBase &
+  {{name}}Info & {
+    type: InstructionType.{{name}}
+  }
+
+{{/instructions}}
 
 // ------------------- DATA LAYOUT -------------------
 export const IX_DATA_LAYOUT: Partial<Record<{{eventTypeEnum.name}}, any>> = {
@@ -43,21 +65,6 @@ export const IX_ACCOUNTS_LAYOUT: Partial<Record<{{eventTypeEnum.name}}, any>> = 
   ],
 {{/instructions}}
 }
-
-// ------------------- INSTRUCTIONS -------------------
-{{#instructions}}
-export type {{name}}Instruction = {
-{{#data.fields}}
-  {{name}}{{#optional}}?{{/optional}}: {{type}}{{#multiple}}[]{{/multiple}}
-{{/data.fields}}
-  accounts: {
-{{#accounts}}
-    {{name}}Account{{#multiple}}s{{/multiple}}: string{{#multiple}}[]{{/multiple}}
-{{/accounts}}
-  }
-}
-
-{{/instructions}}
 
 export type ParsedInstruction =
 {{#instructions}}

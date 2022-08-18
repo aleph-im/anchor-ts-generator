@@ -33,6 +33,13 @@ export class Paths {
     return path.join(this.srcDir, `${name}.ts`)
   }
 
+  get apiDir() {
+    return path.join(this.srcDir.toString(), 'api')
+  }
+  apiFile(name: string) {
+    return path.join(this.apiDir, `${name}.ts`)
+  }
+
   get dalDir() {
     return path.join(this.srcDir.toString(), 'dal')
   }

@@ -1,6 +1,6 @@
-export function renderGraphQLFiles(name: string){
-  const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-  name = name.toLowerCase()
+export function renderGraphQLFiles(filename: string){
+  const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
+  const name = filename.toLowerCase()
 
   const index: string = 
 `import { ${Name}GraphQLResolvers } from './resolvers.js'

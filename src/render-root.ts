@@ -1,6 +1,5 @@
-export function renderRootFiles(name: string){
-  const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-  name = name.toLowerCase()
+export function renderRootFiles(filename: string){
+  const NAME = filename.toUpperCase()
 
   let docker: string = 
 `version: '2'
@@ -8,7 +7,7 @@ export function renderRootFiles(name: string){
 services:
   error-indexer:
     build: ../..
-    container_name: ${name}-indexer
+    container_name: ${filename}-indexer
     volumes:
       - ~/indexer.data:/app/data:rw
       - ~/indexer.discovery:/app/discovery:rw
@@ -18,7 +17,7 @@ services:
       - ../../.env
       - ./.env
     environment:
-      - DEX=${name}
+      - DEX=${filename}
     ports:
       - 8080:8080
     # (configure them in .env file)
@@ -30,7 +29,7 @@ services:
 
   let pkg: string = 
 `{
-  "name": "@aleph-indexer/${name}",
+  "name": "@aleph-indexer/${filename}",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -55,67 +54,61 @@ services:
 }`
 
   let run: string = 
-`import os from 'os'
-import { EventEmitter } from 'events'
-import { Settings } from 'luxon'
-
-Settings.defaultZone = 'utc'
-
+`import { fileURLToPath } from 'url'
+import path from 'path'
 import { config } from '@aleph-indexer/core'
-import graphQLServer from './src/graphql/index.js'
-import { ${Name}Indexer } from './src/indexers/${name}.js'
-import * as v8 from 'v8'
-import { round } from 'lodash-es'
+import SDK, { TransportType } from '@aleph-indexer/framework'
 
-// Disable event emmiter warning
-EventEmitter.defaultMaxListeners = 100000
-
-// libuv max threads
-const cpus = os.cpus().length
-const concurrency = cpus // Math.max(4, Math.min(12, cpus))
-process.env.UV_THREADPOOL_SIZE = concurrency as any
-
-console.log('UV_THREADPOOL_SIZE', process.env.UV_THREADPOOL_SIZE)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 async function main() {
-  console.log(
-    'Current max heap size:',
-    round(v8.getHeapStatistics().total_available_size / 1024 / 1024),
-    'MB')
-  await graphQLServer.listen({
-    port: config.PORT ? parseInt(config.PORT) : 8080
+  const indexerDomainPath = path.join(__dirname, './src/domain/indexer.js')
+  const mainDomainPath = path.join(__dirname, './src/domain/main.js')
+  const apiPath = path.join(__dirname, './src/api/index.js')
+
+  const projectId = config.${NAME}_ID
+  if (!projectId) throw new Error('${NAME}_ID env var must be provided ')
+
+  await SDK.init({
+    projectId,
+    transport: TransportType.LocalNet,
+    main: {
+      apiPath,
+      domainPath: mainDomainPath,
+    },
+    indexer: {
+      instances: 4,
+      domainPath: indexerDomainPath,
+    },
+    // parser: {
+    //   instances: 1,
+    // },
+    // fetcher: {
+    //   instances: 1,
+    // },
   })
-  const indexer = new ${Name}Indexer()
-  await indexer.init()
-  await indexer.run()
 }
 
 main()
-
-process.on('uncaughtException', (e) => {
-  console.log('uncaughtException', e)
-})
-
-process.on('unhandledRejection', (e) => {
-  console.log('unhandledRejection', e)
-})`
+`
 
   let tsconfig: string = 
 `{
-    "extends": "../../tsconfig.json",
-    "compilerOptions": {
-        "outDir": "dist"
-    },
-    "exclude": [
-        "node_modules",
-        "dist",
-        "scripts",
-        "tests",
-        "**/*.spec.ts",
-        "**/*.test.ts",
-        "**/__tests__",
-        "**/__mocks__"
-    ]
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+      "outDir": "dist"
+  },
+  "exclude": [
+      "node_modules",
+      "dist",
+      "scripts",
+      "tests",
+      "**/*.spec.ts",
+      "**/*.test.ts",
+      "**/__tests__",
+      "**/__mocks__"
+  ]
 }`
 
 let typesdts: string = 

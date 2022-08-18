@@ -1,15 +1,15 @@
-export function renderDALFiles(name: string){
-    const dollar = '$'
-    const com = '`'
-    const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-    name = name.toLowerCase()
+export function renderDALFiles(filename: string){
+  const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
 
-    const main: string = 
+  const dollar = '$'
+  const com = '`'
+
+  const main: string = 
 `export * from './common.js'
 export * from './fetcherState.js'
 `
   
-    const common: string =
+  const common: string =
 `import { config } from '@aleph-indexer/core'
 import { ProgramName } from '../constants.js'
 
@@ -19,7 +19,7 @@ export enum InstructionDAL {
 
 export const dbPath = ${com}${dollar}{config.DB_FOLDER}/${dollar}{ProgramName.${Name}}${com}`
 
-const instruction: string = 
+  const instruction: string = 
 `import { EntityStorage } from '@aleph-indexer/core'
 import { InstructionEvent } from '../types.js'
 import { dbPath as path, InstructionDAL } from './common.js'
@@ -45,7 +45,7 @@ export const instructionEventDAL = new EntityStorage<InstructionEvent>({
   ],
 })`
 
-    const fetcherState: string = 
+  const fetcherState: string = 
 `import { FetcherStateLevelStorage } from '@aleph-indexer/core'
 import { dbPath as path } from './common.js'
 

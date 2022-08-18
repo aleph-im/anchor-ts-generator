@@ -1,7 +1,7 @@
-export function renderDomainFiles(name: string){
-    const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-    const NAME = name.toUpperCase()
-    name = name.toLowerCase()
+export function renderDomainFiles(filename: string){
+  const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
+  const NAME = filename.toUpperCase()
+  const name = filename.toLowerCase()
 
     const account: string = 
 `import { DateTime, Interval } from 'luxon'

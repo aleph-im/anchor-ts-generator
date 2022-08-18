@@ -14,6 +14,7 @@ import { renderDomainFiles } from './render-domain.js'
 import { renderIndexersFiles } from './render-indexers.js'
 import { renderLayoutsFiles } from './render-layouts.js'
 import { format, Options } from 'prettier'
+import { renderApiFiles } from "./render-api.js";
 //import { renderUtilsFiles } from "./render-utils.js";
 
 const DEFAULT_FORMAT_OPTS: Options = {
@@ -53,6 +54,11 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
   } catch (err) {
     console.log(`Failed to format on src folder`)
   }
+
+  if(!existsSync(paths.apiDir))
+    mkdirSync(paths.apiDir)
+  const { apiTypes } = renderApiFiles(instructionsView, accountsView)
+    writeFileSync(paths.apiFile('types'), format(apiTypes, DEFAULT_FORMAT_OPTS));
 
   if(!existsSync(paths.dalDir))
     mkdirSync(paths.dalDir)
@@ -128,10 +134,9 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
-  const { parser, instructionParser } = renderParsersFiles(fileName)
+  const { event } = renderParsersFiles(fileName, instructionsView)
   try {
-    writeFileSync(paths.parsersFile('accountEvent'), format(parser, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.parsersFile('instruction'), format(instructionParser, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.parsersFile('event'), format(event, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     console.log(`Failed to format on parser folder`)
   }
