@@ -58,6 +58,7 @@ if(instructions != undefined){
           return {
             ...baseEvent,
           } as ${instruction.name}Instruction
+
 `
   }
 }

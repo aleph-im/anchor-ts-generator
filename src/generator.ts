@@ -42,12 +42,12 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
     writeFileSync(paths.projectFile('tsconfig.json'), tsconfig);
     writeFileSync(paths.projectFile('types.d.ts'), typesdts);
 
-  const { typesView, instructionsView, eventsView, accountsView, textAndTemplate } = generateFromTemplateType(idl, toGenerate)
+  const { typesView, instructionsView, eventsView, accountsView, /*textAndTemplate*/ } = generateFromTemplateType(idl, toGenerate)
   console.log(typesView, instructionsView, eventsView, accountsView)
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
-  const { constants, types } = renderSrcFiles(fileName, accountsView, instructionsView)
+  const { constants, types } = renderSrcFiles(fileName, instructionsView)
   try {
     writeFileSync(paths.srcFile('constants'), format(constants, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.srcFile('types'), format(types, DEFAULT_FORMAT_OPTS));
@@ -111,7 +111,7 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
 
   if(!existsSync(paths.layaoutsDir))
     mkdirSync(paths.layaoutsDir)
-  const { accountLayouts, ixLayouts } = renderLayoutsFiles(instructionsView, accountsView);
+  const { accountLayouts, ixLayouts, indexLayouts } = renderLayoutsFiles(instructionsView, accountsView);
   try {
     if(accountLayouts != '') {
       writeFileSync(paths.layoutsFile('accounts'), format(accountLayouts, DEFAULT_FORMAT_OPTS));
@@ -119,10 +119,12 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
     if(ixLayouts != '') {
       writeFileSync(paths.layoutsFile('instructions'), format(ixLayouts, DEFAULT_FORMAT_OPTS));
     }
+    writeFileSync(paths.layoutsFile('index'), format(indexLayouts, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     console.log(`Failed to format on layouts folder`)
   }
 
+  /*
   if(!existsSync(paths.tsDir))
     mkdirSync(paths.tsDir)
     for (const x of textAndTemplate) {
@@ -135,6 +137,7 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
         }
       }
     }
+  */
 
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)

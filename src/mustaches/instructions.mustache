@@ -6,15 +6,16 @@ import BN from "bn.js"
 import { PublicKey } from "@solana/web3.js"
 import { EventBase } from '@aleph-indexer/core'
 import {
-{{#typeImports}}
-  {{.}},
-{{/typeImports}}
+
 } from "../solita/index.js";
 
 import {
 {{#beetImports}}
   {{.}},
 {{/beetImports}}
+{{#typeImports}}
+  {{.}},
+{{/typeImports}}
 } from '../solita/index.js';
 
 // ------------------- INSTRUCTION TYPE -------------------
@@ -41,7 +42,7 @@ export type {{name}}Info = {
   }
 }
 
-export type {{name}}Instruction = InstructionBase &
+export type {{name}}Event = InstructionBase &
   {{name}}Info & {
     type: InstructionType.{{name}}
   }
@@ -66,7 +67,7 @@ export const IX_ACCOUNTS_LAYOUT: Partial<Record<{{eventTypeEnum.name}}, any>> = 
 {{/instructions}}
 }
 
-export type ParsedInstruction =
+export type ParsedEvents =
 {{#instructions}}
-  {{name}}Instruction |
+  {{name}}Event |
 {{/instructions}}
