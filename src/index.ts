@@ -25,7 +25,7 @@ async function main() {
     let programName: string = path[path.length - 1]
     const paths = new Paths(`./`, programName)
     const idl = JSON.parse(readFileSync(paths.idlFile(programName), "utf8"))
-    await generate(programName, idl, paths,
+    await generate(idl, paths,
       [
         TemplateType.Types,
         TemplateType.Instructions,
@@ -43,9 +43,9 @@ async function main() {
         }
         if(stdout) {
           console.log(stdout)
-          const paths = new Paths(`./`, options.address)
           const idl = JSON.parse(stdout)
-          await generate(options.address, idl, paths,
+          const paths = new Paths(`./`, idl.name)
+          await generate(idl, paths,
             [
               TemplateType.Types,
               TemplateType.Instructions,

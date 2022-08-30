@@ -23,7 +23,7 @@ export const DOMAIN_CACHE_START_DATE = config.INDEX_START_DATE
   if(address){
     constants += 
 `
-export const ${NAME}_PROGRAM_ID = ${address}
+export const ${NAME}_PROGRAM_ID = '${address}'
 export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
 `
   }

@@ -26,13 +26,13 @@ const DEFAULT_FORMAT_OPTS: Options = {
   parser: 'typescript',
 }
 
-export default async function generate(fileName: string, idl: Idl, paths: Paths, toGenerate: TemplateType[], address?: string, ) {
+export default async function generate(idl: Idl, paths: Paths, toGenerate: TemplateType[], address?: string, ) {
   if(!existsSync(paths.outputDir))
     mkdirSync(paths.outputDir)
 
   if(!existsSync(paths.projectDir))
     mkdirSync(paths.projectDir)
-  const {docker, pkg, run, tsconfig, typesdts } = renderRootFiles(fileName)
+  const {docker, pkg, run, tsconfig, typesdts } = renderRootFiles(idl.name)
   writeFileSync(paths.projectFile('docker-compose.yaml'), docker);
   writeFileSync(paths.projectFile('package.json'), pkg);
   writeFileSync(paths.projectFile('run.ts'), run);
@@ -44,7 +44,7 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
-  const { constants, types } = renderSrcFiles(fileName, instructionsView, address)
+  const { constants, types } = renderSrcFiles(idl.name, instructionsView, address)
   try {
     writeFileSync(paths.srcFile('constants'), format(constants, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.srcFile('types'), format(types, DEFAULT_FORMAT_OPTS));
@@ -55,7 +55,7 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
   if(!existsSync(paths.apiDir))
     mkdirSync(paths.apiDir)
   await generateSchema(paths, idl);
-  const { indexApi, resolversApi, schemaApi } = renderApiFiles(fileName)
+  const { indexApi, resolversApi, schemaApi } = renderApiFiles(idl.name)
   try {
     writeFileSync(paths.apiFile('index'), format(indexApi, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.apiFile('resolvers'), format(resolversApi, DEFAULT_FORMAT_OPTS));
@@ -75,7 +75,7 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
 
   if(!existsSync(paths.domainDir))
     mkdirSync(paths.domainDir)
-  const { account, indexer, mainDomain } = renderDomainFiles(fileName, accountsView)
+  const { account, indexer, mainDomain } = renderDomainFiles(idl.name, accountsView)
   try {
     writeFileSync(paths.domainFile('account'), format(account, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.domainFile('indexer'), format(indexer, DEFAULT_FORMAT_OPTS));
@@ -86,9 +86,9 @@ export default async function generate(fileName: string, idl: Idl, paths: Paths,
 
   if(!existsSync(paths.discovererDir))
     mkdirSync(paths.discovererDir)
-  const { discoverer } = renderDiscovererFiles(fileName)
+  const { discoverer } = renderDiscovererFiles(idl.name)
   try {
-    writeFileSync(paths.discovererFile(fileName), format(discoverer, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.discovererFile(idl.name), format(discoverer, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     console.log(`Failed to format on domain folder`)
   }
