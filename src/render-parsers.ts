@@ -1,7 +1,6 @@
 import { ViewInstructions } from "./types"
 
-export function renderParsersFiles(name: string, instructions: ViewInstructions | undefined){
-  name = name.toLowerCase()
+export function renderParsersFiles(instructions: ViewInstructions | undefined){
   const dollar = '$'
   const com = '`'
 
@@ -9,8 +8,8 @@ export function renderParsersFiles(name: string, instructions: ViewInstructions 
 `import { InstructionContextV1, AlephParsedEvent } from '@aleph-indexer/core'
 
 import {
-  UnionInstructions,
-  UnionInstructionsInfo,
+  ParsedEvents,
+  ParsedEventsInfo,
   InstructionType,
   `
   if(instructions != undefined){
@@ -26,11 +25,10 @@ event += `
 } from '../types.js'
 
 export class EventParser {
-  parse(ixCtx: InstructionContextV1): UnionInstructions {
+  parse(ixCtx: InstructionContextV1): ParsedEvents {
     const { ix, parentIx, parentTx } = ixCtx
-    const parsed = (
-      ix as AlephParsedEvent<InstructionType, UnionInstructionsInfo>
-    ).parsed
+    const parsed = (ix as AlephParsedEvent<InstructionType, ParsedEventsInfo>)
+      .parsed
 
     const id = ${com}${dollar}{parentTx.signature}${dollar}{
       parentIx ? ${com}:${dollar}{parentIx.index.toString().padStart(2, '0')}${com} : ''
@@ -67,7 +65,7 @@ event += `
 
         default: {
           console.log('default -> ', parsed.type, id)
-          return baseEvent as UnionInstructions
+          return baseEvent as ParsedEvents
         }
       }
     } catch (e) {

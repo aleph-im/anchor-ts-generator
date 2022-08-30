@@ -1,9 +1,9 @@
 import { ViewInstructions } from "./types"
 
-export function renderSrcFiles(name: string, instructionsView: ViewInstructions | undefined){
-  const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-  const NAME = name.toUpperCase()
-  const _name = name.toLowerCase()
+export function renderSrcFiles(filename: string, instructionsView: ViewInstructions | undefined, address?: string){
+  const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
+  const NAME = filename.toUpperCase()
+  const _name = filename.toLowerCase()
 
   let constants: string = 
 `import { PublicKey } from '@solana/web3.js'
@@ -20,10 +20,10 @@ export const DOMAIN_CACHE_START_DATE = config.INDEX_START_DATE
   ? Number(config.INDEX_START_DATE)
   : SINCE_DATE
 `
-  if(name.length == 43){
+  if(address){
     constants += 
 `
-export const ${NAME}_PROGRAM_ID = ${NAME}
+export const ${NAME}_PROGRAM_ID = ${address}
 export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
 `
   }
@@ -38,14 +38,14 @@ export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
   let types: string = ''
   if(instructionsView && instructionsView.instructions.length > 0) {
     types += 
-`export * from './layouts/index.js'
+`export * from './utils/layouts/index.js'
 `
     types +=
 `
 import { AccountStats } from '@aleph-indexer/framework'
-import { AccountType, ParsedEvents, ParsedAccountsData } from './layouts/index.js'
+import { AccountType, ParsedEvents, ParsedAccountsData } from './utils/layouts/index.js'
 
-export type AccountInfo = {
+export type ${Name}AccountInfo = {
   name: string
   programId: string
   address: string
@@ -86,7 +86,7 @@ export type Global${Name}Stats = {
 }
 
 export type ${Name}ProgramData = {
-  info: AccountInfo
+  info: ${Name}AccountInfo
   stats?: ${Name}Stats
 }
 

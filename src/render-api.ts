@@ -1,278 +1,187 @@
-import { ViewAccounts, ViewInstructions, ViewTypes } from "./types"
+export function renderApiFiles(filename: string){
+  const dollar = '$'
+  const com = '`'
+  const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
+  const name = filename.toLowerCase()
 
-export function renderApiFiles(instructions: ViewInstructions | undefined, accounts: ViewAccounts | undefined, types: ViewTypes | undefined){
-    let apiTypes: string = 
-`import { GraphQLBoolean, GraphQLInt } from 'graphql'
+  const indexApi: string = `export { default } from './schema.js'`
+
+  const resolversApi: string = `import MainDomain from '../domain/main.js'
 import {
-  GraphQLObjectType,
-  GraphQLString,
-  GraphQLEnumType,
-  GraphQLNonNull,
-  GraphQLList,
-  GraphQLInterfaceType,
-  GraphQLUnionType,
-} from 'graphql'
-import { GraphQLBigNumber, GraphQLLong } from '@aleph-indexer/core'
-import { InstructionType, AccountType } from '../types.js'
+  AccountType,
+  Global${Name}Stats,
+  ParsedEvents,
+  InstructionType,
+  ${Name}AccountInfo,
+  ${Name}ProgramData,
+} from '../types.js'
+import { AccountStats } from '@aleph-indexer/framework'
 
-// ------------------- STATS ---------------------------
-/*
-export const AggregatorInfo = new GraphQLObjectType({
-  name: 'AggregatorInfo',
-  fields: {
-    name: { type: new GraphQLNonNull(GraphQLString) },
-    programId: { type: new GraphQLNonNull(GraphQLString) },
-    oracleQueue: { type: new GraphQLNonNull(GraphQLString) },
-    address: { type: new GraphQLNonNull(GraphQLString) },
-    permissioned: { type: new GraphQLNonNull(GraphQLBoolean) },
-  },
-})
-*/
+export type AccountsFilters = {
+  types?: AccountType[]
+  accounts?: string[]
+  includeStats?: boolean
+}
 
-export const AccountsEnum = new GraphQLEnumType({
-  name: 'AccountsEnum',
-  values: {`
-if(accounts){
-  for(const account of accounts.accounts){
-    apiTypes += `
-    ${account.name}: { value: '${account.name}' },`
+export type EventsFilters = {
+  account: string
+  types?: InstructionType[]
+  startDate?: number
+  endDate?: number
+  limit?: number
+  skip?: number
+  reverse?: boolean
+}
+
+export type GlobalStatsFilters = AccountsFilters
+
+export class APIResolvers {
+  constructor(protected domain: MainDomain) {}
+
+  async accounts(args: AccountsFilters): Promise<${Name}AccountInfo[]> {
+    const result = await this.filterAccounts(args)
+    return result.map(({ info, stats }) => ({ ...info, stats }))
   }
-  apiTypes += ` },
-})
 
-`
-if(types){
-  for(const type of types.types){
-    apiTypes +=
-`export const ${type.name} = new GraphQLObjectType({
-name: '${type.name}',
-fields: {`
-    for(const field of type.fields){
-  apiTypes +=
-`       
-  ${field.name}: { type: new GraphQLNonNull(${field.graphqlType}) },`
+  async instructionHistory({
+    account,
+    types,
+    startDate = 0,
+    endDate = Date.now(),
+    limit = 1000,
+    skip = 0,
+    reverse = true,
+  }: EventsFilters): Promise<ParsedEvents[]> {
+    if (limit < 1 || limit > 1000)
+      throw new Error('400 Bad Request: 1 <= limit <= 1000')
+
+    const typesMap = types ? new Set(types) : undefined
+
+    const result: ParsedEvents[] = []
+
+    const events = await this.domain.getAccountEventsByTime(
+      account,
+      startDate,
+      endDate,
+      {
+        reverse,
+        limit: !typesMap ? limit + skip : undefined,
+      },
+    )
+
+    // const events = this.eventDAL
+    //   .useIndex('reserve_timestamp')
+    //   .getAllFromTo([reserve, startDate], [reserve, endDate], {
+    //     reverse,
+    //     limit: !typesMap ? limit + skip : undefined,
+    //   })
+
+    for await (const { value } of events) {
+      // @note: Filter by type
+      if (typesMap && !typesMap.has(value.type)) continue
+
+      // @note: Skip first N events
+      if (--skip >= 0) continue
+
+      result.push(value)
+
+      // @note: Stop when after reaching the limit
+      if (limit > 0 && result.length >= limit) return result
     }
-apiTypes += `
-}
-})
 
-`
-  }
-  for(const type of types.enums){
-    apiTypes +=
-`export const ${type.name} = new GraphQLEnumType({
-name: '${type.name}',
-values: {`
-    for(const variant of type.variants){
-  apiTypes +=
-`       
-  ${variant}: { value: '${variant}' },`
-    }
-apiTypes += `
-}
-})
-
-`
-  }
-}
-
-  for(const account of accounts.accounts){
-  apiTypes += `
-export const ${account.name} = new GraphQLObjectType({
-  name: '${account.name}',
-  isTypeOf: (item) => item.type === AccountType.${account.name},
-  fields: {`
-  for(const field of account.data.fields){
-    apiTypes += `
-    ${field.name}: { type: new GraphQLNonNull(${field.graphqlType}) },`
-  }
-  apiTypes +=
-` },
-})
-`
+    return result
   }
 
-  apiTypes +=
-`export const ParsedAccountsData = new GraphQLUnionType({
-    name: "ParsedAccountsData",
-    types: [`
-    for(const account of accounts.accounts){
-      apiTypes += `
-      ${account.name}, `
-    }
-    apiTypes += `
-    ],
-});
-  
-`
-}
+  public async globalStats(
+    parent: any,
+    args: GlobalStatsFilters,
+    context: any,
+    info: any,
+  ): Promise<Global${Name}Stats> {
+    const result = await this.filterAccounts(args)
+    const addresses = result.map(({ info }) => info.address)
+    return this.domain.getGlobalStats(addresses)
+  }
 
-apiTypes += `export const SwitchboardAccountsInfo = new GraphQLObjectType({
-  name: 'SwitchboardAccountsInfo',
-  fields: {
-    name: { type: new GraphQLNonNull(GraphQLString) },
-    type: { type: new GraphQLNonNull(AccountsEnum) },
-    address: { type: new GraphQLNonNull(GraphQLString) },
-    programId: { type: new GraphQLNonNull(GraphQLString) },
-    data: { type: new GraphQLNonNull(ParsedAccountsData) },
-  },
-})
+  // -------------------------------- PROTECTED --------------------------------
+  protected async getAccountByAddress(address: string): Promise<AccountStats> {
+    const add: string[] = [address]
+    const account = await this.domain.getAccountStats(add)
+    if (!account) throw new Error(${com}Account ${dollar}{address} does not exist${com})
+    return account[0]
+  }
 
-export const GlobalStatsInfo = new GraphQLObjectType({
-  name: 'GlobalStatsInfo',
-  fields: {
-    totalAggregators: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    totalActivelyUsedAggregators: {
-      type: new GraphQLNonNull(GraphQLBigNumber),
+  protected async filterAccounts(
+    { types, accounts, includeStats }: AccountsFilters = {
+      types: undefined,
+      accounts: undefined,
+      includeStats: undefined,
     },
-    totalRequests: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    totalUpdates: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    totalUniqueAccessingPrograms: {
-      type: new GraphQLNonNull(GraphQLBigNumber),
-    },
-  },
-})
+  ): Promise<${Name}ProgramData[]> {
+    const accountMap = await this.domain.getAccounts(includeStats)
 
-export const AggregatorStats = new GraphQLObjectType({
-  name: 'AggregatorStats',
-  fields: {
-    last1h: { type: ParsedAccountsData },
-    last24h: { type: ParsedAccountsData },
-    last7d: { type: ParsedAccountsData },
-    total: { type: ParsedAccountsData },
+    accounts =
+      accounts ||
+      Object.values(accountMap).map((account) => account.info.address)
 
-    //requestsStatsByHour: { type: Record<string, AggregatorTimeStat> },
-    requests1h: { type: new GraphQLNonNull(GraphQLInt) },
-    requests24h: { type: new GraphQLNonNull(GraphQLInt) },
-    requests7d: { type: new GraphQLNonNull(GraphQLInt) },
-    requestsTotal: { type: new GraphQLNonNull(GraphQLInt) },
-    updates1h: { type: new GraphQLNonNull(GraphQLInt) },
-    updates24h: { type: new GraphQLNonNull(GraphQLInt) },
-    updates7d: { type: new GraphQLNonNull(GraphQLInt) },
-    updatesTotal: { type: new GraphQLNonNull(GraphQLInt) },
-    activelyUsed: { type: new GraphQLNonNull(GraphQLBoolean) },
-    //accessingPrograms: { type: Set<string> },
-  },
-})
+    let result = accounts
+      .map((address) => accountMap[address])
+      .filter((aggregator) => !!aggregator)
 
-// ------------------- AGGREGATOR --------------------------
+    if (types !== undefined) {
+      result = result.filter(({ info }) => types!.includes(info.type))
+    }
 
-export const Aggregator = new GraphQLObjectType({
-  name: 'Aggregator',
-  fields: {
-    name: { type: new GraphQLNonNull(GraphQLString) },
-    programId: { type: new GraphQLNonNull(GraphQLString) },
-    oracleQueue: { type: new GraphQLNonNull(GraphQLString) },
-    address: { type: new GraphQLNonNull(GraphQLString) },
-    permissioned: { type: new GraphQLNonNull(GraphQLBoolean) },
-    stats: { type: AggregatorStats },
-  },
-})
+    return result
+  }
+}`
 
-export const Reserves = new GraphQLList(Aggregator)
+    const schemaApi: string = `import { GraphQLSchema } from 'graphql'
+import { APIResolvers } from './resolvers.js'
+import MainDomain from '../domain/main.js'
+import { makeExecutableSchema } from 'graphql-tools'
+import { readFileSync } from 'fs'
+import path from 'path'
+import { APISchemaBase } from '@aleph-indexer/framework'
 
-export const LendingMarkets = new GraphQLList(GraphQLString)
-
-// ------------------- EVENTS --------------------------
-
-export const InstructionTypes = new GraphQLEnumType({
-  name: 'InstructionType',
-  values: {
-    aggregatorAddJob: { value: 'aggregatorAddJob' },
-    aggregatorInit: { value: 'depositReserveLiquidity' },
-    aggregatorLock: { value: 'aggregatorLock' },
-    aggregatorOpenRound: { value: 'aggregatorOpenRound' },
-    aggregatorRemoveJob: { value: 'aggregatorRemoveJob' },
-    aggregatorSaveResult: { value: 'aggregatorSaveResult' },
-    aggregatorSetAuthority: { value: 'aggregatorSetAuthority' },
-    aggregatorSetBatchSize: { value: 'aggregatorSetBatchSize' },
-    aggregatorSetHistoryBuffer: { value: 'aggregatorSetHistoryBuffer' },
-    aggregatorSetMinJobs: { value: 'aggregatorSetMinJobs' },
-    aggregatorSetMinOracles: { value: 'aggregatorSetMinOracles' },
-    aggregatorSetQueue: { value: 'aggregatorSetQueue' },
-    aggregatorSetUpdateInterval: { value: 'aggregatorSetUpdateInterval' },
-    aggregatorSetVarianceThreshold: { value: 'aggregatorSetVarianceThreshold' },
-    crankInit: { value: 'crankInit' },
-    crankPop: { value: 'crankPop' },
-    crankPush: { value: 'crankPush' },
-    jobInit: { value: 'jobInit' },
-    leaseExtend: { value: 'leaseExtend' },
-    leaseInit: { value: 'leaseInit' },
-    leaseWithdraw: { value: 'leaseWithdraw' },
-    leaseSetAuthority: { value: 'leaseSetAuthority' },
-    oracleHeartbeat: { value: 'oracleHeartbeat' },
-    oracleInit: { value: 'oracleInit' },
-    oracleQueueInit: { value: 'oracleQueueInit' },
-    oracleQueueSetRewards: { value: 'oracleQueueSetRewards' },
-    oracleQueueVrfConfig: { value: 'oracleQueueVrfConfig' },
-    oracleWithdraw: { value: 'oracleWithdraw' },
-    permissionInit: { value: 'permissionInit' },
-    permissionSet: { value: 'permissionSet' },
-    programConfig: { value: 'programConfig' },
-    programInit: { value: 'programInit' },
-    vaultTransfer: { value: 'vaultTransfer' },
-    vrfInit: { value: 'vrfInit' },
-    vrfProve: { value: 'vrfProve' },
-    vrfProveAndVerify: { value: 'vrfProveAndVerify' },
-    vrfRequestRandomness: { value: 'vrfRequestRandomness' },
-    vrfVerify: { value: 'vrfVerify' },
-  },
-})
-
-const commonEventFields = {
-  id: { type: new GraphQLNonNull(GraphQLString) },
-  timestamp: { type: GraphQLLong },
-  type: { type: new GraphQLNonNull(InstructionTypes) },
+export default class APISchema extends APISchemaBase {
+  constructor(
+    protected domain: MainDomain,
+    protected resolver: APIResolvers = new APIResolvers(domain),
+    protected schema = getSchema(resolver),
+  ) {
+    super(domain, schema)
+  }
 }
 
-const Event = new GraphQLInterfaceType({
-  name: 'Event',
-  fields: {
-    ...commonEventFields,
-  },
-})
-`
-    if(instructions){
-        for(const instruction of instructions.instructions){
-            apiTypes +=
-`export const Event${instruction.name} = new GraphQLObjectType({
-  name: '${instruction.name}',
-  interfaces: [Event],
-  isTypeOf: (item) => item.type === InstructionType.${instruction.name},
-  fields: {
-    ...commonEventFields,`
-            for(const account of instruction.accounts){
-                apiTypes +=
-`       
-      ${account.name.toLowerCase()}: { type: new GraphQLNonNull(GraphQLString) },`
-            }
-            apiTypes += `
+function getSchema(resolver: APIResolvers): GraphQLSchema {
+  const schemaPath = path.resolve(
+    './packages/${name}/dist/src/api/schema.graphql',
+  )
+  const typeDefs = readFileSync(schemaPath, 'utf8')
+
+  // @note: resolver methods in resolver object need to have the same name as the query they resolve
+  const resolvers = {
+    Account: {
+      __resolveType(obj: any, context: any, info: any) {
+        return obj.type
+      },
+    },
+    Instruction: {
+      __resolveType(obj: any, context: any, info: any) {
+        return obj.type
+      },
+    },
+    Query: resolver,
   }
-})
 
-`
-        }
-        apiTypes += 
-`export const Events = new GraphQLList(Event)
-
-export const types = [`
-        for(const instruction of instructions.instructions){
-            apiTypes += 
-`   
-  Event${instruction.name},`
-        }
-        if(accounts){
-          for(const account of accounts.accounts){
-            apiTypes += 
-  `   
-  ${account.name},`
-          }
-        }
-        apiTypes += 
-`
-  ParsedAccountsData
-]
-`
-    }
-    return { apiTypes }
+  return makeExecutableSchema({
+    typeDefs,
+    resolvers,
+    resolverValidationOptions: {
+      requireResolversToMatchSchema: 'ignore',
+    },
+  })
+}`
+    return { indexApi, resolversApi, schemaApi }
 }

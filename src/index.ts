@@ -3,7 +3,6 @@ import { TemplateType } from "./types.js";
 import { Command } from 'commander';
 import { exec } from 'child_process';
 import { Paths } from './paths.js'
-import { Idl } from "@metaplex-foundation/solita";
 import { readFileSync } from "fs";
 /*
   <insert-name-here> generate -f <path-to-idl.json> -> Invoke our generator script
@@ -25,7 +24,7 @@ async function main() {
     let path: string[] = options.file.replace('.json', '').split('/')
     let programName: string = path[path.length - 1]
     const paths = new Paths(`./`, programName)
-    const idl = parseIdl(readFileSync(paths.idlFile(programName), "utf8"))
+    const idl = JSON.parse(readFileSync(paths.idlFile(programName), "utf8"))
     await generate(programName, idl, paths,
       [
         TemplateType.Types,
@@ -45,14 +44,15 @@ async function main() {
         if(stdout) {
           console.log(stdout)
           const paths = new Paths(`./`, options.address)
-          const idl = parseIdl(stdout)
+          const idl = JSON.parse(stdout)
           await generate(options.address, idl, paths,
             [
               TemplateType.Types,
               TemplateType.Instructions,
               TemplateType.Events,
               TemplateType.Accounts
-            ]
+            ],
+            options.address
           )
           return;
         }
@@ -66,8 +66,4 @@ async function main() {
       console.log('HELP')
     }
   }
-}
-
-function parseIdl(idl: string): Idl {
-  return JSON.parse(idl)
 }
