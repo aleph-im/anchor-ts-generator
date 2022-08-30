@@ -1,6 +1,7 @@
 import { ViewInstructions, ViewAccounts } from './types'
 
 export function renderLayoutsFiles(instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined){
+    const set = new Set(['string', 'number', 'boolean', 'Buffer', 'PublicKey', 'BN'])
     let accountLayouts: string = ""
 
     if(accountsView != undefined && accountsView.accounts.length > 0) {
@@ -58,6 +59,8 @@ export const ACCOUNTS_DATA_LAYOUT: Record<
     if(instructionsView != undefined && instructionsView.instructions.length > 0) {
         ixLayouts += `import { EventBase } from '@aleph-indexer/core'
 import * as solita from './solita/index.js'
+import { PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 `
 
         ixLayouts += `
@@ -75,8 +78,19 @@ export type InstructionBase = EventBase<InstructionType>
 ` 
         for(const instruction of instructionsView.instructions){
                 ixLayouts += 
-`export type ${instruction.name}Info = solita.${instruction.name}Params & {
-        accounts: solita.${instruction.name}InstructionAccounts
+`export type ${instruction.name}Info = {
+        ` 
+                for(const field of instruction.data.fields){
+                        if(set.has(field.type)){
+                                ixLayouts += `${field.name}: ${field.type},
+`                       }
+                        else{
+                                ixLayouts += `${field.name}: solita.${field.type},
+`  
+                        }
+                }
+                ixLayouts += 
+`       accounts: solita.${instruction.name}InstructionAccounts
 }
 
 export type ${instruction.name}Event = InstructionBase &
