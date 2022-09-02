@@ -32,7 +32,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.projectDir))
     mkdirSync(paths.projectDir)
-  const {docker, pkg, run, tsconfig, typesdts } = renderRootFiles(idl.name)
+  const { docker, pkg, run, tsconfig, typesdts } = renderRootFiles(idl.name)
   writeFileSync(paths.projectFile('docker-compose.yaml'), docker);
   writeFileSync(paths.projectFile('package.json'), pkg);
   writeFileSync(paths.projectFile('run.ts'), run);
@@ -143,8 +143,6 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
         if (idl.instructions) {
           const { template, view } = generateInstructions(idl)
           const text = Mustache.render(template, view);
-          // TODO: Modularize to enum.mustache
-          //writeFileSync(paths.tsFile(templateType), text.slice(0, text.length-2))
           textAndTemplate.push([templateType, text.slice(0, text.length-2)])
           instructionsView = view
         }

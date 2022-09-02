@@ -94,9 +94,14 @@ export type Idl = {
 
 export type IdlInstruction = {
   name: string;
-  accounts: IdlAccount[];
+  accounts: IdlAccount[] | IdlAccountsCollection[];
   args: IdlField[];
 };
+
+export type IdlAccountsCollection = {
+  name: string
+  accounts: IdlAccount[]
+}
 
 export type IdlAccount = {
   name: string;

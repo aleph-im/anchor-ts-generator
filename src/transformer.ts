@@ -200,25 +200,29 @@ export default class IdlTransformer {
 
   protected toRustType(type: IdlType): string {
     let name = type as string
+    let option = type as IdlTypeOption
+
     if ((type as IdlTypeArray).array) name = "blob"
     if ((type as IdlTypeVec).vec) name = "vec"
-    if ((type as IdlTypeOption).option)
-      name = (type as IdlTypeOption).option as string
-
-    if ((type as IdlTypeDefined).defined) {
-      name = ((type as IdlTypeDefined).defined)
-      // TODO: Insert {{> struct}} template
-      //const template = fs.readFileSync(
-      //  `${PACKAGE_ROOT}/src/struct.mustache`, "utf8");
-      //const struct = this.idl.types?.find(x => x.name ===
-      //    (type as IdlTypeDefined).defined) as IdlTypeDef;
-      //const view = struct.type.kind === "struct" ? this.toViewStruct(struct) :
-      //  (type as IdlTypeDefined).defined
-      //return Mustache.render(template, view);
+    if (this.isIdlTypeOption(type)) {
+      option = (type as IdlTypeOption).option as IdlTypeOption
+      if (this.isIdlDefined(option)) {
+        name = (option as IdlTypeDefined).defined as string
+      }
+      else{
+        name = (type as IdlTypeOption).option as string
+      }
     }
-
+    if (this.isIdlDefined(type)) name = ((type as IdlTypeDefined).defined)
     name = name.slice(0, 1).toLowerCase() + name.slice(1);
     return name
+  }
+
+  protected isIdlTypeOption(type: IdlType): type is IdlTypeOption {
+    return (type as IdlTypeOption).option !== undefined
+  }
+  protected isIdlDefined(type: IdlType): type is IdlTypeDefined {
+    return (type as IdlTypeDefined).defined !== undefined
   }
 
   protected toViewField(field: IdlField | IdlEventField): ViewField {
