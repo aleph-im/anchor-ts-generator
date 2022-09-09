@@ -101,10 +101,10 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.layaoutsDir)
   const { accountLayouts, ixLayouts, indexLayouts } = renderLayoutsFiles(instructionsView, accountsView);
   try {
-    if(accountLayouts != '') {
+    if(accountLayouts) {
       writeFileSync(paths.layoutsFile('accounts'), format(accountLayouts, DEFAULT_FORMAT_OPTS));
     }
-    if(ixLayouts != '') {
+    if(ixLayouts) {
       writeFileSync(paths.layoutsFile('instructions'), format(ixLayouts, DEFAULT_FORMAT_OPTS));
     }
     writeFileSync(paths.layoutsFile('index'), format(indexLayouts, DEFAULT_FORMAT_OPTS));

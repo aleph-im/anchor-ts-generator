@@ -3,7 +3,7 @@ Multipurpose .ts file generator, using Anchor's IDLs.
 
 For now to run the indexer generator 'CLI' as for the moment isn't a npm package: 
 1. npm run build
-2. from root folder:
+2. from root folder (from root folder):
     - node ./dist/index.js -f ./idl/switchboard_v2.json
 or
     - node ./dist/index.js -a JUP3c2Uh3WA4Ng34tw6kPd2G4C5BB21Xo36Je1s32Ph
