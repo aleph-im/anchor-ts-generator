@@ -1,7 +1,6 @@
 import { ViewInstructions, ViewAccounts } from './types'
 
 export function renderLayoutsFiles(instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined){
-    const set = new Set(['string', 'number', 'boolean', 'Buffer', 'PublicKey', 'BN'])
     let accountLayouts: string = ""
 
     if(accountsView != undefined && accountsView.accounts.length > 0) {
@@ -79,18 +78,10 @@ export type InstructionBase = EventBase<InstructionType>
         for(const instruction of instructionsView.instructions){
                 ixLayouts += 
 `export type ${instruction.name}Info = {
-        ` 
-                for(const field of instruction.data.fields){
-                        if(set.has(field.type)){
-                                ixLayouts += `${field.name}: ${field.type},
-`                       }
-                        else{
-                                ixLayouts += `${field.name}: solita.${field.type},
-`  
-                        }
-                }
+` 
                 ixLayouts += 
 `       accounts: solita.${instruction.name}InstructionAccounts
+        data: solita.${instruction.name}Instruction
 }
 
 export type ${instruction.name}Event = InstructionBase &

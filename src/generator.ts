@@ -14,6 +14,7 @@ import { renderLayoutsFiles } from './render-layouts.js'
 import { format, Options } from 'prettier'
 import { renderApiFiles } from "./render-api.js";
 import { renderDiscovererFiles } from "./render-discoverer.js";
+import { logError } from './utils/index.js'
 
 const DEFAULT_FORMAT_OPTS: Options = {
   semi: false,
@@ -52,6 +53,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     writeFileSync(paths.srcFile('types'), format(types, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     console.log(`Failed to format on src folder`)
+    console.error.bind(console)
   }
 
   if(!existsSync(paths.apiDir))
@@ -63,7 +65,8 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     writeFileSync(paths.apiFile('resolvers'), format(resolversApi, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.apiFile('schema'), format(schemaApi, DEFAULT_FORMAT_OPTS));
   } catch (err) {
-    console.log(`Failed to format on dal folder`)
+    logError(`Failed to format on api folder`)
+    logError(err)
   }
 
   if(!existsSync(paths.dalDir))
@@ -72,7 +75,8 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   try {
     writeFileSync(paths.dalFile('event'), format(eventDal, DEFAULT_FORMAT_OPTS));
   } catch (err) {
-    console.log(`Failed to format on dal folder`)
+    logError(`Failed to format on dal folder`)
+    logError(err)
   }
 
   if(!existsSync(paths.domainDir))
@@ -83,7 +87,8 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     writeFileSync(paths.domainFile('indexer'), format(indexer, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.domainFile('main'), format(mainDomain, DEFAULT_FORMAT_OPTS));
   } catch (err) {
-    console.log(`Failed to format on domain folder`)
+    logError(`Failed to format on domain folder`)
+    logError(err)
   }
 
   if(!existsSync(paths.discovererDir))
@@ -92,7 +97,8 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   try {
     writeFileSync(paths.discovererFile(idl.name), format(discoverer, DEFAULT_FORMAT_OPTS));
   } catch (err) {
-    console.log(`Failed to format on domain folder`)
+    logError(`Failed to format on discoverer folder`)
+    logError(err)
   }
 
   if(!existsSync(paths.utilsDir))
@@ -110,6 +116,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     writeFileSync(paths.layoutsFile('index'), format(indexLayouts, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     console.log(`Failed to format on layouts folder`)
+    logError(err)
   }
   
   if(!existsSync(paths.tsSolitaDir))
@@ -123,6 +130,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     writeFileSync(paths.parsersFile('event'), format(event, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     console.log(`Failed to format on parser folder`)
+    logError(err)
   }
 }
 
