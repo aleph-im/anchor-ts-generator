@@ -27,6 +27,8 @@ const DEFAULT_FORMAT_OPTS: Options = {
 }
 
 export default async function generate(idl: Idl, paths: Paths, toGenerate: TemplateType[], address?: string, ) {
+  const Name = toCamelCase(idl.name)
+  
   if(!existsSync(paths.outputDir))
     mkdirSync(paths.outputDir)
 
@@ -44,7 +46,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
-  const { constants, types } = renderSrcFiles(idl.name, instructionsView, address)
+  const { constants, types } = renderSrcFiles(Name, instructionsView, address)
   try {
     writeFileSync(paths.srcFile('constants'), format(constants, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.srcFile('types'), format(types, DEFAULT_FORMAT_OPTS));
@@ -55,7 +57,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   if(!existsSync(paths.apiDir))
     mkdirSync(paths.apiDir)
   await generateSchema(paths, idl);
-  const { indexApi, resolversApi, schemaApi } = renderApiFiles(idl.name)
+  const { indexApi, resolversApi, schemaApi } = renderApiFiles(Name)
   try {
     writeFileSync(paths.apiFile('index'), format(indexApi, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.apiFile('resolvers'), format(resolversApi, DEFAULT_FORMAT_OPTS));
@@ -75,7 +77,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.domainDir))
     mkdirSync(paths.domainDir)
-  const { account, indexer, mainDomain } = renderDomainFiles(idl.name, accountsView)
+  const { account, indexer, mainDomain } = renderDomainFiles(Name, idl.name, accountsView)
   try {
     writeFileSync(paths.domainFile('account'), format(account, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.domainFile('indexer'), format(indexer, DEFAULT_FORMAT_OPTS));
@@ -86,7 +88,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.discovererDir))
     mkdirSync(paths.discovererDir)
-  const { discoverer } = renderDiscovererFiles(idl.name)
+  const { discoverer } = renderDiscovererFiles(Name)
   try {
     writeFileSync(paths.discovererFile(idl.name), format(discoverer, DEFAULT_FORMAT_OPTS));
   } catch (err) {
@@ -224,4 +226,13 @@ async function generateSchema(paths: Paths, idl: Idl) {
   await gen.renderAndWriteTo(paths.apiDir);
 
   console.log("Success on Schema generation!");
+}
+
+function toCamelCase(str: string){
+  let wordArr = str.split(/[-_]/g);
+  let camelCase = ""
+  for (let i in wordArr){
+    camelCase += wordArr[i].charAt(0).toUpperCase() + wordArr[i].slice(1);
+  }
+  return camelCase;
 }

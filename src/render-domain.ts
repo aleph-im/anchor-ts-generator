@@ -1,9 +1,7 @@
 import { ViewAccounts } from "./types"
 
-export function renderDomainFiles(filename: string, accounts: ViewAccounts | undefined){
-  const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
+export function renderDomainFiles(Name: string, filename: string, accounts: ViewAccounts | undefined){
   const NAME = filename.toUpperCase()
-  const name = filename.toLowerCase()
   const dollar = '$'
   const com = '`'
 
@@ -201,7 +199,7 @@ import {
   AccountTypesGlobalStats,
   ParsedEvents,
 } from '../types.js'
-import ${Name}Discoverer from './discoverer/${name}.js'
+import ${Name}Discoverer from './discoverer/${filename}.js'
 
 export default class MainDomain
   extends MainDomainBase

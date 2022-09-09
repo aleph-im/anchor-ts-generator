@@ -15,7 +15,7 @@ import {
   if(instructions != undefined){
     for (const instruction of instructions.instructions) {
       event += 
-` ${instruction.name}Instruction,
+` ${instruction.name}Event,
 `
     }
   }
@@ -55,7 +55,7 @@ if(instructions != undefined){
 `       case InstructionType.${instruction.name}:
           return {
             ...baseEvent,
-          } as ${instruction.name}Instruction
+          } as ${instruction.name}Event
 
 `
   }

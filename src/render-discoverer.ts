@@ -1,7 +1,6 @@
-export function renderDiscovererFiles(filename: string){
-    const NAME = filename.toUpperCase()
-    const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
-    const name = filename.toLowerCase()
+export function renderDiscovererFiles(Name: string){
+    const NAME = Name.toUpperCase()
+    const name = Name.toLowerCase()
 
     let discoverer: string = 
 `import {

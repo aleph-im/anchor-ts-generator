@@ -1,8 +1,7 @@
-export function renderApiFiles(filename: string){
+export function renderApiFiles(Name: string){
   const dollar = '$'
   const com = '`'
-  const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
-  const name = filename.toLowerCase()
+  const name = Name.toLowerCase()
 
   const indexApi: string = `export { default } from './schema.js'`
 

@@ -1,16 +1,15 @@
 import { ViewInstructions } from "./types"
 
-export function renderSrcFiles(filename: string, instructionsView: ViewInstructions | undefined, address?: string){
-  const Name = filename.charAt(0).toUpperCase().concat(filename.slice(1))
-  const NAME = filename.toUpperCase()
-  const _name = filename.toLowerCase()
+export function renderSrcFiles(Name: string, instructionsView: ViewInstructions | undefined, address?: string){
+  const NAME = Name.toUpperCase()
+  const name = Name.toLowerCase()
 
   let constants: string = 
 `import { PublicKey } from '@solana/web3.js'
 import { config } from '@aleph-indexer/core'
 
 export enum ProgramName {
-  ${Name} = '${_name}',
+  ${Name} = '${name}',
 }
 
 const DAY = 1000 * 60 * 60 * 24
