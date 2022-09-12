@@ -70,14 +70,14 @@ export class Paths {
     return path.join(this.discovererDir, `${name}.ts`)
   }
 
-  get indexersDir() {
-    return path.join(this.srcDir.toString(), 'indexers')
+  get statsDir() {
+    return path.join(this.domainDir.toString(), 'stats')
   }
-  get relIndexersDir() {
-    return path.relative(process.cwd(), this.indexersDir)
+  get relStatsDir() {
+    return path.relative(process.cwd(), this.statsDir)
   }
-  indexersFile(name: string) {
-    return path.join(this.indexersDir, `${name}.ts`)
+  statsFile(name: string) {
+    return path.join(this.statsDir, `${name}.ts`)
   }
 
   get parsersDir() {

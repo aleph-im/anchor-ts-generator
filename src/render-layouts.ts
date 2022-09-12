@@ -58,8 +58,6 @@ export const ACCOUNTS_DATA_LAYOUT: Record<
     if(instructionsView != undefined && instructionsView.instructions.length > 0) {
         ixLayouts += `import { EventBase } from '@aleph-indexer/core'
 import * as solita from './solita/index.js'
-import { PublicKey } from '@solana/web3.js'
-import BN from 'bn.js'
 `
 
         ixLayouts += `

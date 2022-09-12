@@ -4,13 +4,33 @@ export function renderSrcFiles(Name: string, filename: string, instructionsView:
   const NAME = filename.toUpperCase()
   const name = filename.toUpperCase()
 
-  let constants: string = 
+  let constants = ''
+  let types = ''
+
+  if(instructionsView) {
+  constants = 
 `import { PublicKey } from '@solana/web3.js'
 import { config } from '@aleph-indexer/core'
+import { InstructionType } from './types.js'
 
 export enum ProgramName {
   ${Name} = '${name}',
 }
+
+// This is just an example, to use it on a type guard on stats folder 
+export const collectionEvent1 = [
+  InstructionType.${instructionsView.instructions[0].name},
+  InstructionType.${instructionsView.instructions[1].name},
+]
+
+export const collectionEvent1Whitelist = new Set(collectionEvent1)
+
+export const collectionEvent2 = [
+  InstructionType.${instructionsView.instructions[2].name},
+  InstructionType.${instructionsView.instructions[3].name},
+]
+
+export const collectionEvent2Whitelist = new Set(collectionEvent1)
 
 const DAY = 1000 * 60 * 60 * 24
 const START_DATE = Date.now()
@@ -34,8 +54,6 @@ export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
 `
   }
 
-  let types: string = ''
-  if(instructionsView && instructionsView.instructions.length > 0) {
     types += 
 `export * from './utils/layouts/index.js'
 `
@@ -60,16 +78,24 @@ export type AccountTimeStat = {
   interval: string
 }
 
+// You should group different related instructions to process their information together
+export type ${Name}Info = EventType1Info & EventType2Info
+
+export type EventType1Info = {
+  customProperties1: number
+}
+
+export type EventType2Info = {
+  customProperties2: number
+}
+
 export type ${Name}Stats = {
   requestsStatsByHour: Record<string, AccountTimeStat>
-
-  requests1h: number
-  requests24h: number
-  requests7d: number
-  requestsTotal: number
-
+  last1h: ${Name}Info
+  last24h: ${Name}Info
+  last7d: ${Name}Info
+  total: ${Name}Info
   accessingPrograms: Set<string>
-
   lastRequest?: ParsedEvents
 }
 

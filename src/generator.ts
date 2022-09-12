@@ -15,6 +15,7 @@ import { format, Options } from 'prettier'
 import { renderApiFiles } from "./render-api.js";
 import { renderDiscovererFiles } from "./render-discoverer.js";
 import { logError } from './utils/index.js'
+import { renderStatsFiles } from "./render-stats.js";
 
 const DEFAULT_FORMAT_OPTS: Options = {
   semi: false,
@@ -53,7 +54,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     writeFileSync(paths.srcFile('types'), format(types, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     console.log(`Failed to format on src folder`)
-    console.error.bind(console)
+    logError(err)
   }
 
   if(!existsSync(paths.apiDir))
@@ -86,6 +87,18 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     writeFileSync(paths.domainFile('account'), format(account, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.domainFile('indexer'), format(indexer, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.domainFile('main'), format(mainDomain, DEFAULT_FORMAT_OPTS));
+  } catch (err) {
+    logError(`Failed to format on domain folder`)
+    logError(err)
+  }
+
+  if(!existsSync(paths.statsDir))
+    mkdirSync(paths.statsDir)
+  const { timeSeries, timeSeriesAggregator, statsAggregator } = renderStatsFiles(Name, idl.name, instructionsView)
+  try {
+    writeFileSync(paths.statsFile('timeSeries'), format(timeSeries, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.statsFile('timeSeriesAggregator'), format(timeSeriesAggregator, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.statsFile('statsAggregator'), format(statsAggregator, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     logError(`Failed to format on domain folder`)
     logError(err)
