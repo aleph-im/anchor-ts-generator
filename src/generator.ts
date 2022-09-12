@@ -47,7 +47,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
-  const { constants, types } = renderSrcFiles(Name, instructionsView, address)
+  const { constants, types } = renderSrcFiles(Name, idl.name, instructionsView, address)
   try {
     writeFileSync(paths.srcFile('constants'), format(constants, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.srcFile('types'), format(types, DEFAULT_FORMAT_OPTS));

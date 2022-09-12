@@ -1,8 +1,8 @@
 import { ViewInstructions } from "./types"
 
-export function renderSrcFiles(Name: string, instructionsView: ViewInstructions | undefined, address?: string){
-  const NAME = Name.toUpperCase()
-  const name = Name.toLowerCase()
+export function renderSrcFiles(Name: string, filename: string, instructionsView: ViewInstructions | undefined, address?: string){
+  const NAME = filename.toUpperCase()
+  const name = filename.toUpperCase()
 
   let constants: string = 
 `import { PublicKey } from '@solana/web3.js'
