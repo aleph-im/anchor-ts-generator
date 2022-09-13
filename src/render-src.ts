@@ -1,16 +1,36 @@
-import { ViewAccounts, ViewInstructions } from "./types"
+import { ViewInstructions } from "./types"
 
-export function renderSrcFiles(name: string, accountsView: ViewAccounts | undefined, instructionsView: ViewInstructions | undefined){
-  const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-  const NAME = name.toUpperCase()
-  const _name = name.toLowerCase()
+export function renderSrcFiles(Name: string, filename: string, instructionsView: ViewInstructions | undefined, address?: string){
+  const NAME = filename.toUpperCase()
+  const name = filename.toUpperCase()
 
-  let constants: string = 
+  let constants = ''
+  let types = ''
+
+  if(instructionsView) {
+  constants = 
 `import { PublicKey } from '@solana/web3.js'
 import { config } from '@aleph-indexer/core'
+import { InstructionType } from './types.js'
+
 export enum ProgramName {
-  ${Name} = '${_name}',
+  ${Name} = '${name}',
 }
+
+// This is just an example, to use it on a type guard on stats folder 
+export const collectionEvent1 = [
+  InstructionType.${instructionsView.instructions[0].name},
+  InstructionType.${instructionsView.instructions[1].name},
+]
+
+export const collectionEvent1Whitelist = new Set(collectionEvent1)
+
+export const collectionEvent2 = [
+  InstructionType.${instructionsView.instructions[2].name},
+  InstructionType.${instructionsView.instructions[3].name},
+]
+
+export const collectionEvent2Whitelist = new Set(collectionEvent1)
 
 const DAY = 1000 * 60 * 60 * 24
 const START_DATE = Date.now()
@@ -19,10 +39,10 @@ export const DOMAIN_CACHE_START_DATE = config.INDEX_START_DATE
   ? Number(config.INDEX_START_DATE)
   : SINCE_DATE
 `
-  if(name.length == 43){
+  if(address){
     constants += 
 `
-export const ${NAME}_PROGRAM_ID = ${NAME}
+export const ${NAME}_PROGRAM_ID = '${address}'
 export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
 `
   }
@@ -34,59 +54,20 @@ export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
 `
   }
 
-  let types: string = ''
-  if(instructionsView && instructionsView.instructions.length > 0) {
     types += 
-`export * from './layouts/ts/instructions.js'
-export { ParsedInstructions } from './layouts/solita/index.js'
-export { InstructionType } from './layouts/ts/instructions.js'
+`export * from './utils/layouts/index.js'
 `
-    if(accountsView) {
-      types += 
-`export { AccountType } from './layouts/ts/accounts.js'
-import {
-  ParsedAccountInfo
-} from '@aleph-indexer/core'
+    types +=
 `
-      types += 
-`
-import {
-`
-      for(let i = 0; i < accountsView.accounts.length; i++){
-        types +=
-`\t${accountsView.accounts[i].name},
-\t${accountsView.accounts[i].name}Args,
-`
-      }
-      types +=
-`\tParsedAccountsData,
-\tParsedInstructions
-} from './layouts/solita/index.js'
+import { AccountStats } from '@aleph-indexer/framework'
+import { AccountType, ParsedEvents, ParsedAccountsData } from './utils/layouts/index.js'
 
-import { InstructionType } from './layouts/ts/instructions.js'
-
-export enum IndexersType {
-`
-      for(let i = 0; i < accountsView.accounts.length; i++){
-        types +=
-`\t${accountsView.accounts[i].name}Indexer = '${accountsView.accounts[i].name}Indexer',
-`
-      }
-      types +=
-`}
-
-export type SwitchboardAccountInfo = ParsedAccountInfo<AccountType, ParsedAccountsData>
-
-// ------------------- PARSED ------------------
-
-export type InstructionEvent = {
-  id: string
-  type: InstructionType | undefined
-  timestamp: number
+export type ${Name}AccountInfo = {
+  name: string
   programId: string
-  account: string
-  accounts: Record<string, string>
-  data: ParsedInstructions
+  address: string
+  type: AccountType
+  data: ParsedAccountsData
 }
 
 // -------------------------- STATS --------------------------
@@ -97,60 +78,48 @@ export type AccountTimeStat = {
   interval: string
 }
 
-export type ${Name}AccountStats = {
-  requestsStatsByHour: Record<string, AccountTimeStat>
+// You should group different related instructions to process their information together
+export type ${Name}Info = EventType1Info & EventType2Info
 
-  requests1h: number
-  requests24h: number
-  requests7d: number
-  requestsTotal: number
-
-  accessingPrograms: Set<string>
-
-  lastRequest?: InstructionEvent
+export type EventType1Info = {
+  customProperties1: number
 }
 
-export type ${Name}AccountInfo = ParsedAccountInfo<AccountType, ParsedAccountsData>
+export type EventType2Info = {
+  customProperties2: number
+}
+
+export type ${Name}Stats = {
+  requestsStatsByHour: Record<string, AccountTimeStat>
+  last1h: ${Name}Info
+  last24h: ${Name}Info
+  last7d: ${Name}Info
+  total: ${Name}Info
+  accessingPrograms: Set<string>
+  lastRequest?: ParsedEvents
+}
 
 export type HourlyStats = {
   stats: AccountTimeStat[]
   statsMap: Record<string, AccountTimeStat>
 }
 
-export type GlobalStats = {
+export type Global${Name}Stats = {
   totalAccounts: Record<AccountType, number>
   totalRequests: number
   totalUniqueAccessingPrograms: number
 }
 
-// -------------------------- ACCOUNTS --------------------------
-
-export type AccountData = ParsedAccountInfo<AccountType, ParsedAccountsData> & {
-  stats: ${Name}AccountStats
+export type ${Name}ProgramData = {
+  info: ${Name}AccountInfo
+  stats?: ${Name}Stats
 }
-`
-      types += `
-export type ${Name}AccountBeet =
-`
-      for(let i = 0; i < accountsView.accounts.length; i++){
-        types +=
-`  ${accountsView.accounts[i].name} |
-`
-      }
-      types = types.slice(0, types.length-2)
-  
 
-        types +=`
-export type ${Name}AccountBeetArgs =
-`
-      for(let i = 0; i < accountsView.accounts.length; i++){
-        types +=
-` ${accountsView.accounts[i].name}Args |
-`
-      }
-      types = types.slice(0, types.length-2)
-      types += '\n'
-    }
+export type AccountTypesGlobalStats = {
+  type: AccountType
+  stats: AccountStats<Global${Name}Stats>
+}
+` 
   }
   return { constants, types }
 }

@@ -18,6 +18,7 @@ export type ViewField = {
   name: string
   type: ViewPrimitive | string
   rustType: string
+  graphqlType: string
   optional: boolean
   multiple: boolean
   length?: number
@@ -93,9 +94,14 @@ export type Idl = {
 
 export type IdlInstruction = {
   name: string;
-  accounts: IdlAccount[];
+  accounts: IdlAccount[] | IdlAccountsCollection[];
   args: IdlField[];
 };
+
+export type IdlAccountsCollection = {
+  name: string
+  accounts: IdlAccount[]
+}
 
 export type IdlAccount = {
   name: string;

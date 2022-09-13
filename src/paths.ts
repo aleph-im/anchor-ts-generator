@@ -33,6 +33,13 @@ export class Paths {
     return path.join(this.srcDir, `${name}.ts`)
   }
 
+  get apiDir() {
+    return path.join(this.srcDir.toString(), 'api')
+  }
+  apiFile(name: string) {
+    return path.join(this.apiDir, `${name}.ts`)
+  }
+
   get dalDir() {
     return path.join(this.srcDir.toString(), 'dal')
   }
@@ -53,49 +60,24 @@ export class Paths {
     return path.join(this.domainDir, `${name}.ts`)
   }
 
-  get graphqlDir() {
-    return path.join(this.srcDir.toString(), 'graphql')
+  get discovererDir() {
+    return path.join(this.domainDir.toString(), 'discoverer')
   }
-  get relGraphqlDir() {
-    return path.relative(process.cwd(), this.graphqlDir)
+  get relDiscovererDir() {
+    return path.relative(process.cwd(), this.discovererDir)
   }
-  graphqlFile(name: string) {
-    return path.join(this.graphqlDir, `${name}.ts`)
-  }
-  get graphSchemaDir() {
-    return path.join(this.graphqlDir.toString(), 'schema')
+  discovererFile(name: string) {
+    return path.join(this.discovererDir, `${name}.ts`)
   }
 
-
-  get indexersDir() {
-    return path.join(this.srcDir.toString(), 'indexers')
+  get statsDir() {
+    return path.join(this.domainDir.toString(), 'stats')
   }
-  get relIndexersDir() {
-    return path.relative(process.cwd(), this.indexersDir)
+  get relStatsDir() {
+    return path.relative(process.cwd(), this.statsDir)
   }
-  indexersFile(name: string) {
-    return path.join(this.indexersDir, `${name}.ts`)
-  }
-
-  get layoutsDir() {
-    return path.join(this.srcDir.toString(), 'layouts')
-  }
-  get relLayaoutsDir() {
-    return path.relative(process.cwd(), this.layoutsDir)
-  }
-  layoutsFile(name: string) {
-    return path.join(this.layoutsDir, `${name}.ts`)
-  }
-
-  get tsDir() {
-    return path.join(this.layoutsDir.toString(), 'ts')
-  }
-  tsFile(name: string) {
-    return path.join(this.tsDir, `${name}.ts`)
-  }
-
-  get tsSolitaDir() {
-    return path.join(this.layoutsDir.toString(), 'solita')
+  statsFile(name: string) {
+    return path.join(this.statsDir, `${name}.ts`)
   }
 
   get parsersDir() {
@@ -116,5 +98,26 @@ export class Paths {
   }
   utilsFile(name: string) {
     return path.join(this.utilsDir, `${name}.ts`)
+  }
+
+  get layaoutsDir() {
+    return path.join(this.utilsDir.toString(), 'layouts')
+  }
+  get relLayaoutsDir() {
+    return path.relative(process.cwd(), this.layaoutsDir)
+  }
+  layoutsFile(name: string) {
+    return path.join(this.layaoutsDir, `${name}.ts`)
+  }
+
+  get tsDir() {
+    return path.join(this.layaoutsDir.toString(), 'ts')
+  }
+  tsFile(name: string) {
+    return path.join(this.tsDir, `${name}.ts`)
+  }
+
+  get tsSolitaDir() {
+    return path.join(this.layaoutsDir.toString(), 'solita')
   }
 }

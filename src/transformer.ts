@@ -22,7 +22,7 @@ import {
   IdlTypeOption,
   IdlTypeVec,
  } from "@metaplex-foundation/solita";
-import { primitivesMap } from "./constants.js";
+import { primitivesMap, primitivesMapGraphqQl } from "./constants.js";
 
 export default class IdlTransformer {
   private _viewTypes: ViewTypes | undefined = undefined;
@@ -185,27 +185,47 @@ export default class IdlTransformer {
       (type as IdlTypeArray).array[0]);
   }
 
+  protected toGraphQLTypes(type: IdlType): string {
+    if (type === undefined) return "undefined";
+
+    if (typeof type === "string") {
+      return primitivesMapGraphqQl[type];
+    }
+    // @note: Ascii encoded strings
+    if ((type as IdlTypeArray).array && (type as IdlTypeArray).array[0] === "u8")
+      return "GraphQLString";
+
+    return (type as IdlTypeDefined).defined ??
+      this.toGraphQLTypes((type as IdlTypeOption).option ??
+      (type as IdlTypeVec).vec ??
+      (type as IdlTypeArray).array[0]);
+  }
+
   protected toRustType(type: IdlType): string {
     let name = type as string
+    let option = type as IdlTypeOption
+
     if ((type as IdlTypeArray).array) name = "blob"
     if ((type as IdlTypeVec).vec) name = "vec"
-    if ((type as IdlTypeOption).option)
-      name = (type as IdlTypeOption).option as string
-
-    if ((type as IdlTypeDefined).defined) {
-      name = ((type as IdlTypeDefined).defined)
-      // TODO: Insert {{> struct}} template
-      //const template = fs.readFileSync(
-      //  `${PACKAGE_ROOT}/src/struct.mustache`, "utf8");
-      //const struct = this.idl.types?.find(x => x.name ===
-      //    (type as IdlTypeDefined).defined) as IdlTypeDef;
-      //const view = struct.type.kind === "struct" ? this.toViewStruct(struct) :
-      //  (type as IdlTypeDefined).defined
-      //return Mustache.render(template, view);
+    if (this.isIdlTypeOption(type)) {
+      option = (type as IdlTypeOption).option as IdlTypeOption
+      if (this.isIdlDefined(option)) {
+        name = (option as IdlTypeDefined).defined as string
+      }
+      else{
+        name = (type as IdlTypeOption).option as string
+      }
     }
-
+    if (this.isIdlDefined(type)) name = ((type as IdlTypeDefined).defined)
     name = name.slice(0, 1).toLowerCase() + name.slice(1);
     return name
+  }
+
+  protected isIdlTypeOption(type: IdlType): type is IdlTypeOption {
+    return (type as IdlTypeOption).option !== undefined
+  }
+  protected isIdlDefined(type: IdlType): type is IdlTypeDefined {
+    return (type as IdlTypeDefined).defined !== undefined
   }
 
   protected toViewField(field: IdlField | IdlEventField): ViewField {
@@ -213,6 +233,7 @@ export default class IdlTransformer {
       name: field.name,
       type: this.toTypeScriptType(field.type) as string,
       rustType: this.toRustType(field.type),
+      graphqlType: this.toGraphQLTypes(field.type),
       optional: !!(field.type as IdlTypeOption).option,
       multiple: !!((field.type as IdlTypeVec).vec ?? (field.type as IdlTypeArray).array),
       length: (field.type as IdlTypeArray).array ?

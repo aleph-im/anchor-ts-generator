@@ -1,412 +1,372 @@
-export function renderDomainFiles(name: string){
-    const Name = name.charAt(0).toUpperCase().concat(name.slice(1))
-    const NAME = name.toUpperCase()
-    name = name.toLowerCase()
+import { ViewAccounts } from "./types"
 
-    const account: string = 
-`import { DateTime, Interval } from 'luxon'
-import { Utils, StatsCache, EntityStorage } from '@aleph-indexer/core'
+export function renderDomainFiles(Name: string, filename: string, accounts: ViewAccounts | undefined){
+  const NAME = filename.toUpperCase()
+  const dollar = '$'
+  const com = '`'
+
+  const account = `import { StorageStream, Utils } from '@aleph-indexer/core'
 import {
-  InstructionEvent,
-  HourlyStats,
-  ${Name}AccountInfo, 
-  ${Name}AccountStats
-} from '../types.js'
-import eventProcessor, { EventProcessor } from './processor.js'
+  AccountTimeSeriesStatsManager,
+  AccountTimeSeriesStats,
+  AccountStatsFilters,
+  AccountStats,
+} from '@aleph-indexer/framework'
+import { EventDALIndex, EventStorage } from '../dal/event.js'
+import { ParsedEvents, ${Name}AccountInfo } from '../types.js'
 
-const { sortTimeStatsMap } = Utils
-
-export class Account extends StatsCache<
-  ${Name}AccountInfo,
-  ${Name}AccountStats
-> {
-  private _shouldUpdate = true
-
+export class Account {
   constructor(
     public info: ${Name}AccountInfo,
-    protected startDate: number,
-    protected eventDAL: EntityStorage<InstructionEvent>,
-    protected processor: EventProcessor = eventProcessor,
+    protected eventDAL: EventStorage,
+    protected timeSeriesStats: AccountTimeSeriesStatsManager,
+  ) {}
+
+  async updateStats(now: number): Promise<void> {
+    await this.timeSeriesStats.process(now)
+  }
+
+  async getTimeSeriesStats(
+    type: string,
+    filters: AccountStatsFilters,
+  ): Promise<AccountTimeSeriesStats> {
+    return this.timeSeriesStats.getTimeSeriesStats(type, filters)
+  }
+
+  async getStats(): Promise<AccountStats> {
+    return this.timeSeriesStats.getStats()
+  }
+
+  getEventsByTime(
+    startDate: number,
+    endDate: number,
+    opts: any,
+  ): Promise<StorageStream<string, ParsedEvents>> {
+    return this.eventDAL
+      .useIndex(EventDALIndex.AccoountTimestamp)
+      .getAllFromTo(
+        [this.info.address, startDate],
+        [this.info.address, endDate],
+        opts,
+      )
+  }
+}
+`
+  const indexer = `import { StorageStream, Utils } from '@aleph-indexer/core'
+import {
+  IndexerDomain as IndexerDomainI,
+  IndexerDomainContext,
+  AccountIndexerConfigWithMeta,
+  InstructionContextV1,
+  IndexerDomainBase,
+  IndexerDomainWithStats,
+  createStatsStateDAL,
+  createStatsTimeSeriesDAL,
+  AccountTimeSeriesStats,
+  AccountStatsFilters,
+  AccountStats,
+} from '@aleph-indexer/framework'
+import { eventParser as eParser } from '../parsers/event.js'
+import { createEventDAL } from '../dal/event.js'
+import { ParsedEvents, ${Name}AccountInfo } from '../types.js'
+import { Account } from './account.js'
+import { createAccountStats } from './stats/timeSeries.js'
+import { ${NAME}_PROGRAM_ID } from '../constants.js'
+
+const { isParsedIx } = Utils
+
+export default class IndexerDomain
+  extends IndexerDomainBase
+  implements IndexerDomainI, IndexerDomainWithStats
+{
+  protected accounts: Record<string, Account> = {}
+
+  constructor(
+    protected context: IndexerDomainContext,
+    protected eventParser = eParser,
+    protected eventDAL = createEventDAL(context.dataPath),
+    protected statsStateDAL = createStatsStateDAL(context.dataPath),
+    protected statsTimeSeriesDAL = createStatsTimeSeriesDAL(context.dataPath),
+    protected programId = ${NAME}_PROGRAM_ID,
   ) {
-    super(info, {
-      requestsStatsByHour: {},
+    super(context)
+  }
 
-      requests1h: 0,
-      requests24h: 0,
-      requests7d: 0,
-      requestsTotal: 0,
+  async init(): Promise<void> {
+    return
+  }
 
-      accessingPrograms: new Set<string>([]),
+  async onNewAccount(
+    config: AccountIndexerConfigWithMeta<${Name}AccountInfo>,
+  ): Promise<void> {
+    const { account, meta } = config
+    const { indexerApi } = this.context
+
+    const accountTimeSeries = await createAccountStats(
+      account,
+      indexerApi,
+      this.eventDAL,
+      this.statsStateDAL,
+      this.statsTimeSeriesDAL,
+    )
+
+    this.accounts[account] = new Account(meta, this.eventDAL, accountTimeSeries)
+
+    console.log('Account indexing', this.context.instanceName, account)
+  }
+
+  async updateStats(account: string, now: number): Promise<void> {
+    const actual = this.getAccount(account)
+    await actual.updateStats(now)
+  }
+
+  async getTimeSeriesStats(
+    account: string,
+    type: string,
+    filters: AccountStatsFilters,
+  ): Promise<AccountTimeSeriesStats> {
+    const oracle = this.getAccount(account)
+    return oracle.getTimeSeriesStats(type, filters)
+  }
+
+  async getStats(account: string): Promise<AccountStats> {
+    return this.getAccountStats(account)
+  }
+
+  // ------------- Custom impl methods -------------------
+
+  async get${Name}AccountInfo(reserve: string): Promise<${Name}AccountInfo> {
+    const res = this.getAccount(reserve)
+    return res.info
+  }
+
+  async getAccountStats(reserve: string): Promise<AccountStats> {
+    const res = this.getAccount(reserve)
+    return res.getStats()
+  }
+
+  getAccountEventsByTime(
+    account: string,
+    startDate: number,
+    endDate: number,
+    opts: any,
+  ): Promise<StorageStream<string, ParsedEvents>> {
+    const res = this.getAccount(account)
+    return res.getEventsByTime(startDate, endDate, opts)
+  }
+
+  protected async filterInstructions(
+    ixsContext: InstructionContextV1[],
+  ): Promise<InstructionContextV1[]> {
+    return ixsContext.filter(({ ix }) => {
+      return isParsedIx(ix) && ix.programId === this.programId
     })
   }
 
+  protected async indexInstructions(
+    ixsContext: InstructionContextV1[],
+  ): Promise<void> {
+    const parsedIxs = ixsContext.map((ix) => this.eventParser.parse(ix))
 
-  async init(): Promise<void> {
-    console.log('Init stats ', this.info.name, this.info.address)
-    const events = this.eventDAL
-      .useIndex('account_timestamp')
-      .getAllFromTo([this.info.address, this.startDate], [this.info.address], {
-        reverse: false,
-      })
+    console.log(${com}indexing ${dollar}{ixsContext.length} parsed ixs${com})
 
-    let count = 0
-    for await (const { value: event } of events) {
-      await this.computeEvent(event)
-
-      count++
-      if (!(count % 1000))
-        console.log(
-          'Init address domain',
-          this.info.name,
-          this.info.address,
-          count,
-          'events loaded...',
-        )
-    }
+    await this.eventDAL.save(parsedIxs)
   }
 
-  async computeEvent(event: InstructionEvent): Promise<void> {
-    if (event.timestamp <= this.startDate) return
-
-    if (!this.stats.accessingPrograms.has(event.programId))
-      this.stats.accessingPrograms.add(event.programId)
-
-    this.processor.processEvent(event, 'hour', 1, this.stats)
-
-    this._shouldUpdate = true
-  }
-
-  async updateStats(now: DateTime = DateTime.now()): Promise<void> {
-    if (!this._shouldUpdate) return
-    this._shouldUpdate = false
-
-    console.log('Updating stats for', this.info.name, this.info.address)
-
-    const endOfCurrentHour = now.plus({ hours: 1 }).startOf('hour')
-    const it1h = Interval.before(endOfCurrentHour, { hours: 1 })
-    const it24h = Interval.before(endOfCurrentHour, { hours: 24 })
-    const it7d = Interval.before(endOfCurrentHour, { hours: 24 * 7 })
-
-    const timeStats = this.processor.sortTimeStats(
-      this.stats.requestsStatsByHour,
-    )
-
-    if (timeStats.length) {
-      this.stats.requests1h = 0
-      this.stats.requests24h = 0
-      this.stats.requests7d = 0
-
-      for (const stats of timeStats) {
-        const it = Interval.fromISO(stats.interval)
-
-        if (it1h.engulfs(it)) this.stats.requests1h += stats.requests
-
-        if (it24h.engulfs(it)) this.stats.requests24h += stats.requests
-
-        if (it7d.engulfs(it)) this.stats.requests7d += stats.requests
-
-        this.stats.requestsTotal += stats.requests
-      }
-    }
-
-    this.stats.lastRequest = await this.eventDAL.getLastValue()
-  }
-
-  clearStatsCache(now: DateTime = DateTime.now()): void | Promise<void> {
-    console.log('Cleaning stats cache for', this.info.name, this.info.address)
-
-    const startOfCache = now
-      .minus({ hours: 24 * 7 })
-      .startOf('hour')
-      .toMillis()
-
-    const timeStats = this.processor.sortTimeStats(
-      this.stats.requestsStatsByHour,
-    )
-    const leftBound = DateTime.fromMillis(startOfCache)
-
-    for (const stats of timeStats) {
-      if (Interval.fromISO(stats.interval).isAfter(leftBound)) break
-      delete this.stats.requestsStatsByHour[stats.interval]
-    }
-
-    this._shouldUpdate = true
-  }
-
-  async getHourlyStats(): Promise<HourlyStats> {
-    const statsMap = this.stats.requestsStatsByHour
-    const stats = sortTimeStatsMap(statsMap)
-
-    return {
-      stats,
-      statsMap,
-    }
-  }
-}`
-  
-    const processor: string =
-`import { Utils } from '@aleph-indexer/core'
-import { DateTimeUnit } from 'luxon'
-import { AccountTimeStat, InstructionEvent, ${Name}AccountStats } from '../types.js';
-
-const splitIt = Utils.splitDurationIntoIntervals
-
-export class EventProcessor {
-  processEvent(
-    event: InstructionEvent,
-    intervalUnit: DateTimeUnit,
-    intervalSize = 1,
-    stats: ${Name}AccountStats,
-  ): Record<string, AccountTimeStat> {
-    const [interval] = splitIt(
-      event.timestamp,
-      event.timestamp + 1,
-      intervalUnit,
-      intervalSize,
-    )
-    const intervalISO = interval.toISO()
-
-    const map = stats.requestsStatsByHour
-    let stat = (map[intervalISO] =
-      map[intervalISO] || ({} as AccountTimeStat))
-
-    stat.interval = intervalISO
-    stat.uniqueProgramIds = stats.accessingPrograms.size
-    stat.requests = (stat.requests || 0) + 1 //L
-    return map
-  }
-
-  sortTimeStats(
-    timeStatsMap: Record<string, AccountTimeStat>,
-    reverse = false,
-  ): AccountTimeStat[] {
-    const op = reverse ? -1 : 1
-    return Object.values(timeStatsMap).sort(
-      (a, b) => a.interval.localeCompare(b.interval) * op,
-    )
+  private getAccount(account: string): Account {
+    const accountInstance = this.accounts[account]
+    if (!accountInstance) throw new Error(${com}Account ${dollar}{account} does not exist${com})
+    return accountInstance
   }
 }
+`
 
-const eventProcessor = new EventProcessor()
-export default eventProcessor`
-  
-    const custom: string = 
-`import { 
-  DOMAIN_CACHE_START_DATE, 
-  ${NAME}_PROGRAM_ID, 
-  ${NAME}_PROGRAM_ID_PK 
-} from '../constants.js';
-import { 
-  AccountType, 
-  GlobalStats, 
-  InstructionEvent, 
-  ${Name}AccountInfo 
-} from '../types.js';
-import { 
-  ACCOUNT_DISCRIMINATOR, 
-  ACCOUNTS_DATA_LAYOUT 
-} from '../layouts/accounts.js'
+  let mainDomain = `import { StorageStream } from '@aleph-indexer/core'
 import {
-  EntityStorage,
-  Domain,
-  solanaPrivateRPCRoundRobin,
-  SolanaRPCRoundRobin,
-  Utils
-} from '@aleph-indexer/core'
-import { DateTime } from 'luxon'
-import { Account } from './account.js'
-import { instructionEventDAL } from '../dal/instruction.js'
-import bs58 from 'bs58'
-import { AccountInfo, PublicKey } from '@solana/web3.js'
+  MainDomainBase,
+  MainDomainWithDiscovery,
+  MainDomainWithStats,
+  AccountIndexerConfigWithMeta,
+  MainDomainContext,
+  AccountStats,
+} from '@aleph-indexer/framework'
+import {
+  Global${Name}Stats,
+  ${Name}Stats,
+  ${Name}ProgramData,
+  AccountType,
+  ${Name}AccountInfo,
+  AccountTypesGlobalStats,
+  ParsedEvents,
+} from '../types.js'
+import ${Name}Discoverer from './discoverer/${filename}.js'
 
-export class ${Name}Program extends Domain<Account> {
-  private _stats: GlobalStats = this.getNewGlobalStats()
+export default class MainDomain
+  extends MainDomainBase
+  implements MainDomainWithDiscovery, MainDomainWithStats
+{
+  protected stats!: Global${Name}Stats
 
   constructor(
-    protected accountTypes: Set<AccountType> = new Set(
-      Object.values(AccountType)
-    ),
-    protected startDate: number,
-    protected eventDAL: EntityStorage<InstructionEvent>,
-    protected solanaRpcRR: SolanaRPCRoundRobin = solanaPrivateRPCRoundRobin,
+    protected context: MainDomainContext,
+    protected discoverer: ${Name}Discoverer = new ${Name}Discoverer(),
   ) {
-    super()
+    super(context, {
+      discovery: 1000 * 60 * 60 * 1,
+      stats: 1000 * 60 * 5,
+    })
   }
 
-  async getAllAccountsOfType(
-    type: AccountType,
-  ): Promise<${Name}AccountInfo[]> {
-    const connection = await this.solanaRpcRR.getClient().getConnection()
-    const resp = await connection.getProgramAccounts(
-      ${NAME}_PROGRAM_ID_PK,
-      {
-        filters: [
-          {
-            memcmp: {
-              bytes: bs58.encode(ACCOUNT_DISCRIMINATOR[type]),
-              offset: 0,
-            },
+  async discoverAccounts(): Promise<
+    AccountIndexerConfigWithMeta<${Name}AccountInfo>[]
+  > {
+    const accounts = await this.discoverer.discoverAllAccounts()
+
+    return accounts.map((meta) => {
+      return {
+        account: meta.address,
+        meta,
+        index: {
+          transactions: {
+            chunkDelay: 0,
+            chunkTimeframe: 1000 * 60 * 60 * 24,
           },
-        ],
-      },
+          content: false,
+        },
+      }
+    })
+  }
+
+  async getAccounts(
+    includeStats?: boolean,
+  ): Promise<Record<string, ${Name}ProgramData>> {
+    const accounts: Record<string, ${Name}ProgramData> = {}
+
+    await Promise.all(
+      Array.from(this.accounts || []).map(async (account) => {
+        const actual = await this.getAccount(account, includeStats)
+        accounts[account] = actual as ${Name}ProgramData
+      }),
     )
-    return resp.map(
-      (value: { pubkey: PublicKey; account: AccountInfo<Buffer> }) =>
-        this.deserializeAccountResponse(value, type),
-    )
+
+    return accounts
   }
 
-  deserializeAccountResponse(
-    resp: { pubkey: PublicKey; account: AccountInfo<Buffer> },
-    type: AccountType,
-  ): ${Name}AccountInfo {
-    const data = ACCOUNTS_DATA_LAYOUT[type].deserialize(resp.account.data)[0]
-    const address = resp.pubkey.toBase58()
-    // Parsing names from on-chain account data can be complicated at times...
-    let name: string = address
-    if (Object.hasOwn(data, 'name')) {
-      if ((data as any).name instanceof Uint8Array)
-        name = ((data as any).name as Uint8Array).toString()
-      if ((data as any).name instanceof String) name = (data as any).name
-    }
-    return {
-      name,
-      type,
-      address: address,
-      programId: ${NAME}_PROGRAM_ID,
-      data: data,
-    }
+  async getAccount(
+    account: string,
+    includeStats?: boolean,
+  ): Promise<${Name}ProgramData> {
+    const info = (await this.context.indexerApi.invokeDomainMethod({
+      account,
+      method: 'get${Name}Info',
+    })) as ${Name}AccountInfo
+
+    if (!includeStats) return { info }
+
+    const { stats } = (await this.context.indexerApi.invokeDomainMethod({
+      account,
+      method: 'get${Name}Stats',
+    })) as AccountStats<${Name}Stats>
+
+    return { info, stats }
   }
 
-  addAccountByInfo(
-    info: ${Name}AccountInfo
-  ): Account {
-    if (this.accountStatsExists(info.address)) 
-      return this.accountStatsCaches[info.address]
+  async getAccountEventsByTime(
+    account: string,
+    startDate: number,
+    endDate: number,
+    opts: any,
+  ): Promise<StorageStream<string, ParsedEvents>> {
+    const stream = await this.context.indexerApi.invokeDomainMethod({
+      account,
+      method: 'getAccountEventsByTime',
+      args: [startDate, endDate, opts],
+    })
 
-    const account = new Account(info, this.startDate, this.eventDAL)
-
-    this.addAccountStats(account)
-
-    return account
+    console.log('getAccountEventsByTime stream', typeof stream)
+    return stream as StorageStream<string, ParsedEvents>
   }
 
-  /**
-   * Discovers all accounts of a certain type and adds domain objects for them.
-   * @param type
-   * @param index
-   * @param total
-   */
-   async discoverAccounts(
-    type: AccountType,
-    index?: number,
-    total?: number,
-  ): Promise<Account[]> {
-    const newAccounts = await this.getAllAccountsOfType(type)
-    const result: Account[] = []
+  async updateStats(now: number): Promise<void> {
+    this.stats = await this.computeGlobalStats()
+  }
 
-    for (const accountInfo of newAccounts) {
-      if (index !== undefined && total !== undefined) {
-        const hash = Utils.murmur(accountInfo.address) % total
-        if (index !== hash) continue
+  async getGlobalStats(addresses?: string[]): Promise<Global${Name}Stats> {
+    if (!addresses || addresses.length === 0) {
+      if (!this.stats) {
+        await this.updateStats(Date.now())
       }
 
-      const alreadyExists = this.accountStatsExists(accountInfo.address)
-      if (alreadyExists) continue
-
-      const domain = this.addAccountByInfo(accountInfo)
-      result.push(domain)
-    }
-
-    return result
-  }
-
-  async discoverAllAccounts(): Promise<Account[]> {
-    return await Promise.all([...this.accountTypes].map((type) =>
-      this.discoverAccounts(type)
-    )).then(allAccounts => allAccounts.flat())
-  }
-
-  async getGlobalStats(
-    addresses?: string[],
-  ): Promise<GlobalStats> {
-    if (!addresses || addresses.length === 0) {
-      return this._stats
+      return this.stats
     }
 
     return this.computeGlobalStats(addresses)
   }
 
-  // --------------------- PROTECTED ----------------------
-
-  protected async updateStats(now: DateTime = DateTime.now()): Promise<void> {
-    console.log('Updating global stats')
-    this._stats = await this.computeGlobalStats()
-  }
-
-  protected async computeGlobalStats(
+  async computeGlobalStats(
     accountAddresses?: string[],
-  ): Promise<GlobalStats> {
-    const accountMap = await this.getAllAccountStats()
+  ): Promise<Global${Name}Stats> {
+    const accountsTypesStats: Record<string, AccountTypesGlobalStats> =
+      await this.getAccountsTypesStats(accountAddresses)
 
-    const accounts: Account[] = !accountAddresses
-      ? Object.values(accountMap)
-      : accountAddresses.reduce((acc, address) => {
-          const market = accountMap[address]
-          if (market) acc.push(market)
-          return acc
-        }, [] as Account[])
+    const globalStats: Global${Name}Stats = this.getNewGlobalStats()
 
-    const globalStats: GlobalStats = this.getNewGlobalStats()
-    let uniqueProgramIds = new Set<string>([])
+    for (const { type, stats } of Object.values(accountsTypesStats)) {
+      if (!stats) continue
 
-    for (const account of accounts) {
-      // @note: Calculate last stats from reserves
-      const { requestsTotal, accessingPrograms } = account.stats
-
-      globalStats.totalAccounts[account.info.type] += 1
-      globalStats.totalRequests += requestsTotal //L -updatesTotal
-      uniqueProgramIds = new Set([
-        ...[...accessingPrograms].filter(value => !uniqueProgramIds.has(value)),
-        ...uniqueProgramIds
-      ])
+      const { totalRequests, totalUniqueAccessingPrograms } = stats.stats
+      globalStats.totalAccounts[type] += 1
+      globalStats.totalRequests += totalRequests
+      globalStats.totalUniqueAccessingPrograms += totalUniqueAccessingPrograms
     }
-
-    globalStats.totalUniqueAccessingPrograms += uniqueProgramIds.size
     return globalStats
   }
 
-  protected getNewGlobalStats(): GlobalStats {
+  getNewGlobalStats(): Global${Name}Stats {
     return {
       totalRequests: 0,
-      totalAccounts: {
-        [AccountType.SbState]: 0,
-        [AccountType.AggregatorAccountData]: 0,
-        [AccountType.PermissionAccountData]: 0,
-        [AccountType.LeaseAccountData]: 0,
-        [AccountType.OracleQueueAccountData]: 0,
-        [AccountType.CrankAccountData]: 0,
-        [AccountType.OracleAccountData]: 0,
-        [AccountType.JobAccountData]: 0,
-        [AccountType.VrfAccountData]: 0,
+      totalAccounts: {`
+  if(accounts){
+    for(const account of accounts.accounts){
+      mainDomain += `
+        [AccountType.${account.name}]: 0,`
+    }
+  }
+  mainDomain += `
       },
-      totalUniqueAccessingPrograms: 0
+      totalUniqueAccessingPrograms: 0,
     }
   }
 
-  protected async _loadCaches(index?: number, total?: number): Promise<void> {
-    await Promise.all([...this.accountTypes].map((type) =>
-      this.discoverAccounts(type, index, total)
-    ))
+  async getAccountsTypesStats(
+    accounts: string[] = [],
+  ): Promise<Record<string, AccountTypesGlobalStats>> {
+    this.checkStats()
+    const accountsTypesStats: Record<string, AccountTypesGlobalStats> = {}
+
+    accounts =
+      accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
+
+    Promise.all(
+      accounts.map(async (account) => {
+        const stats = (await this.context.indexerApi.invokeDomainMethod({
+          account,
+          method: 'getStats',
+          args: [],
+        })) as AccountStats
+
+        const type: AccountType = this.discoverer.getAccountType(account)
+
+        accountsTypesStats[account] = {
+          type: type,
+          stats: stats,
+        }
+      }),
+    )
+    return accountsTypesStats
   }
 }
-
-export const ${name}Program = new ${Name}Program(
-  new Set([AccountType.OracleAccountData]),
-  DOMAIN_CACHE_START_DATE,
-  instructionEventDAL,
-)
-export default ${name}Program`
+`
   
-    return { account, processor, custom }
+  return { account, indexer, mainDomain }
   }
