@@ -1,11 +1,9 @@
 import { ViewInstructions } from "./types"
 
 export function renderParsersFiles(instructions: ViewInstructions | undefined){
-  const dollar = '$'
-  const com = '`'
 
   let event: string = 
-`import { InstructionContextV1, AlephParsedEvent } from '@aleph-indexer/core'
+`import { InstructionContextV1, AlephParsedEvent } from '../../../solana-indexer-framework/packages/core/src'
 
 import {
   ParsedEvents,
@@ -30,9 +28,9 @@ export class EventParser {
     const parsed = (ix as AlephParsedEvent<InstructionType, ParsedEventsInfo>)
       .parsed
 
-    const id = ${com}${dollar}{parentTx.signature}${dollar}{
-      parentIx ? ${com}:${dollar}{parentIx.index.toString().padStart(2, '0')}${com} : ''
-    }:${dollar}{ix.index.toString().padStart(2, '0')}${com}
+    const id = \`\${parentTx.signature}\${
+      parentIx ? \` :\${parentIx.index.toString().padStart(2, '0')}\` : ''
+    }:\${ix.index.toString().padStart(2, '0')}\` 
 
     const timestamp = parentTx.blockTime
       ? parentTx.blockTime * 1000

@@ -48,16 +48,21 @@ services:
   "dependencies": {
     "@metaplex-foundation/beet": "0.6.1",
     "@metaplex-foundation/beet-solana": "0.3.1",
-    "@aleph-indexer/core": "1.0.0",
-    "@aleph-indexer/layout": "1.0.0"
+    "@solana/web3.js": "1.61.1",
+    "bs58": "5.0.0",
+    "graphql": "16.6.0",
+    "graphql-tools": "8.3.6"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.0.1"
   }
 }`
 
   let run: string = 
 `import { fileURLToPath } from 'url'
 import path from 'path'
-import { config } from '@aleph-indexer/core'
-import SDK, { TransportType } from '@aleph-indexer/framework'
+import { config } from '../../../solana-indexer-framework/packages/core/src'
+import SDK, { TransportType } from '../../../solana-indexer-framework/packages/framework'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -95,7 +100,7 @@ main()
 
   let tsconfig: string = 
 `{
-  "extends": "../../tsconfig.json",
+  "extends": "../solana-indexer-framework/tsconfig.json",
   "compilerOptions": {
       "outDir": "dist"
   },

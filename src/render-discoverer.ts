@@ -1,6 +1,6 @@
-export function renderDiscovererFiles(Name: string){
-    const NAME = Name.toUpperCase()
-    const name = Name.toLowerCase()
+export function renderDiscovererFiles(Name: string, filename: string){
+    const NAME = filename.toUpperCase()
+    const name = filename.toLowerCase()
 
     let discoverer: string = 
 `import {
@@ -12,7 +12,7 @@ import {
     ACCOUNT_DISCRIMINATOR,
     ACCOUNTS_DATA_LAYOUT,
 } from '../../utils/layouts/accounts.js'
-import { solanaPrivateRPCRoundRobin, Utils } from '@aleph-indexer/core'
+import { solanaPrivateRPCRoundRobin, Utils } from '../../../../solana-indexer-framework/packages/core/src'
 import bs58 from 'bs58'
 import { AccountInfo, PublicKey } from '@solana/web3.js'
 

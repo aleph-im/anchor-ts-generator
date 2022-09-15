@@ -1,6 +1,6 @@
 export function renderDALFiles(){
 
-  const eventDal = `import { EntityStorage } from '@aleph-indexer/core'
+  const eventDal = `import { EntityStorage } from '../../../solana-indexer-framework/packages/core/src'
 import { ParsedEvents } from '../types.js'
 
 export type EventStorage = EntityStorage<ParsedEvents>

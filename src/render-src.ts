@@ -10,14 +10,14 @@ export function renderSrcFiles(Name: string, filename: string, instructionsView:
   if(instructionsView) {
   constants = 
 `import { PublicKey } from '@solana/web3.js'
-import { config } from '@aleph-indexer/core'
+import { config } from '../../solana-indexer-framework/packages/core/src'
 import { InstructionType } from './types.js'
 
 export enum ProgramName {
   ${Name} = '${name}',
 }
 
-// This is just an example, to use it on a type guard on stats folder 
+// @todo: This is just an example, to use it on a type guard on stats folder 
 export const collectionEvent1 = [
   InstructionType.${instructionsView.instructions[0].name},
   InstructionType.${instructionsView.instructions[1].name},
@@ -59,7 +59,7 @@ export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
 `
     types +=
 `
-import { AccountStats } from '@aleph-indexer/framework'
+import { AccountStats } from '../../solana-indexer-framework/packages/framework'
 import { AccountType, ParsedEvents, ParsedAccountsData } from './utils/layouts/index.js'
 
 export type ${Name}AccountInfo = {

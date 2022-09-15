@@ -1,6 +1,4 @@
 export function renderApiFiles(Name: string){
-  const dollar = '$'
-  const com = '`'
   const name = Name.toLowerCase()
 
   const indexApi: string = `export { default } from './schema.js'`
@@ -14,7 +12,7 @@ import {
   ${Name}AccountInfo,
   ${Name}ProgramData,
 } from '../types.js'
-import { AccountStats } from '@aleph-indexer/framework'
+import { AccountStats } from '../../../solana-indexer-framework/packages/framework'
 
 export type AccountsFilters = {
   types?: AccountType[]
@@ -106,7 +104,7 @@ export class APIResolvers {
   protected async getAccountByAddress(address: string): Promise<AccountStats> {
     const add: string[] = [address]
     const account = await this.domain.getAccountStats(add)
-    if (!account) throw new Error(${com}Account ${dollar}{address} does not exist${com})
+    if (!account) throw new Error(\`Account \${address} does not exist\`)
     return account[0]
   }
 
@@ -141,9 +139,9 @@ import MainDomain from '../domain/main.js'
 import { makeExecutableSchema } from 'graphql-tools'
 import { readFileSync } from 'fs'
 import path from 'path'
-import { APISchemaBase } from '@aleph-indexer/framework'
+import { IndexerAPISchema } from '../../../solana-indexer-framework/packages/framework'
 
-export default class APISchema extends APISchemaBase {
+export default class APISchema extends IndexerAPISchema {
   constructor(
     protected domain: MainDomain,
     protected resolver: APIResolvers = new APIResolvers(domain),

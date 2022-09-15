@@ -106,7 +106,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.discovererDir))
     mkdirSync(paths.discovererDir)
-  const { discoverer } = renderDiscovererFiles(Name)
+  const { discoverer } = renderDiscovererFiles(Name, idl.name)
   try {
     writeFileSync(paths.discovererFile(idl.name), format(discoverer, DEFAULT_FORMAT_OPTS));
   } catch (err) {

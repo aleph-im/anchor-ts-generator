@@ -41,8 +41,7 @@ export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {
 
 export const ACCOUNTS_DATA_LAYOUT: Record<
     AccountType,
-    BeetStruct<ParsedAccounts, ParsedAccountsData> |
-    FixableBeetStruct<ParsedAccounts, ParsedAccountsData>
+    any
 > = {
 `
         for(const account of accountsView.accounts){
@@ -56,7 +55,7 @@ export const ACCOUNTS_DATA_LAYOUT: Record<
 
     let ixLayouts: string = ''
     if(instructionsView != undefined && instructionsView.instructions.length > 0) {
-        ixLayouts += `import { EventBase } from '@aleph-indexer/core'
+        ixLayouts += `import { EventBase } from '../../../../solana-indexer-framework/packages/core/src'
 import * as solita from './solita/index.js'
 `
 

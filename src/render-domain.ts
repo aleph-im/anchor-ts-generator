@@ -2,20 +2,18 @@ import { ViewAccounts } from "./types"
 
 export function renderDomainFiles(Name: string, filename: string, accounts: ViewAccounts | undefined){
   const NAME = filename.toUpperCase()
-  const dollar = '$'
-  const com = '`'
 
-  const account = `import { StorageStream, Utils } from '@aleph-indexer/core'
+  const account = `import { StorageStream, Utils } from '../../../solana-indexer-framework/packages/core/src'
 import {
   AccountTimeSeriesStatsManager,
   AccountTimeSeriesStats,
   AccountStatsFilters,
   AccountStats,
-} from '@aleph-indexer/framework'
+} from '../../../solana-indexer-framework/packages/framework'
 import { EventDALIndex, EventStorage } from '../dal/event.js'
 import { ParsedEvents, ${Name}AccountInfo } from '../types.js'
 
-export class Account {
+export class AccountDomain {
   constructor(
     public info: ${Name}AccountInfo,
     protected eventDAL: EventStorage,
@@ -52,34 +50,33 @@ export class Account {
   }
 }
 `
-  const indexer = `import { StorageStream, Utils } from '@aleph-indexer/core'
+  const indexer = `import { StorageStream, Utils } from '../../../solana-indexer-framework/packages/core/src'
 import {
-  IndexerDomain as IndexerDomainI,
   IndexerDomainContext,
   AccountIndexerConfigWithMeta,
   InstructionContextV1,
-  IndexerDomainBase,
-  IndexerDomainWithStats,
+  IndexerWorkerDomain,
+  IndexerWorkerDomainWithStats,
   createStatsStateDAL,
   createStatsTimeSeriesDAL,
   AccountTimeSeriesStats,
   AccountStatsFilters,
   AccountStats,
-} from '@aleph-indexer/framework'
+} from '../../../solana-indexer-framework/packages/framework'
 import { eventParser as eParser } from '../parsers/event.js'
 import { createEventDAL } from '../dal/event.js'
 import { ParsedEvents, ${Name}AccountInfo } from '../types.js'
-import { Account } from './account.js'
+import { AccountDomain } from './account.js'
 import { createAccountStats } from './stats/timeSeries.js'
 import { ${NAME}_PROGRAM_ID } from '../constants.js'
 
 const { isParsedIx } = Utils
 
 export default class IndexerDomain
-  extends IndexerDomainBase
-  implements IndexerDomainI, IndexerDomainWithStats
+  extends IndexerWorkerDomain
+  implements IndexerWorkerDomainWithStats
 {
-  protected accounts: Record<string, Account> = {}
+  protected accounts: Record<string, AccountDomain> = {}
 
   constructor(
     protected context: IndexerDomainContext,
@@ -100,17 +97,17 @@ export default class IndexerDomain
     config: AccountIndexerConfigWithMeta<${Name}AccountInfo>,
   ): Promise<void> {
     const { account, meta } = config
-    const { indexerApi } = this.context
+    const { apiClient } = this.context
 
     const accountTimeSeries = await createAccountStats(
       account,
-      indexerApi,
+      apiClient,
       this.eventDAL,
       this.statsStateDAL,
       this.statsTimeSeriesDAL,
     )
 
-    this.accounts[account] = new Account(meta, this.eventDAL, accountTimeSeries)
+    this.accounts[account] = new AccountDomain(meta, this.eventDAL, accountTimeSeries)
 
     console.log('Account indexing', this.context.instanceName, account)
   }
@@ -168,28 +165,28 @@ export default class IndexerDomain
   ): Promise<void> {
     const parsedIxs = ixsContext.map((ix) => this.eventParser.parse(ix))
 
-    console.log(${com}indexing ${dollar}{ixsContext.length} parsed ixs${com})
+    console.log(\`indexing \${ixsContext.length} parsed ixs\`)
 
     await this.eventDAL.save(parsedIxs)
   }
 
-  private getAccount(account: string): Account {
+  private getAccount(account: string): AccountDomain {
     const accountInstance = this.accounts[account]
-    if (!accountInstance) throw new Error(${com}Account ${dollar}{account} does not exist${com})
+    if (!accountInstance) throw new Error(\`Account \${account} does not exist\`)
     return accountInstance
   }
 }
 `
 
-  let mainDomain = `import { StorageStream } from '@aleph-indexer/core'
+  let mainDomain = `import { StorageStream } from '../../../solana-indexer-framework/packages/core/src'
 import {
-  MainDomainBase,
-  MainDomainWithDiscovery,
-  MainDomainWithStats,
+  IndexerMainDomain,
+  IndexerMainDomainWithDiscovery,
+  IndexerMainDomainWithStats,
   AccountIndexerConfigWithMeta,
-  MainDomainContext,
+  IndexerMainDomainContext,
   AccountStats,
-} from '@aleph-indexer/framework'
+} from '../../../solana-indexer-framework/packages/framework'
 import {
   Global${Name}Stats,
   ${Name}Stats,
@@ -202,17 +199,17 @@ import {
 import ${Name}Discoverer from './discoverer/${filename}.js'
 
 export default class MainDomain
-  extends MainDomainBase
-  implements MainDomainWithDiscovery, MainDomainWithStats
+  extends IndexerMainDomain
+  implements IndexerMainDomainWithDiscovery, IndexerMainDomainWithStats
 {
   protected stats!: Global${Name}Stats
 
   constructor(
-    protected context: MainDomainContext,
+    protected context: IndexerMainDomainContext,
     protected discoverer: ${Name}Discoverer = new ${Name}Discoverer(),
   ) {
     super(context, {
-      discovery: 1000 * 60 * 60 * 1,
+      discoveryInterval: 1000 * 60 * 60 * 1,
       stats: 1000 * 60 * 5,
     })
   }
@@ -256,14 +253,14 @@ export default class MainDomain
     account: string,
     includeStats?: boolean,
   ): Promise<${Name}ProgramData> {
-    const info = (await this.context.indexerApi.invokeDomainMethod({
+    const info = (await this.context.apiClient.invokeDomainMethod({
       account,
       method: 'get${Name}Info',
     })) as ${Name}AccountInfo
 
     if (!includeStats) return { info }
 
-    const { stats } = (await this.context.indexerApi.invokeDomainMethod({
+    const { stats } = (await this.context.apiClient.invokeDomainMethod({
       account,
       method: 'get${Name}Stats',
     })) as AccountStats<${Name}Stats>
@@ -277,7 +274,7 @@ export default class MainDomain
     endDate: number,
     opts: any,
   ): Promise<StorageStream<string, ParsedEvents>> {
-    const stream = await this.context.indexerApi.invokeDomainMethod({
+    const stream = await this.context.apiClient.invokeDomainMethod({
       account,
       method: 'getAccountEventsByTime',
       args: [startDate, endDate, opts],
@@ -349,7 +346,7 @@ export default class MainDomain
 
     Promise.all(
       accounts.map(async (account) => {
-        const stats = (await this.context.indexerApi.invokeDomainMethod({
+        const stats = (await this.context.apiClient.invokeDomainMethod({
           account,
           method: 'getStats',
           args: [],
