@@ -1,6 +1,6 @@
 export function renderDiscovererFiles(Name: string, filename: string){
     const NAME = filename.toUpperCase()
-    const name = filename.toLowerCase()
+    const naMe = Name.charAt(0).toUpperCase() + Name.slice(1)
 
     let discoverer: string = 
 `import {
@@ -12,7 +12,7 @@ import {
     ACCOUNT_DISCRIMINATOR,
     ACCOUNTS_DATA_LAYOUT,
 } from '../../utils/layouts/accounts.js'
-import { solanaPrivateRPCRoundRobin, Utils } from '../../../../solana-indexer-framework/packages/core/src'
+import { solanaPrivateRPCRoundRobin, Utils } from '@aleph-indexer/core'
 import bs58 from 'bs58'
 import { AccountInfo, PublicKey } from '@solana/web3.js'
 
@@ -28,18 +28,18 @@ export default class ${Name}Discoverer {
         total?: number,
     ): Promise<${Name}AccountInfo[]> {
         const newAccounts = await this.getAllAccountsOfType(type)
-        const result: ${Name}AccountInfo[] = []
+        const result: ${naMe}AccountInfo[] = []
 
-        for (const ${name}AccountInfo of newAccounts) {
+        for (const ${naMe}AccountInfo of newAccounts) {
             if (index !== undefined && total !== undefined) {
-                const hash = Utils.murmur(${name}AccountInfo.address) % total
+                const hash = Utils.murmur(${naMe}AccountInfo.address) % total
                 if (index !== hash) continue
             }
     
-            if (this.cache[${name}AccountInfo.address]) continue
+            if (this.cache[${naMe}AccountInfo.address]) continue
     
-            this.cache[${name}AccountInfo.address] = ${name}AccountInfo
-            result.push(this.cache[${name}AccountInfo.address])
+            this.cache[${naMe}AccountInfo.address] = ${naMe}AccountInfo
+            result.push(this.cache[${naMe}AccountInfo.address])
         }
 
         return result

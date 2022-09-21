@@ -60,7 +60,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   if(!existsSync(paths.apiDir))
     mkdirSync(paths.apiDir)
   await generateSchema(paths, idl);
-  const { indexApi, resolversApi, schemaApi } = renderApiFiles(Name)
+  const { indexApi, resolversApi, schemaApi } = renderApiFiles(Name, idl.name)
   try {
     writeFileSync(paths.apiFile('index'), format(indexApi, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.apiFile('resolvers'), format(resolversApi, DEFAULT_FORMAT_OPTS));

@@ -3,13 +3,13 @@ import { ViewAccounts } from "./types"
 export function renderDomainFiles(Name: string, filename: string, accounts: ViewAccounts | undefined){
   const NAME = filename.toUpperCase()
 
-  const account = `import { StorageStream, Utils } from '../../../solana-indexer-framework/packages/core/src'
+  const account = `import { StorageStream, Utils } from '@aleph-indexer/core'
 import {
   AccountTimeSeriesStatsManager,
   AccountTimeSeriesStats,
   AccountStatsFilters,
   AccountStats,
-} from '../../../solana-indexer-framework/packages/framework'
+} from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../dal/event.js'
 import { ParsedEvents, ${Name}AccountInfo } from '../types.js'
 
@@ -50,7 +50,7 @@ export class AccountDomain {
   }
 }
 `
-  const indexer = `import { StorageStream, Utils } from '../../../solana-indexer-framework/packages/core/src'
+  const indexer = `import { StorageStream, Utils } from '@aleph-indexer/core'
 import {
   IndexerDomainContext,
   AccountIndexerConfigWithMeta,
@@ -62,7 +62,7 @@ import {
   AccountTimeSeriesStats,
   AccountStatsFilters,
   AccountStats,
-} from '../../../solana-indexer-framework/packages/framework'
+} from '@aleph-indexer/framework'
 import { eventParser as eParser } from '../parsers/event.js'
 import { createEventDAL } from '../dal/event.js'
 import { ParsedEvents, ${Name}AccountInfo } from '../types.js'
@@ -178,7 +178,7 @@ export default class IndexerDomain
 }
 `
 
-  let mainDomain = `import { StorageStream } from '../../../solana-indexer-framework/packages/core/src'
+  let mainDomain = `import { StorageStream } from '@aleph-indexer/core'
 import {
   IndexerMainDomain,
   IndexerMainDomainWithDiscovery,
@@ -186,7 +186,7 @@ import {
   AccountIndexerConfigWithMeta,
   IndexerMainDomainContext,
   AccountStats,
-} from '../../../solana-indexer-framework/packages/framework'
+} from '@aleph-indexer/framework'
 import {
   Global${Name}Stats,
   ${Name}Stats,

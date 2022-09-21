@@ -10,7 +10,7 @@ export function renderSrcFiles(Name: string, filename: string, instructionsView:
   if(instructionsView) {
   constants = 
 `import { PublicKey } from '@solana/web3.js'
-import { config } from '../../solana-indexer-framework/packages/core/src'
+import { config } from 'core'
 import { InstructionType } from './types.js'
 
 export enum ProgramName {
@@ -59,7 +59,7 @@ export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
 `
     types +=
 `
-import { AccountStats } from '../../solana-indexer-framework/packages/framework'
+import { AccountStats } from '@aleph-indexer/framework'
 import { AccountType, ParsedEvents, ParsedAccountsData } from './utils/layouts/index.js'
 
 export type ${Name}AccountInfo = {

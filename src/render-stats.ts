@@ -11,10 +11,10 @@ export function renderStatsFiles(Name: string, filename: string, instructions: V
     StatsTimeSeriesStorage,
     TimeFrame,
     TimeSeriesStats,
-} from '../../../../solana-indexer-framework/packages/framework'
+} from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../../dal/event.js'
-import { ParsedEvents, ${Name}Info } from '../../types'
-import statsAggregator from './statsAggregator'
+import { ParsedEvents, ${Name}Info } from '../../types.js'
+import statsAggregator from './statsAggregator.js'
 import eventAggregator from './timeSeriesAggregator.js'
 
 export async function createAccountStats(
@@ -180,7 +180,7 @@ export default eventAggregator
     }
     const statsAggregator =
 `import { DateTime } from 'luxon'
-import { TimeFrame, AccountAggregatorFnArgs } from '../../../../solana-indexer-framework/packages/framework'
+import { TimeFrame, AccountAggregatorFnArgs } from '@aleph-indexer/framework'
 import { ${Name}Stats, ${Name}Info } from '../../types.js'
 import eventAggregator from './timeSeriesAggregator.js'
 

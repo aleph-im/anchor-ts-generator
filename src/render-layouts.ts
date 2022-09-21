@@ -55,7 +55,7 @@ export const ACCOUNTS_DATA_LAYOUT: Record<
 
     let ixLayouts: string = ''
     if(instructionsView != undefined && instructionsView.instructions.length > 0) {
-        ixLayouts += `import { EventBase } from '../../../../solana-indexer-framework/packages/core/src'
+        ixLayouts += `import { EventBase } from '@aleph-indexer/core'
 import * as solita from './solita/index.js'
 `
 

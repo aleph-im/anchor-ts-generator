@@ -1,5 +1,5 @@
-export function renderApiFiles(Name: string){
-  const name = Name.toLowerCase()
+export function renderApiFiles(Name: string, filename: string){
+  const name = filename.toLowerCase()
 
   const indexApi: string = `export { default } from './schema.js'`
 
@@ -12,7 +12,7 @@ import {
   ${Name}AccountInfo,
   ${Name}ProgramData,
 } from '../types.js'
-import { AccountStats } from '../../../solana-indexer-framework/packages/framework'
+import { AccountStats } from '@aleph-indexer/framework'
 
 export type AccountsFilters = {
   types?: AccountType[]
@@ -139,15 +139,14 @@ import MainDomain from '../domain/main.js'
 import { makeExecutableSchema } from 'graphql-tools'
 import { readFileSync } from 'fs'
 import path from 'path'
-import { IndexerAPISchema } from '../../../solana-indexer-framework/packages/framework'
 
-export default class APISchema extends IndexerAPISchema {
+export default class APISchema extends GraphQLSchema {
   constructor(
     protected domain: MainDomain,
     protected resolver: APIResolvers = new APIResolvers(domain),
     protected schema = getSchema(resolver),
   ) {
-    super(domain, schema)
+    super(schema)
   }
 }
 

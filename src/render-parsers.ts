@@ -3,7 +3,7 @@ import { ViewInstructions } from "./types"
 export function renderParsersFiles(instructions: ViewInstructions | undefined){
 
   let event: string = 
-`import { InstructionContextV1, AlephParsedEvent } from '../../../solana-indexer-framework/packages/core/src'
+`import { InstructionContextV1, AlephParsedEvent } from '@aleph-indexer/core'
 
 import {
   ParsedEvents,
