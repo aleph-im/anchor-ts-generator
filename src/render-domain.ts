@@ -3,7 +3,7 @@ import { ViewAccounts } from "./types"
 export function renderDomainFiles(Name: string, filename: string, accounts: ViewAccounts | undefined){
   const NAME = filename.toUpperCase()
 
-  const account = `import { StorageStream, Utils } from '@aleph-indexer/core'
+  const account = `import { StorageStream } from '@aleph-indexer/core'
 import {
   AccountTimeSeriesStatsManager,
   AccountTimeSeriesStats,
@@ -50,7 +50,7 @@ export class AccountDomain {
   }
 }
 `
-  const indexer = `import { StorageStream, Utils } from '@aleph-indexer/core'
+  const worker = `import { StorageStream, Utils } from '@aleph-indexer/core'
 import {
   IndexerDomainContext,
   AccountIndexerConfigWithMeta,
@@ -132,7 +132,7 @@ export default class IndexerDomain
 
   // ------------- Custom impl methods -------------------
 
-  async get${Name}AccountInfo(reserve: string): Promise<${Name}AccountInfo> {
+  async getAccountInfo(reserve: string): Promise<${Name}AccountInfo> {
     const res = this.getAccount(reserve)
     return res.info
   }
@@ -193,7 +193,6 @@ import {
   ${Name}ProgramData,
   AccountType,
   ${Name}AccountInfo,
-  AccountTypesGlobalStats,
   ParsedEvents,
 } from '../types.js'
 import ${Name}Discoverer from './discoverer/${filename}.js'
@@ -217,7 +216,7 @@ export default class MainDomain
   async discoverAccounts(): Promise<
     AccountIndexerConfigWithMeta<${Name}AccountInfo>[]
   > {
-    const accounts = await this.discoverer.discoverAllAccounts()
+    const accounts = await this.discoverer.loadAccounts()
 
     return accounts.map((meta) => {
       return {
@@ -255,7 +254,7 @@ export default class MainDomain
   ): Promise<${Name}ProgramData> {
     const info = (await this.context.apiClient.invokeDomainMethod({
       account,
-      method: 'get${Name}Info',
+      method: 'get$AccountInfo',
     })) as ${Name}AccountInfo
 
     if (!includeStats) return { info }
@@ -303,18 +302,21 @@ export default class MainDomain
   async computeGlobalStats(
     accountAddresses?: string[],
   ): Promise<Global${Name}Stats> {
-    const accountsTypesStats: Record<string, AccountTypesGlobalStats> =
-      await this.getAccountsTypesStats(accountAddresses)
-
+    const accountStats = await this.getAccountStats(accountAddresses)
     const globalStats: Global${Name}Stats = this.getNewGlobalStats()
 
-    for (const { type, stats } of Object.values(accountsTypesStats)) {
-      if (!stats) continue
+    for (const accountStats of accountsStats) {
+      if (!accountStats.stats) continue
 
-      const { totalRequests, totalUniqueAccessingPrograms } = stats.stats
-      globalStats.totalAccounts[type] += 1
+      const { totalRequests, totalUniqueAccessingPrograms, totalAccounts } =
+      accountStats.stats
+
+      const type = this.discoverer.getAccountType(accountStats.account)
+
+      globalStats.totalAccounts[type] += totalAccounts[type]
       globalStats.totalRequests += totalRequests
       globalStats.totalUniqueAccessingPrograms += totalUniqueAccessingPrograms
+
     }
     return globalStats
   }
@@ -334,36 +336,8 @@ export default class MainDomain
       totalUniqueAccessingPrograms: 0,
     }
   }
-
-  async getAccountsTypesStats(
-    accounts: string[] = [],
-  ): Promise<Record<string, AccountTypesGlobalStats>> {
-    this.checkStats()
-    const accountsTypesStats: Record<string, AccountTypesGlobalStats> = {}
-
-    accounts =
-      accounts.length !== 0 ? accounts : Array.from(this.accounts.values())
-
-    Promise.all(
-      accounts.map(async (account) => {
-        const stats = (await this.context.apiClient.invokeDomainMethod({
-          account,
-          method: 'getStats',
-          args: [],
-        })) as AccountStats
-
-        const type: AccountType = this.discoverer.getAccountType(account)
-
-        accountsTypesStats[account] = {
-          type: type,
-          stats: stats,
-        }
-      }),
-    )
-    return accountsTypesStats
-  }
 }
 `
   
-  return { account, indexer, mainDomain }
+  return { account, worker, mainDomain }
   }

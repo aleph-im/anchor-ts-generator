@@ -1,6 +1,6 @@
 export function renderDiscovererFiles(Name: string, filename: string){
     const NAME = filename.toUpperCase()
-    const naMe = Name.charAt(0).toUpperCase() + Name.slice(1)
+    const naMe = Name.charAt(0).toLowerCase() + Name.slice(1)
 
     let discoverer: string = 
 `import {
@@ -12,7 +12,7 @@ import {
     ACCOUNT_DISCRIMINATOR,
     ACCOUNTS_DATA_LAYOUT,
 } from '../../utils/layouts/accounts.js'
-import { solanaPrivateRPCRoundRobin, Utils } from '@aleph-indexer/core'
+import { solanaPrivateRPC } from '@aleph-indexer/core'
 import bs58 from 'bs58'
 import { AccountInfo, PublicKey } from '@solana/web3.js'
 
@@ -22,54 +22,47 @@ export default class ${Name}Discoverer {
         protected cache: Record<string, ${Name}AccountInfo> = {},
     ) {}
 
-    async discoverAccounts(
-        type: AccountType,
-        index?: number,
-        total?: number,
-    ): Promise<${Name}AccountInfo[]> {
-        const newAccounts = await this.getAllAccountsOfType(type)
-        const result: ${naMe}AccountInfo[] = []
+    async loadAccounts(): Promise<${Name}AccountInfo[]> {
+        const newAccounts:${Name}AccountInfo[] = []
+        const accounts = await this.getAllAccounts()
 
-        for (const ${naMe}AccountInfo of newAccounts) {
-            if (index !== undefined && total !== undefined) {
-                const hash = Utils.murmur(${naMe}AccountInfo.address) % total
-                if (index !== hash) continue
-            }
-    
+        for (const ${naMe}AccountInfo of accounts) {
             if (this.cache[${naMe}AccountInfo.address]) continue
     
             this.cache[${naMe}AccountInfo.address] = ${naMe}AccountInfo
-            result.push(this.cache[${naMe}AccountInfo.address])
+            newAccounts.push(this.cache[${naMe}AccountInfo.address])
         }
 
-        return result
+        return newAccounts
     }
 
     getAccountType(address: string): AccountType {
         return this.cache[address].type
     }
 
-    async getAllAccountsOfType(
-        type: AccountType,
-    ): Promise<${Name}AccountInfo[]> {
-        const connection = solanaPrivateRPCRoundRobin.getClient().getConnection()
-        const resp = await connection.getProgramAccounts(
-        ${NAME}_PROGRAM_ID_PK,
-        {
-            filters: [
+    async getAllAccounts(): Promise<${Name}AccountInfo[]> {
+        const connection = solanaPrivateRPC.getConnection()
+        const accounts: ${Name}AccountInfo[] = []
+        for(const type of this.accountTypes){
+          const resp = await connection.getProgramAccounts(
+            MARINADE_FINANCE_PROGRAM_ID_PK,
             {
-                memcmp: {
-                bytes: bs58.encode(ACCOUNT_DISCRIMINATOR[type]),
-                offset: 0,
+              filters: [
+                {
+                  memcmp: {
+                    bytes: bs58.encode(ACCOUNT_DISCRIMINATOR[type]),
+                    offset: 0,
+                  },
                 },
+              ],
             },
-            ],
-        },
-        )
-        return resp.map(
+          )
+          resp.map(
             (value: { pubkey: PublicKey; account: AccountInfo<Buffer> }) =>
-                this.deserializeAccountResponse(value, type),
-            )
+              accounts.push(this.deserializeAccountResponse(value, type)),
+          )
+        }
+        return accounts
     }
 
     deserializeAccountResponse(
@@ -92,12 +85,6 @@ export default class ${Name}Discoverer {
             address: address,
             data: data,
         }
-    }
-
-    async discoverAllAccounts(): Promise<${Name}AccountInfo[]> {
-        return await Promise.all(
-        [...this.accountTypes].map((type) => this.discoverAccounts(type)),
-        ).then((allAccounts) => allAccounts.flat())
     }
 }
 `

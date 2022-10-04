@@ -5,25 +5,21 @@ export function renderRootFiles(filename: string){
 `version: '2'
 
 services:
-  error-indexer:
+  ${name}:
     build: ../..
-    container_name: ${filename}-indexer
     volumes:
       - ~/indexer.data:/app/data:rw
-      - ~/indexer.discovery:/app/discovery:rw
     extra_hosts:
       - host.docker.internal:host-gateway
     env_file:
       - ../../.env
       - ./.env
     environment:
-      - DEX=${filename}
-    ports:
-      - 8080:8080
-    # (configure them in .env file)
-    #   - LETSENCRYPT_HOST=splerror.api.aleph.cloud
-    #   - VIRTUAL_HOST=splerror.api.aleph.cloud
-    #   - VIRTUAL_PORT=8080
+      - INDEXER=${name}
+      - LETSENCRYPT_HOST=port.api.aleph.cloud
+      - VIRTUAL_HOST=port.api.aleph.cloud
+      - VIRTUAL_PORT=8080
+      - SOLANA_RPC=http://solrpc1.aleph.cloud:7725/
     network_mode: bridge
 `
 
@@ -37,27 +33,24 @@ services:
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "start": "npm run build && node ./dist/run.js",
-    "build": "tsc -p ./tsconfig.json && npm run postbuild",
-    "build:ts": "tsc -p ./tsconfig.json",
+    "build": "tsc -p ./tsconfig.json",
     "clean:ts": "rm -rf ./dist",
     "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json",
-    "postbuild": "cp ./src/api/schema.graphql ./dist/src/api/schema.graphql",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npm i && npm link @aleph-indexer/core @aleph-indexer/framework && npm run build && node ./dist/run.js",
+    "test": "echo \\"Error: no test specified\" && exit 1",
     "up": "docker-compose up -d",
     "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name error-devnet up -d"
   },
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
-    "@metaplex-foundation/beet": "0.6.1",
-    "@metaplex-foundation/beet-solana": "0.3.1",
+    "@aleph-indexer/core": "file:../../../solana-indexer-framework/packages/core/dist",
+    "@aleph-indexer/framework": "file:../../../solana-indexer-framework/packages/framework/dist",
+    "@metaplex-foundation/beet": "0.7.1",
+    "@metaplex-foundation/beet-solana": "0.4.0",
+    "@solana/spl-token": "0.3.5",
     "@solana/web3.js": "1.61.1",
-    "bs58": "5.0.0",
-    "graphql": "16.6.0",
-    "graphql-tools": "8.3.6",
-    "@aleph-indexer/core": "1.0.0",
-    "@aleph-indexer/framework": "1.0.0"
+    "bs58": "5.0.0"
   },
   "devDependencies": {
     "@types/luxon": "^3.0.1",
@@ -69,34 +62,46 @@ services:
   let run: string = 
 `import { fileURLToPath } from 'url'
 import path from 'path'
+import { config } from '@aleph-indexer/core'
 import SDK, { TransportType } from '@aleph-indexer/framework'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 async function main() {
-  const indexerDomainPath = path.join(__dirname, './src/domain/indexer.js')
+  const workerDomainPath = path.join(__dirname, './src/domain/worker.js')
   const mainDomainPath = path.join(__dirname, './src/domain/main.js')
   const apiSchemaPath = path.join(__dirname, './src/api/index.js')
 
+  const instances = Number(config.INDEXER_INSTANCES || 2)
+  const apiPort = Number(config.INDEXER_API_PORT || 8080)
+  const tcpPort = Number(config.INDEXER_TCP_PORT) || undefined
+  const tcpUrls = config.INDEXER_TCP_URLS || undefined
+
+  const projectId = '${name}'
+  const dataPath = config.INDEXER_DATA_PATH || undefined // 'data'
+  const transport =
+    (config.INDEXER_TRANSPORT as TransportType) || TransportType.LocalNet
+
+  if (!projectId) throw new Error('INDEXER_NAMESPACE env var must be provided ')
+
   await SDK.init({
-    ${name},
-    transport: TransportType.LocalNet,
+    projectId,
+    transport,
+    transportConfig,
+    apiPort,
     indexer: {
+      dataPath,
+      tcpPort,
+      tcpUrls,
       main: {
         domainPath: mainDomainPath,
         apiSchemaPath,
       },
       worker: {
-        domainPath: indexerDomainPath,
-        instances: 4,
+        instances,
+        domainPath: workerDomainPath,
       },
-      // parser: {
-      //   instances: 1,
-      // },
-      // fetcher: {
-      //   instances: 1,
-      // },
     }
   })
 }
@@ -106,9 +111,9 @@ main()
 
   let tsconfig: string = 
 `{
-  "extends": "../solana-indexer-framework/tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-      "outDir": "dist"
+      "outDir": "dist",
   },
   "exclude": [
       "node_modules",
@@ -123,7 +128,15 @@ main()
 }`
 
 let typesdts: string = 
-`export * from '../../types'`
+`declare module '@solana/web3.js' {
+  interface Connection {
+    public _rpcRequest(method: string, args: any[]): Promise<any>
+    public _rpcBatchRequest(requests: any[]): Promise<any>
+  }
+}
+
+declare module 'graphql-type-long'
+`
 
   return {docker, pkg, run, tsconfig, typesdts }
 }

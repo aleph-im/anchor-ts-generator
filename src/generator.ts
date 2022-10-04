@@ -60,11 +60,12 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   if(!existsSync(paths.apiDir))
     mkdirSync(paths.apiDir)
   await generateSchema(paths, idl);
-  const { indexApi, resolversApi, schemaApi } = renderApiFiles(Name, idl.name)
+  const { indexApi, resolversApi, schemaApi, apiTypes } = renderApiFiles(Name, idl.name, instructionsView, accountsView, typesView)
   try {
     writeFileSync(paths.apiFile('index'), format(indexApi, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.apiFile('resolvers'), format(resolversApi, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.apiFile('schema'), format(schemaApi, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.apiFile('types'), format(apiTypes, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     logError(`Failed to format on api folder`)
     logError(err)
@@ -82,10 +83,10 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.domainDir))
     mkdirSync(paths.domainDir)
-  const { account, indexer, mainDomain } = renderDomainFiles(Name, idl.name, accountsView)
+  const { account, worker, mainDomain } = renderDomainFiles(Name, idl.name, accountsView)
   try {
     writeFileSync(paths.domainFile('account'), format(account, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.domainFile('indexer'), format(indexer, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.domainFile('worker'), format(worker, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.domainFile('main'), format(mainDomain, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     logError(`Failed to format on domain folder`)

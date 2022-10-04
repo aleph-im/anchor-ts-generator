@@ -41,6 +41,7 @@ export class EventParser {
       id,
       timestamp,
       type: parsed.type,
+      account: parentTx.account
     }
 
     try {
