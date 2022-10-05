@@ -56,7 +56,8 @@ services:
   "devDependencies": {
     "@types/luxon": "^3.0.1",
     "@types/node": "^18.7.18",
-    "typescript": "^4.8.3"
+    "typescript": "^4.8.3",
+    "@types/bn.js": "^5.1.0"
   }
 }`
 
