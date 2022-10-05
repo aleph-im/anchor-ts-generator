@@ -1,7 +1,7 @@
 import { ViewAccounts, ViewInstructions, ViewTypes } from "./types"
 
-export function renderApiFiles(Name: string, filename: string, instructions: ViewInstructions | undefined, accounts: ViewAccounts | undefined, types: ViewTypes | undefined){
-  const name = filename.toLowerCase()
+export function renderApiFiles(Name: string, instructions: ViewInstructions | undefined, accounts: ViewAccounts | undefined, types: ViewTypes | undefined){
+  const naMe = Name.charAt(0).toLowerCase() + Name.slice(1)
 
   const indexApi: string = `export { default } from './schema.js'`
 
@@ -37,8 +37,8 @@ export class APIResolvers {
   constructor(protected domain: MainDomain) {}
 
   async getAccounts(args: AccountsFilters): Promise<${Name}AccountInfo[]> {
-    const result = await this.filterAccounts(args)
-    return result.map(({ info, stats }) => ({ ...info, stats }))
+    const acountsData = await this.filterAccounts(args)
+    return acountsData.map(({ info, stats }) => ({ ...info, stats }))
   }
 
   async getEvents({
@@ -55,9 +55,9 @@ export class APIResolvers {
 
     const typesMap = types ? new Set(types) : undefined
 
-    const result: ParsedEvents[] = []
+    const events: ParsedEvents[] = []
 
-    const events = await this.domain.getAccountEventsByTime(
+    const accountEvents = await this.domain.getAccountEventsByTime(
       account,
       startDate,
       endDate,
@@ -67,32 +67,25 @@ export class APIResolvers {
       },
     )
 
-    // const events = this.eventDAL
-    //   .useIndex('reserve_timestamp')
-    //   .getAllFromTo([reserve, startDate], [reserve, endDate], {
-    //     reverse,
-    //     limit: !typesMap ? limit + skip : undefined,
-    //   })
-
-    for await (const { value } of events) {
+    for await (const { value } of accountEvents) {
       // @note: Filter by type
       if (typesMap && !typesMap.has(value.type)) continue
 
       // @note: Skip first N events
       if (--skip >= 0) continue
 
-      result.push(value)
+      events.push(value)
 
       // @note: Stop when after reaching the limit
-      if (limit > 0 && result.length >= limit) return result
+      if (limit > 0 && events.length >= limit) return events
     }
 
-    return result
+    return events
   }
 
   public async getGlobalStats(args: GlobalStatsFilters): Promise<Global${Name}Stats> {
-    const result = await this.filterAccounts(args)
-    const addresses = result.map(({ info }) => info.address)
+    const acountsData = await this.filterAccounts(args)
+    const addresses = acountsData.map(({ info }) => info.address)
 
     return this.domain.getGlobalStats(addresses)
   }
@@ -105,25 +98,23 @@ export class APIResolvers {
     return account[0]
   }*/
 
-  protected async filterAccounts(
-    { types, accounts, includeStats }: AccountsFilters = {
-      types: undefined,
-      accounts: undefined,
-      includeStats: undefined,
-    },
-  ): Promise<${Name}ProgramData[]> {
+  protected async filterAccounts({ 
+    types, 
+    accounts, 
+    includeStats 
+  }: AccountsFilters): Promise<${Name}ProgramData[]> {
     const accountMap = await this.domain.getAccounts(includeStats)
 
     accounts =
       accounts ||
       Object.values(accountMap).map((account) => account.info.address)
 
-    let result = accounts
+    let accountsData = accounts
       .map((address) => accountMap[address])
-      .filter((aggregator) => !!aggregator)
+      .filter((account) => !!account)
 
     if (types !== undefined) {
-      result = result.filter(({ info }) => types!.includes(info.type))
+      accountsData = accountsData.filter(({ info }) => types!.includes(info.type))
     }
 
     return result
@@ -157,7 +148,7 @@ export default class APISchema extends IndexerAPISchema {
     super(domain, {
       types: Types.types,
 
-      customTimeSeriesTypesMap: { ${name}Info: Types.${Name}Info },
+      customTimeSeriesTypesMap: { ${naMe}Info: Types.${Name}Info },
       customStatsType: Types.${Name}Stats,
 
       query: new GraphQLObjectType({
@@ -166,9 +157,8 @@ export default class APISchema extends IndexerAPISchema {
           accounts: {
             type: Types.AccountsInfo,
             args: {
-              types: { type: GraphQLString },
+              types: { type: new GraphQLList(GraphQLString) },
               accounts: { type: new GraphQLList(GraphQLString) },
-              includeStats: { type: new GraphQLList(GraphQLBoolean) },
             },
             resolve: (_, ctx, __, info) => {
               ctx.includeStats =
@@ -198,6 +188,10 @@ export default class APISchema extends IndexerAPISchema {
 
           globalStats: {
             type: Types.GlobalMarinadeFinanceStats,
+            args: {
+              types: { type: GraphQLString },
+              accounts: { type: new GraphQLList(GraphQLString) },
+            },
             resolve: (_, ctx) =>
                 resolver.getGlobalStats(ctx as GlobalStatsFilters),
           },
@@ -246,6 +240,7 @@ export const ${type.name} = new GraphQLObjectType({
 // ------------------- STATS ---------------------------
 
 // look .src/domain/stats/statsAggregator & ./src/types.ts
+
 export const ${Name}Info = new GraphQLObjectType({
   name: '${Name}Info',
   fields: {
@@ -337,16 +332,26 @@ export const ParsedAccountsData = new GraphQLUnionType({
       return null
     }
 });
-  
-`
 
-    apiTypes += `export const ${Name}AccountsInfo = new GraphQLObjectType({
-  name: '${Name}AccountsInfo',
+const commonAccountInfoFields = {
+  name: { type: new GraphQLNonNull(GraphQLString) },
+  programId: { type: new GraphQLNonNull(GraphQLString) },
+  address: { type: new GraphQLNonNull(GraphQLString) },
+  type: { type: new GraphQLNonNull(AccountsEnum) },
+}
+
+const Account = new GraphQLInterfaceType({
+  name: 'Account',
   fields: {
-    name: { type: new GraphQLNonNull(GraphQLString) },
-    type: { type: new GraphQLNonNull(AccountsEnum) },
-    address: { type: new GraphQLNonNull(GraphQLString) },
-    programId: { type: new GraphQLNonNull(GraphQLString) },
+    ...commonAccountInfoFields,
+  },
+})
+
+export const ${Name}AccountsInfo = new GraphQLObjectType({
+  name: '${Name}AccountsInfo',
+  interfaces: [Account],
+  fields: {
+    ...commonAccountInfoFields,
     data: { type: new GraphQLNonNull(ParsedAccountsData) },
   },
 })
@@ -410,11 +415,6 @@ export const types = [`
         apiTypes += 
 `   
   ${instruction.name}Event,`
-      }
-      for(const account of accounts.accounts){
-          apiTypes += 
-  `   
-  ${account.name},`
       }
       apiTypes += 
 `]
