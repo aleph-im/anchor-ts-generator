@@ -16,10 +16,10 @@ services:
       - ./.env
     environment:
       - INDEXER=${name}
-      - LETSENCRYPT_HOST=port.api.aleph.cloud
-      - VIRTUAL_HOST=port.api.aleph.cloud
+      - LETSENCRYPT_HOST=${name}.api.aleph.cloud
+      - VIRTUAL_HOST=${name}.api.aleph.cloud
       - VIRTUAL_PORT=8080
-      - SOLANA_RPC=http://solrpc1.aleph.cloud:7725/
+      - SOLANA_RPC=
     network_mode: bridge
 `
 
@@ -33,19 +33,16 @@ services:
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "build": "tsc -p ./tsconfig.json",
-    "clean:ts": "rm -rf ./dist",
-    "clean:all": "rm -rf ./node_modules && rm -rf ./dist && rm -rf package-lock.json",
-    "start": "npm i && npm link @aleph-indexer/core @aleph-indexer/framework && npm run build && node ./dist/run.js",
-    "test": "echo \\"Error: no test specified\" && exit 1",
+    "test": "echo \\"Error: no test specified\\" && exit 1",
     "up": "docker-compose up -d",
-    "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name error-devnet up -d"
+    "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name staking-devnet up -d"
   },
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
-    "@aleph-indexer/core": "file:../../../solana-indexer-framework/packages/core/dist",
-    "@aleph-indexer/framework": "file:../../../solana-indexer-framework/packages/framework/dist",
+    "@aleph-indexer/core": "^1.0.11",
+    "@aleph-indexer/framework": "^1.0.11",
+    "@aleph-indexer/layout": "^1.0.10",
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/beet-solana": "0.4.0",
     "@solana/spl-token": "0.3.5",
@@ -128,14 +125,7 @@ main()
 }`
 
 let typesdts: string = 
-`declare module '@solana/web3.js' {
-  interface Connection {
-    public _rpcRequest(method: string, args: any[]): Promise<any>
-    public _rpcBatchRequest(requests: any[]): Promise<any>
-  }
-}
-
-declare module 'graphql-type-long'
+`export * from '../../types'
 `
 
   return {docker, pkg, run, tsconfig, typesdts }
