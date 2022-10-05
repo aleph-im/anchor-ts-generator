@@ -254,7 +254,7 @@ export default class MainDomain
   ): Promise<${Name}ProgramData> {
     const info = (await this.context.apiClient.invokeDomainMethod({
       account,
-      method: 'get$AccountInfo',
+      method: 'getAccountInfo',
     })) as ${Name}AccountInfo
 
     if (!includeStats) return { info }
