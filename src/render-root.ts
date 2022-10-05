@@ -1,6 +1,10 @@
 export function renderRootFiles(filename: string){
   const name = filename.toLowerCase()
 
+  let cmd: string = `#!/bin/sh
+
+node --max-old-space-size=51200 packages/\${INDEXER}/dist/run.js`
+
   let docker: string = 
 `version: '2'
 
@@ -135,5 +139,5 @@ let typesdts: string =
 `export * from '../../types'
 `
 
-  return {docker, pkg, run, tsconfig, typesdts }
+  return {docker, pkg, run, tsconfig, typesdts, cmd }
 }

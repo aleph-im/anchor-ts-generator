@@ -36,12 +36,13 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.projectDir))
     mkdirSync(paths.projectDir)
-  const { docker, pkg, run, tsconfig, typesdts } = renderRootFiles(idl.name)
+  const { docker, pkg, run, tsconfig, typesdts, cmd } = renderRootFiles(idl.name)
   writeFileSync(paths.projectFile('docker-compose.yaml'), docker);
   writeFileSync(paths.projectFile('package.json'), pkg);
   writeFileSync(paths.projectFile('run.ts'), run);
   writeFileSync(paths.projectFile('tsconfig.json'), tsconfig);
   writeFileSync(paths.projectFile('types.d.ts'), typesdts);
+  writeFileSync(paths.projectFile('cmd.sh'), cmd);
 
   const { typesView, instructionsView, eventsView, accountsView } = generateFromTemplateType(idl, toGenerate)
   console.log(typesView, instructionsView, eventsView, accountsView)
