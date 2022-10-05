@@ -24,25 +24,25 @@ event += `
 
 export class EventParser {
   parse(ixCtx: InstructionContextV1): ParsedEvents {
-    const { ix, parentIx, parentTx } = ixCtx
+    const { ix, parentIx, txContext } = ixCtx
     const parsed = (ix as AlephParsedEvent<InstructionType, ParsedEventsInfo>)
       .parsed
 
-    const id = \`\${parentTx.signature}\${
+    const id = \`\${txContext.tx.signature}\${
       parentIx ? \` :\${parentIx.index.toString().padStart(2, '0')}\` : ''
     }:\${ix.index.toString().padStart(2, '0')}\` 
 
-    const timestamp = parentTx.blockTime
-      ? parentTx.blockTime * 1000
-      : parentTx.slot
+    const timestamp = txContext.tx.blockTime
+    ? txContext.tx.blockTime * 1000
+    : txContext.tx.slot
 
-    const baseEvent = {
-      ...parsed.info,
-      id,
-      timestamp,
-      type: parsed.type,
-      account: parentTx.account
-    }
+  const baseEvent = {
+    ...parsed.info,
+    id,
+    timestamp,
+    type: parsed.type,
+    account: txContext.parserContext.account
+  }
 
     try {
       switch (parsed.type) {

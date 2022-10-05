@@ -302,7 +302,7 @@ export default class MainDomain
   async computeGlobalStats(
     accountAddresses?: string[],
   ): Promise<Global${Name}Stats> {
-    const accountStats = await this.getAccountStats(accountAddresses)
+    const accountsStats = await this.getAccountStats(accountAddresses)
     const globalStats: Global${Name}Stats = this.getNewGlobalStats()
 
     for (const accountStats of accountsStats) {
