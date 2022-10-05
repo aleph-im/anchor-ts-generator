@@ -207,7 +207,6 @@ export default class APISchema extends IndexerAPISchema {
   }
 }
 `
-  const GraphqlTypesSet: Set<string> = new Set(["GraphQLBoolean", "GraphQLInt", "GraphQLString", "GraphQLBigNumber"])
   let apiTypes: string = 
 `import { GraphQLBoolean, GraphQLInt } from 'graphql'
 import {
@@ -233,19 +232,9 @@ export const ${type.name} = new GraphQLObjectType({
   name: '${type.name}',
   fields: {`
       for(const field of type.fields) {
-        if(GraphqlTypesSet.has(field.graphqlType)) {
           apiTypes += `
     ${field.name}: { type: new GraphQLNonNull(${field.graphqlType}) },`
-        }
-        else {
-          apiTypes += `
-    ${field.name}: { 
-      type: new GraphQLNonNull(${field.graphqlType}),
-      resolve: () => {
-          return '${field.graphqlType}';
-      },
-    },`
-        }
+
       }
       apiTypes += `
         },
@@ -313,22 +302,10 @@ export const AccountsEnum = new GraphQLEnumType({
     apiTypes += `
 export const ${account.name} = new GraphQLObjectType({
   name: '${account.name}',
-  isTypeOf: (item) => item.type === AccountType.${account.name},
   fields: {`
     for(const field of account.data.fields){
-      if(GraphqlTypesSet.has(field.graphqlType)) {
         apiTypes += `
     ${field.name}: { type: new GraphQLNonNull(${field.graphqlType}) },`
-      }
-      else {
-        apiTypes += `
-    ${field.name}: { 
-      type: new GraphQLNonNull(${field.graphqlType}),
-      resolve: () => {
-          return '${field.graphqlType}';
-      },
-    },`
-      }
     }
     apiTypes +=
 ` },
