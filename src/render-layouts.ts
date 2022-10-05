@@ -69,7 +69,9 @@ export enum InstructionType {
         }
         ixLayouts += `}
 
-export type InstructionBase = EventBase<InstructionType>
+export type InstructionBase = EventBase<InstructionType> & {
+        account: string
+}
 
 ` 
         for(const instruction of instructionsView.instructions){
