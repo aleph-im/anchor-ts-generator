@@ -40,8 +40,8 @@ export async function createAccountStats(
         getInputStream: ({ account, startDate, endDate }) => {
             return eventDAL
             .useIndex(EventDALIndex.AccoountTimestamp)
-            .getAllFromTo([account, startDate], [account, endDate])
-        },
+            .getAllValuesFromTo([account, startDate], [account, endDate])
+          },
         aggregate: ({ input, prevValue }): ${Name}Info => {
             return eventAggregator.aggregate(input, prevValue)
         },

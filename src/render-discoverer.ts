@@ -1,6 +1,5 @@
 export function renderDiscovererFiles(Name: string, filename: string){
     const NAME = filename.toUpperCase()
-    const naMe = Name.charAt(0).toLowerCase() + Name.slice(1)
 
     let discoverer: string = 
 `import {
@@ -26,11 +25,11 @@ export default class ${Name}Discoverer {
         const newAccounts:${Name}AccountInfo[] = []
         const accounts = await this.getAllAccounts()
 
-        for (const ${naMe}AccountInfo of accounts) {
-            if (this.cache[${naMe}AccountInfo.address]) continue
+        for (const accountInfo of accounts) {
+            if (this.cache[accountInfo.address]) continue
     
-            this.cache[${naMe}AccountInfo.address] = ${naMe}AccountInfo
-            newAccounts.push(this.cache[${naMe}AccountInfo.address])
+            this.cache[accountInfo.address] = accountInfo
+            newAccounts.push(this.cache[accountInfo.address])
         }
 
         return newAccounts
@@ -42,27 +41,27 @@ export default class ${Name}Discoverer {
 
     async getAllAccounts(): Promise<${Name}AccountInfo[]> {
         const connection = solanaPrivateRPC.getConnection()
-        const accounts: ${Name}AccountInfo[] = []
+        const accountsInfo: ${Name}AccountInfo[] = []
         for(const type of this.accountTypes){
-          const resp = await connection.getProgramAccounts(
-            MARINADE_FINANCE_PROGRAM_ID_PK,
-            {
-              filters: [
-                {
-                  memcmp: {
-                    bytes: bs58.encode(ACCOUNT_DISCRIMINATOR[type]),
-                    offset: 0,
+            const accounts = await connection.getProgramAccounts(
+              MARINADE_FINANCE_PROGRAM_ID_PK,
+              {
+                filters: [
+                  {
+                    memcmp: {
+                      bytes: bs58.encode(ACCOUNT_DISCRIMINATOR[type]),
+                      offset: 0,
+                    },
                   },
-                },
-              ],
-            },
-          )
-          resp.map(
-            (value: { pubkey: PublicKey; account: AccountInfo<Buffer> }) =>
-              accounts.push(this.deserializeAccountResponse(value, type)),
-          )
+                ],
+              },
+            )
+            accounts.map(
+              (value: { pubkey: PublicKey; account: AccountInfo<Buffer> }) =>
+                accountsInfo.push(this.deserializeAccountResponse(value, type)),
+            )
         }
-        return accounts
+        return accountsInfo
     }
 
     deserializeAccountResponse(
@@ -74,9 +73,9 @@ export default class ${Name}Discoverer {
         // Parsing names from on-chain account data can be complicated at times...
         let name: string = address
         if (Object.hasOwn(data, 'name')) {
-        if ((data as any).name instanceof Uint8Array)
-            name = ((data as any).name as Uint8Array).toString()
-        if ((data as any).name instanceof String) name = (data as any).name
+            if ((data as any).name instanceof Uint8Array)
+                name = ((data as any).name as Uint8Array).toString()
+            if ((data as any).name instanceof String) name = (data as any).name
         }
         return {
             name,

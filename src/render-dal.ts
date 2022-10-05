@@ -39,7 +39,7 @@ export function createEventDAL(path: string): EventStorage {
   return new EntityStorage<ParsedEvents>({
     name: 'event',
     path,
-    primaryKey: [idKey],
+    key: [idKey],
     indexes: [
       {
         name: EventDALIndex.AccoountTimestamp,
