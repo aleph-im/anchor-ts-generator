@@ -1,5 +1,5 @@
 {
-  "name": "anchor-generator",
+  "name": "@aleph-indexer/generator",
   "version": "1.0.0",
   "author": "Mike Hukiewitz",
   "description": "",
