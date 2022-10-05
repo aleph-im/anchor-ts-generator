@@ -44,7 +44,7 @@ export default class ${Name}Discoverer {
         const accountsInfo: ${Name}AccountInfo[] = []
         for(const type of this.accountTypes){
             const accounts = await connection.getProgramAccounts(
-              MARINADE_FINANCE_PROGRAM_ID_PK,
+              ${NAME}_PROGRAM_ID_PK,
               {
                 filters: [
                   {

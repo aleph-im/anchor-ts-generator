@@ -10,7 +10,7 @@ export function renderSrcFiles(Name: string, filename: string, instructionsView:
   if(instructionsView) {
   constants = 
 `import { PublicKey } from '@solana/web3.js'
-import { config } from 'core'
+import { config } from '@aleph-indexer/core'
 import { InstructionType } from './types.js'
 
 export enum ProgramName {

@@ -117,7 +117,7 @@ export class APIResolvers {
       accountsData = accountsData.filter(({ info }) => types!.includes(info.type))
     }
 
-    return result
+    return accountsData
   }
 }`
 
@@ -187,7 +187,7 @@ export default class APISchema extends IndexerAPISchema {
           },
 
           globalStats: {
-            type: Types.GlobalMarinadeFinanceStats,
+            type: Types.Global${Name}Stats,
             args: {
               types: { type: GraphQLString },
               accounts: { type: new GraphQLList(GraphQLString) },
@@ -235,6 +235,23 @@ export const ${type.name} = new GraphQLObjectType({
       })
 `
     }
+
+    for(const type of types.enums){
+      apiTypes += `
+export const ${type.name} = new GraphQLEnumType({
+  name: '${type.name}',
+  values: {`
+      for(const field of type.variants) {
+          apiTypes += `
+    ${field}: { value: '${field}' },`
+
+      }
+      apiTypes += `
+        },
+      })
+`
+    }
+
     apiTypes += `
 
 // ------------------- STATS ---------------------------
