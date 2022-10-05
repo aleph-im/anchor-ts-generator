@@ -28,7 +28,7 @@ jobs:
       - name: Build and export
         uses: docker/build-push-action@v3
         with:
-          context: ./packages
+          context: .
           tags: indexer-framework:latest
           outputs: type=docker,dest=/tmp/indexer-framework.tar
           build-args: |
