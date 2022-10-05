@@ -22,6 +22,16 @@ export const Fee = new GraphQLObjectType({
   },
 })
 
+export const LiqPoolInitializeData = new GraphQLObjectType({
+  name: 'LiqPoolInitializeData',
+  fields: {
+    lpLiquidityTarget: { type: new GraphQLNonNull(GraphQLBigNumber) },
+    lpMaxFee: { type: new GraphQLNonNull(Fee) },
+    lpMinFee: { type: new GraphQLNonNull(Fee) },
+    lpTreasuryCut: { type: new GraphQLNonNull(Fee) },
+  },
+})
+
 export const InitializeData = new GraphQLObjectType({
   name: 'InitializeData',
   fields: {
@@ -33,16 +43,6 @@ export const InitializeData = new GraphQLObjectType({
     additionalStakeRecordSpace: { type: new GraphQLNonNull(GraphQLInt) },
     additionalValidatorRecordSpace: { type: new GraphQLNonNull(GraphQLInt) },
     slotsForStakeDelta: { type: new GraphQLNonNull(GraphQLBigNumber) },
-  },
-})
-
-export const LiqPoolInitializeData = new GraphQLObjectType({
-  name: 'LiqPoolInitializeData',
-  fields: {
-    lpLiquidityTarget: { type: new GraphQLNonNull(GraphQLBigNumber) },
-    lpMaxFee: { type: new GraphQLNonNull(Fee) },
-    lpMinFee: { type: new GraphQLNonNull(Fee) },
-    lpTreasuryCut: { type: new GraphQLNonNull(Fee) },
   },
 })
 
