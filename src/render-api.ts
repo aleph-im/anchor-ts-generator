@@ -213,28 +213,13 @@ import {
   GraphQLUnionType,
 } from 'graphql'
 import { GraphQLBigNumber, GraphQLLong } from '@aleph-indexer/core'
-import { InstructionType, AccountType } from '../types.js'
+import { InstructionType } from '../types.js'
 
 // ------------------- TYPES ---------------------------
 
 // if you have some errors here most probably will be solved by changing the order of types
 `
   if(accounts && instructions && types){
-    for(const type of types.types){
-      apiTypes += `
-export const ${type.name} = new GraphQLObjectType({
-  name: '${type.name}',
-  fields: {`
-      for(const field of type.fields) {
-          apiTypes += `
-    ${field.name}: { type: new GraphQLNonNull(${field.graphqlType}) },`
-
-      }
-      apiTypes += `
-        },
-      })
-`
-    }
 
     for(const type of types.enums){
       apiTypes += `
@@ -244,6 +229,22 @@ export const ${type.name} = new GraphQLEnumType({
       for(const field of type.variants) {
           apiTypes += `
     ${field}: { value: '${field}' },`
+
+      }
+      apiTypes += `
+        },
+      })
+`
+    }
+
+    for(const type of types.types){
+      apiTypes += `
+export const ${type.name} = new GraphQLObjectType({
+  name: '${type.name}',
+  fields: {`
+      for(const field of type.fields) {
+          apiTypes += `
+    ${field.name}: { type: new GraphQLNonNull(${field.graphqlType}) },`
 
       }
       apiTypes += `
@@ -338,15 +339,30 @@ export const ParsedAccountsData = new GraphQLUnionType({
     ],
     resolveType: (obj) => {
       // here is selected the first field of each account data, you have to pick a unique field to each account`
-    
+
+    const uniqueAccountProperty: Record<string, string> = {}
     for(const account of accounts.accounts){
+      for (const field of account.data.fields) {
+        let checksRequired = accounts.accounts.length - 1
+        for(const _account of accounts.accounts) {
+          if(_account.name == account.name) continue
+          if(_account.data.fields.includes(field)) continue
+          checksRequired--
+        }
+        if(checksRequired == 0) {
+          uniqueAccountProperty[account.name] = field.name
+        }
+      }
+    }
+
+    for (const [account, field] of Object.entries(uniqueAccountProperty)) {
       apiTypes += `
-      if(obj.${account.data.fields[0].name}) {
-          return '${account.name}'
+      if(obj.${field}) {
+          return '${account}'
       }`
     }
+
     apiTypes += `
-      return null
     }
 });
 
