@@ -33,6 +33,7 @@ services:
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
+    "build": "tsc -p ./tsconfig.json",
     "test": "echo \\"Error: no test specified\\" && exit 1",
     "up": "docker-compose up -d",
     "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name staking-devnet up -d"
@@ -40,9 +41,8 @@ services:
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.11",
-    "@aleph-indexer/framework": "^1.0.11",
-    "@aleph-indexer/layout": "^1.0.10",
+    "@aleph-indexer/core": "^1.0.12",
+    "@aleph-indexer/framework": "^1.0.12",
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/beet-solana": "0.4.0",
     "@solana/spl-token": "0.3.5",
@@ -90,6 +90,12 @@ async function main() {
     transport,
     transportConfig,
     apiPort,
+    fetcher: {
+      instances: 1,
+    },
+    parser: {
+      instances: 1,
+    },
     indexer: {
       dataPath,
       main: {

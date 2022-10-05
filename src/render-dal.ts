@@ -6,6 +6,8 @@ import { ParsedEvents } from '../types.js'
 
 export type EventStorage = EntityStorage<ParsedEvents>
 
+// in this vector you can include the properties of several 
+// events that are BN in order to be able to cast them
 const mappedProps = [
   'none'
 ]
