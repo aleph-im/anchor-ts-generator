@@ -5,7 +5,7 @@ ARG INDEXER
 ENV INDEXER=$INDEXER
 
 COPY ./packages/$INDEXER .
-RUN npm ci
+RUN npm i
 
 RUN npm run build
 
