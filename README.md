@@ -8,63 +8,35 @@ For now to run the indexer generator 'CLI' as for the moment isn't a npm package
 or
     - node ./dist/index.js -a JUP3c2Uh3WA4Ng34tw6kPd2G4C5BB21Xo36Je1s32Ph
 
+## Generate the indexer
+To generate the indexer, you need to have the Anchor IDL file, or the program ID of the Anchor program.
+```bash
+# Generate the indexer from the IDL file
+alix generate -f ./path/to/idl.json
 
-```graphql endpoint
-scalar Date
-
-enum InstructionType {
-    Create,
-    Update,
-    Delete
-}
-
-enum AccountType {
-    Foo,
-    Bar
-}
-
-schema {
-  query: Query
-}
-
-type Query {
-  instructions: [Instruction]
-  accounts(type: AccountType, address: String): [Account]
-}
-
-interface Instruction {
-    id: String
-    type: InstructionType
-    timestamp: Int
-    programId: String
-    account: String
-}
-
-type CreateInstruction implements Instruction {
-    foo: String
-    bar: String
-}
-
-interface Account {
-    stats: AccessStats
-}
-
-type AccountFoo implements Account {
-    bar: String
-}
-
-type AccessStats {
-    accesses1h: InstructionStats
-    accesses24h: InstructionStats
-    accesses7d: InstructionStats
-    accessesTotal: InstructionStats
-}
-
-type InstructionStats {
-  create: Int
-  update: Int
-  delete: Int
-  unknown: Int
-  total: Int
-}
+# Or generate the indexer from the program ID
+alix generate -a <program_id>
 ```
+
+## Deploy the indexer
+To deploy the indexer to the Aleph network, you need:
+- your indexer source code
+- the [GitHub CLI](https://cli.github.com/) installed
+- a GitHub account
+- an account and its private key for any of the Aleph-supported blockchains (Solana, Ethereum, Tezos, EOS, Cosmos, Polkadot, Kusama, NULS)
+- ALEPH tokens on your account
+
+```bash
+# Deploy the indexer to the Aleph network
+alix deploy -f ./path/to/indexer-package -l ./path/to/solana-indexer-library -k /path/to/key.json
+```
+
+The `deploy` command will:
+- fork the [solana-indexer-library](https://github.com/aleph-im/solana-indexer-library) repository, if it doesn't exist yet
+- set up GitHub Secrets with your private key
+- create a new branch with the indexer source code
+- create a new PR, which will trigger the GitHub Actions workflow
+- the workflow will build the indexer rootfs, and deploy it to the Aleph network
+- print the indexer's address like this: `https://aleph-vm-lab.aleph.cloud/vm/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
+
+Directions on how to deploy the indexer manually on your machine (without using GitHub workflows) are available in the [documentation](https://docs.aleph.im/developers/aleph-ts-generator).
