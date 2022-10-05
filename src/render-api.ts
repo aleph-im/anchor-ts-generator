@@ -338,7 +338,7 @@ export const ParsedAccountsData = new GraphQLUnionType({
     apiTypes += `
     ],
     resolveType: (obj) => {
-      // here is selected the first field of each account data, you have to pick a unique field to each account`
+      // here is selected a unique property of each account to discriminate between types`
 
     const uniqueAccountProperty: Record<string, string> = {}
     for(const account of accounts.accounts){
