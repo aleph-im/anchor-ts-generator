@@ -163,15 +163,16 @@ export * from './accounts.js'
 export * from './instructions.js'
 export * from './solita/index.js'
 
-export default class implements LayoutImplementation {
-  name = '${name}'
-  programID = ${NAME}_PROGRAM_ID
-  accountLayoutMap = IX_ACCOUNTS_LAYOUT
-  dataLayoutMap = IX_DATA_LAYOUT
-  accountDataLayoutMap = ACCOUNTS_DATA_LAYOUT
-  eventType = InstructionType
-
-  getInstructionType = getInstructionType
+export default {
+    [${NAME}_PROGRAM_ID]: {
+    name: '${name}',
+    programID: ${NAME}_PROGRAM_ID,
+    accountLayoutMap: IX_ACCOUNTS_LAYOUT,
+    dataLayoutMap: IX_DATA_LAYOUT,
+    accountDataLayoutMap: ACCOUNTS_DATA_LAYOUT,
+    eventType: InstructionType,
+    getInstructionType
+  } as LayoutImplementation
 }
 `
 

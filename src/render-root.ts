@@ -100,7 +100,7 @@ async function main() {
     },
     parser: {
       instances: 1,
-      schemaPath: './dist/utils/layouts/index.js',
+      layoutPath: './dist/utils/layouts/index.js',
     },
     indexer: {
       dataPath,
