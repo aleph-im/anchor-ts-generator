@@ -41,8 +41,7 @@ export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {
 
 export const ACCOUNTS_DATA_LAYOUT: Record<
     AccountType,
-    BeetStruct<ParsedAccounts, ParsedAccountsData> |
-    FixableBeetStruct<ParsedAccounts, ParsedAccountsData>
+    any
 > = {
 `
         for(const account of accountsView.accounts){
@@ -70,7 +69,9 @@ export enum InstructionType {
         }
         ixLayouts += `}
 
-export type InstructionBase = EventBase<InstructionType>
+export type InstructionBase = EventBase<InstructionType> & {
+        account: string
+}
 
 ` 
         for(const instruction of instructionsView.instructions){

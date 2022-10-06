@@ -13,8 +13,8 @@ export function renderStatsFiles(Name: string, filename: string, instructions: V
     TimeSeriesStats,
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../../dal/event.js'
-import { ParsedEvents, ${Name}Info } from '../../types'
-import statsAggregator from './statsAggregator'
+import { ParsedEvents, ${Name}Info } from '../../types.js'
+import statsAggregator from './statsAggregator.js'
 import eventAggregator from './timeSeriesAggregator.js'
 
 export async function createAccountStats(
@@ -40,8 +40,8 @@ export async function createAccountStats(
         getInputStream: ({ account, startDate, endDate }) => {
             return eventDAL
             .useIndex(EventDALIndex.AccoountTimestamp)
-            .getAllFromTo([account, startDate], [account, endDate])
-        },
+            .getAllValuesFromTo([account, startDate], [account, endDate])
+          },
         aggregate: ({ input, prevValue }): ${Name}Info => {
             return eventAggregator.aggregate(input, prevValue)
         },
@@ -80,9 +80,9 @@ import {
   ${instructions.instructions[2].name}Event,
   ${instructions.instructions[3].name}Event
 } from '../../types.js'
-import { collectionEvent1Whitelist, collectionEvent2Whitelist } from '../../constants.js'
+import { collectionEvent1Whitelist, collectionEvent2Whitelist } from '../../constants.js' // @todo: set to discriminate different event collections
 
-// This is just an example to group some related instructions and process the data together
+// @todo: This is just an example to group some related instructions and process the data together
 type CollectionEvent1 = ${instructions.instructions[0].name}Event & ${instructions.instructions[1].name}Event
 type CollectionEvent2 = ${instructions.instructions[2].name}Event & ${instructions.instructions[3].name}Event
 
@@ -180,10 +180,9 @@ export default eventAggregator
     }
     const statsAggregator =
 `import { DateTime } from 'luxon'
-import { TimeFrame } from '@aleph-indexer/framework'
+import { TimeFrame, AccountAggregatorFnArgs } from '@aleph-indexer/framework'
 import { ${Name}Stats, ${Name}Info } from '../../types.js'
 import eventAggregator from './timeSeriesAggregator.js'
-import { AccountAggregatorFnArgs } from '@aleph-indexer/framework'
 
 export class StatsAggregator {
   async aggregate(

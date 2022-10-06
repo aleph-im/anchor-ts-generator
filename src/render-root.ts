@@ -1,29 +1,29 @@
 export function renderRootFiles(filename: string){
-  const NAME = filename.toUpperCase()
+  const name = filename.toLowerCase()
+
+  let cmd: string = `#!/bin/sh
+
+node --max-old-space-size=51200 packages/\${INDEXER}/dist/run.js`
 
   let docker: string = 
 `version: '2'
 
 services:
-  error-indexer:
+  ${name}:
     build: ../..
-    container_name: ${filename}-indexer
     volumes:
       - ~/indexer.data:/app/data:rw
-      - ~/indexer.discovery:/app/discovery:rw
     extra_hosts:
       - host.docker.internal:host-gateway
     env_file:
       - ../../.env
       - ./.env
     environment:
-      - DEX=${filename}
-    ports:
-      - 8080:8080
-    # (configure them in .env file)
-    #   - LETSENCRYPT_HOST=splerror.api.aleph.cloud
-    #   - VIRTUAL_HOST=splerror.api.aleph.cloud
-    #   - VIRTUAL_PORT=8080
+      - INDEXER=${name}
+      - LETSENCRYPT_HOST=${name}.api.aleph.cloud
+      - VIRTUAL_HOST=${name}.api.aleph.cloud
+      - VIRTUAL_PORT=8080
+      - SOLANA_RPC=
     network_mode: bridge
 `
 
@@ -37,19 +37,27 @@ services:
   "types": "dist/index.d.js",
   "type": "module",
   "scripts": {
-    "build": "tsc -p ./tsconfig.json && npm run postbuild",
-    "postbuild": "cp ./src/graphql/schema.graphql ./dist/src/graphql/schema.graphql",
+    "build": "tsc -p ./tsconfig.json",
     "test": "echo \\"Error: no test specified\\" && exit 1",
     "up": "docker-compose up -d",
-    "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name error-devnet up -d"
+    "up:devnet": "docker-compose -f docker-compose-devnet.yaml --project-name staking-devnet up -d"
   },
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
-    "@metaplex-foundation/beet": "0.6.1",
-    "@metaplex-foundation/beet-solana": "0.3.1",
-    "@aleph-indexer/core": "1.0.0",
-    "@aleph-indexer/layout": "1.0.0"
+    "@aleph-indexer/core": "^1.0.12",
+    "@aleph-indexer/framework": "^1.0.12",
+    "@metaplex-foundation/beet": "0.7.1",
+    "@metaplex-foundation/beet-solana": "0.4.0",
+    "@solana/spl-token": "0.3.5",
+    "@solana/web3.js": "1.61.1",
+    "bs58": "5.0.0"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.0.1",
+    "@types/node": "^18.7.18",
+    "typescript": "^4.8.3",
+    "@types/bn.js": "^5.1.0"
   }
 }`
 
@@ -63,30 +71,47 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 async function main() {
-  const indexerDomainPath = path.join(__dirname, './src/domain/indexer.js')
+  const workerDomainPath = path.join(__dirname, './src/domain/worker.js')
   const mainDomainPath = path.join(__dirname, './src/domain/main.js')
-  const apiPath = path.join(__dirname, './src/api/index.js')
+  const apiSchemaPath = path.join(__dirname, './src/api/index.js')
 
-  const projectId = config.${NAME}_ID
-  if (!projectId) throw new Error('${NAME}_ID env var must be provided ')
+  const instances = Number(config.INDEXER_INSTANCES || 2)
+  const apiPort = Number(config.INDEXER_API_PORT || 8080)
+  const tcpUrls = config.INDEXER_TCP_URLS || undefined
+  const natsUrl = config.INDEXER_NATS_URL || undefined
+
+  const projectId = '${name}'
+  const dataPath = config.INDEXER_DATA_PATH || undefined // 'data'
+  const transport =
+    (config.INDEXER_TRANSPORT as TransportType) || TransportType.LocalNet
+
+  const transportConfig: any =
+    tcpUrls || natsUrl ? { tcpUrls, natsUrl } : undefined
+
+  if (!projectId) throw new Error('INDEXER_NAMESPACE env var must be provided ')
 
   await SDK.init({
     projectId,
-    transport: TransportType.LocalNet,
-    main: {
-      apiPath,
-      domainPath: mainDomainPath,
+    transport,
+    transportConfig,
+    apiPort,
+    fetcher: {
+      instances: 1,
+    },
+    parser: {
+      instances: 1,
     },
     indexer: {
-      instances: 4,
-      domainPath: indexerDomainPath,
+      dataPath,
+      main: {
+        apiSchemaPath,
+        domainPath: mainDomainPath,
+      },
+      worker: {
+        instances,
+        domainPath: workerDomainPath,
+      },
     },
-    // parser: {
-    //   instances: 1,
-    // },
-    // fetcher: {
-    //   instances: 1,
-    // },
   })
 }
 
@@ -95,24 +120,37 @@ main()
 
   let tsconfig: string = 
 `{
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
-      "outDir": "dist"
+    "target": "ES2021",
+    "lib": [
+      "ESNext",
+    ],
+    "module": "esnext",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "outDir": "dist",
+    "declarationMap": true,
+    "allowJs": true,
   },
   "exclude": [
-      "node_modules",
-      "dist",
-      "scripts",
-      "tests",
-      "**/*.spec.ts",
-      "**/*.test.ts",
-      "**/__tests__",
-      "**/__mocks__"
+    "node_modules",
+    "dist",
+    "scripts",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/__tests__",
+    "**/__mocks__"
   ]
 }`
 
 let typesdts: string = 
-`export * from '../../types'`
+`export * from '../../types'
+`
 
-  return {docker, pkg, run, tsconfig, typesdts }
+  return {docker, pkg, run, tsconfig, typesdts, cmd }
 }

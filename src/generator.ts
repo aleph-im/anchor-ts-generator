@@ -36,12 +36,13 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.projectDir))
     mkdirSync(paths.projectDir)
-  const { docker, pkg, run, tsconfig, typesdts } = renderRootFiles(idl.name)
+  const { docker, pkg, run, tsconfig, typesdts, cmd } = renderRootFiles(idl.name)
   writeFileSync(paths.projectFile('docker-compose.yaml'), docker);
   writeFileSync(paths.projectFile('package.json'), pkg);
   writeFileSync(paths.projectFile('run.ts'), run);
   writeFileSync(paths.projectFile('tsconfig.json'), tsconfig);
   writeFileSync(paths.projectFile('types.d.ts'), typesdts);
+  writeFileSync(paths.projectFile('cmd.sh'), cmd);
 
   const { typesView, instructionsView, eventsView, accountsView } = generateFromTemplateType(idl, toGenerate)
   console.log(typesView, instructionsView, eventsView, accountsView)
@@ -60,11 +61,12 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   if(!existsSync(paths.apiDir))
     mkdirSync(paths.apiDir)
   await generateSchema(paths, idl);
-  const { indexApi, resolversApi, schemaApi } = renderApiFiles(Name)
+  const { indexApi, resolversApi, schemaApi, apiTypes } = renderApiFiles(Name, instructionsView, accountsView, typesView)
   try {
     writeFileSync(paths.apiFile('index'), format(indexApi, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.apiFile('resolvers'), format(resolversApi, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.apiFile('schema'), format(schemaApi, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.apiFile('types'), format(apiTypes, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     logError(`Failed to format on api folder`)
     logError(err)
@@ -82,10 +84,10 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.domainDir))
     mkdirSync(paths.domainDir)
-  const { account, indexer, mainDomain } = renderDomainFiles(Name, idl.name, accountsView)
+  const { account, worker, mainDomain } = renderDomainFiles(Name, idl.name, accountsView)
   try {
     writeFileSync(paths.domainFile('account'), format(account, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.domainFile('indexer'), format(indexer, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.domainFile('worker'), format(worker, DEFAULT_FORMAT_OPTS));
     writeFileSync(paths.domainFile('main'), format(mainDomain, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     logError(`Failed to format on domain folder`)
@@ -106,7 +108,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.discovererDir))
     mkdirSync(paths.discovererDir)
-  const { discoverer } = renderDiscovererFiles(Name)
+  const { discoverer } = renderDiscovererFiles(Name, idl.name)
   try {
     writeFileSync(paths.discovererFile(idl.name), format(discoverer, DEFAULT_FORMAT_OPTS));
   } catch (err) {

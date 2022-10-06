@@ -17,7 +17,7 @@ export enum ProgramName {
   ${Name} = '${name}',
 }
 
-// This is just an example, to use it on a type guard on stats folder 
+// @todo: This is just an example, to use it on a type guard on stats folder 
 export const collectionEvent1 = [
   InstructionType.${instructionsView.instructions[0].name},
   InstructionType.${instructionsView.instructions[1].name},
