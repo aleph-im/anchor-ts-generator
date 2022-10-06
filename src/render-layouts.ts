@@ -1,6 +1,9 @@
 import { ViewInstructions, ViewAccounts } from './types'
 
-export function renderLayoutsFiles(instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined){
+export function renderLayoutsFiles(filename: string, instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined){
+    const NAME = filename.toUpperCase()
+    const name = filename.toLowerCase()
+
     let accountLayouts: string = ""
 
     if(accountsView != undefined && accountsView.accounts.length > 0) {
@@ -151,9 +154,25 @@ export type ParsedEvents =
     }
 
     const indexLayouts = 
-`export * from './accounts.js'
+`import { ${NAME}_PROGRAM_ID } from "../../constants.js"
+import { LayoutImplementation } from "@aleph-indexer/framework"
+import { ACCOUNTS_DATA_LAYOUT } from './accounts.js'
+import { InstructionType, IX_DATA_LAYOUT, getInstructionType, IX_ACCOUNTS_LAYOUT } from './instructions.js'
+
+export * from './accounts.js'
 export * from './instructions.js'
 export * from './solita/index.js'
+
+export default class implements LayoutImplementation {
+  name = '${name}'
+  programID = ${NAME}_PROGRAM_ID
+  accountLayoutMap = IX_ACCOUNTS_LAYOUT
+  dataLayoutMap = IX_DATA_LAYOUT
+  accountDataLayoutMap = ACCOUNTS_DATA_LAYOUT
+  eventType = InstructionType
+
+  getInstructionType = getInstructionType
+}
 `
 
     return { accountLayouts, ixLayouts, indexLayouts }

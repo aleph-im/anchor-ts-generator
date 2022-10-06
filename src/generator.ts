@@ -120,7 +120,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.utilsDir)
   if(!existsSync(paths.layaoutsDir))
     mkdirSync(paths.layaoutsDir)
-  const { accountLayouts, ixLayouts, indexLayouts } = renderLayoutsFiles(instructionsView, accountsView);
+  const { accountLayouts, ixLayouts, indexLayouts } = renderLayoutsFiles(idl.name, instructionsView, accountsView);
   try {
     if(accountLayouts) {
       writeFileSync(paths.layoutsFile('accounts'), format(accountLayouts, DEFAULT_FORMAT_OPTS));
