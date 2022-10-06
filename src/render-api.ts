@@ -8,9 +8,11 @@ export function renderApiFiles(Name: string, instructions: ViewInstructions | un
   const resolversApi: string = `import MainDomain from '../domain/main.js'
 import {
   AccountType,
-  Global${Name}Stats,
   ParsedEvents,
   InstructionType,
+} from '../utils/layouts/index.js'
+import {
+  Global${Name}Stats,
   ${Name}AccountInfo,
   ${Name}ProgramData,
 } from '../types.js'
@@ -213,7 +215,7 @@ import {
   GraphQLUnionType,
 } from 'graphql'
 import { GraphQLBigNumber, GraphQLLong } from '@aleph-indexer/core'
-import { InstructionType } from '../types.js'
+import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
 

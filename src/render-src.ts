@@ -2,7 +2,7 @@ import { ViewInstructions } from "./types"
 
 export function renderSrcFiles(Name: string, filename: string, instructionsView: ViewInstructions | undefined, address?: string){
   const NAME = filename.toUpperCase()
-  const name = filename.toUpperCase()
+  const name = filename.toLowerCase()
 
   let constants = ''
   let types = ''
@@ -11,7 +11,7 @@ export function renderSrcFiles(Name: string, filename: string, instructionsView:
   constants = 
 `import { PublicKey } from '@solana/web3.js'
 import { config } from '@aleph-indexer/core'
-import { InstructionType } from './types.js'
+import { InstructionType } from './utils/layouts/index.js'
 
 export enum ProgramName {
   ${Name} = '${name}',
@@ -54,9 +54,6 @@ export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
 `
   }
 
-    types += 
-`export * from './utils/layouts/index.js'
-`
     types +=
 `
 import { AccountStats } from '@aleph-indexer/framework'

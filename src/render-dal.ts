@@ -2,7 +2,7 @@ export function renderDALFiles(){
 
   const eventDal = `import BN from 'bn.js'
 import { EntityStorage } from '@aleph-indexer/core'
-import { ParsedEvents } from '../types.js'
+import { ParsedEvents } from '../utils/layouts/index.js'
 
 export type EventStorage = EntityStorage<ParsedEvents>
 

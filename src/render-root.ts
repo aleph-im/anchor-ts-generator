@@ -45,8 +45,8 @@ services:
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.12",
-    "@aleph-indexer/framework": "^1.0.12",
+    "@aleph-indexer/core": "^1.0.14",
+    "@aleph-indexer/framework": "^1.0.14",
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/beet-solana": "0.4.0",
     "@solana/spl-token": "0.3.5",
@@ -74,6 +74,7 @@ async function main() {
   const workerDomainPath = path.join(__dirname, './src/domain/worker.js')
   const mainDomainPath = path.join(__dirname, './src/domain/main.js')
   const apiSchemaPath = path.join(__dirname, './src/api/index.js')
+  const layoutPath = path.join(__dirname, './src/utils/layouts/layout.js')
 
   const instances = Number(config.INDEXER_INSTANCES || 2)
   const apiPort = Number(config.INDEXER_API_PORT || 8080)
@@ -100,6 +101,7 @@ async function main() {
     },
     parser: {
       instances: 1,
+      layoutPath,
     },
     indexer: {
       dataPath,

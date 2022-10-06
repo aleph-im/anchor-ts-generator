@@ -6,7 +6,8 @@ export function renderDiscovererFiles(Name: string, filename: string){
     ${NAME}_PROGRAM_ID,
     ${NAME}_PROGRAM_ID_PK,
 } from '../../constants.js'
-import { AccountType, ${Name}AccountInfo } from '../../types.js'
+import { AccountType } from '../../utils/layouts/index.js'
+import { ${Name}AccountInfo } from '../../types.js'
 import {
     ACCOUNT_DISCRIMINATOR,
     ACCOUNTS_DATA_LAYOUT,
