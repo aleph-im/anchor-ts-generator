@@ -14,7 +14,7 @@ import {
 import {
   Global${Name}Stats,
   ${Name}AccountInfo,
-  ${Name}ProgramData,
+  ${Name}AccountData,
 } from '../types.js'
 
 export type AccountsFilters = {
@@ -104,7 +104,7 @@ export class APIResolvers {
     types, 
     accounts, 
     includeStats 
-  }: AccountsFilters): Promise<${Name}ProgramData[]> {
+  }: AccountsFilters): Promise<${Name}AccountData[]> {
     const accountMap = await this.domain.getAccounts(includeStats)
 
     accounts =
@@ -150,7 +150,7 @@ export default class APISchema extends IndexerAPISchema {
     super(domain, {
       types: Types.types,
 
-      customTimeSeriesTypesMap: { ${naMe}Info: Types.${Name}Info },
+      customTimeSeriesTypesMap: { ${naMe}Info: Types.AccessTimeStats },
       customStatsType: Types.${Name}Stats,
 
       query: new GraphQLObjectType({
@@ -214,7 +214,7 @@ import {
   GraphQLInterfaceType,
   GraphQLUnionType,
 } from 'graphql'
-import { GraphQLBigNumber, GraphQLLong } from '@aleph-indexer/core'
+import { GraphQLBigNumber, GraphQLLong, GraphQLJSON } from '@aleph-indexer/core'
 import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
@@ -259,13 +259,13 @@ export const ${type.name} = new GraphQLObjectType({
 
 // ------------------- STATS ---------------------------
 
-// look .src/domain/stats/statsAggregator & ./src/types.ts
-
-export const ${Name}Info = new GraphQLObjectType({
-  name: '${Name}Info',
+export const AccessTimeStats = new GraphQLObjectType({
+  name: 'MarinadeFinanceInfo',
   fields: {
-    customProperties1: { type: new GraphQLNonNull(GraphQLInt) },
-    customProperties2: { type: new GraphQLNonNull(GraphQLInt) },
+    accesses: { type: new GraphQLNonNull(GraphQLInt) },
+    accessesByProgramId: { type: new GraphQLNonNull(GraphQLJSON) },
+    startTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
+    endTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
   },
 })
 
@@ -284,18 +284,20 @@ export const Global${Name}Stats = new GraphQLObjectType({
   name: 'Global${Name}Stats',
   fields: {
     totalAccounts: { type: new GraphQLNonNull(TotalAccounts) },
-    totalRequests: { type: new GraphQLNonNull(GraphQLInt) },
-    totalUniqueAccessingPrograms: { type: new GraphQLNonNull(GraphQLInt) },
+    totalAccesses: { type: new GraphQLNonNull(GraphQLInt) },
+    totalAccessesByProgramId: { type: new GraphQLNonNull(GraphQLJSON) },
+    startTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
+    endTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
   },
 })
 
 export const ${Name}Stats = new GraphQLObjectType({
   name: '${Name}Stats',
   fields: {
-    last1h: { type: ${Name}Info },
-    last24h: { type: ${Name}Info },
-    last7d: { type: ${Name}Info },
-    total: { type: ${Name}Info },
+    last1h: { type: AccessTimeStats },
+    last24h: { type: AccessTimeStats },
+    last7d: { type: AccessTimeStats },
+    total: { type: AccessTimeStats },
   },
 })
 

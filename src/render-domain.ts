@@ -12,7 +12,7 @@ import {
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../dal/event.js'
 import { ParsedEvents } from '../utils/layouts/index.js'
-import { ${Name}AccountInfo } from '../types.js'
+import { ${Name}AccountInfo, TimeStats } from '../types.js'
 
 export class AccountDomain {
   constructor(
@@ -32,7 +32,7 @@ export class AccountDomain {
     return this.timeSeriesStats.getTimeSeriesStats(type, filters)
   }
 
-  async getStats(): Promise<AccountStats> {
+  async getStats(): Promise<AccountStats<TimeStats>> {
     return this.timeSeriesStats.getStats()
   }
 
@@ -67,7 +67,7 @@ import {
 import { eventParser as eParser } from '../parsers/event.js'
 import { createEventDAL } from '../dal/event.js'
 import { ParsedEvents } from '../utils/layouts/index.js'
-import { ${Name}AccountInfo } from '../types.js'
+import { AccessTimeStats, ${Name}AccountInfo } from '../types.js'
 import { AccountDomain } from './account.js'
 import { createAccountStats } from './stats/timeSeries.js'
 import { ${NAME}_PROGRAM_ID } from '../constants.js'
@@ -128,7 +128,7 @@ export default class IndexerDomain
     return oracle.getTimeSeriesStats(type, filters)
   }
 
-  async getStats(account: string): Promise<AccountStats> {
+  async getStats(account: string): Promise<AccountStats<AccessTimeStats>> {
     return this.getAccountStats(account)
   }
 
@@ -139,7 +139,7 @@ export default class IndexerDomain
     return res.info
   }
 
-  async getAccountStats(reserve: string): Promise<AccountStats> {
+  async getAccountStats(reserve: string): Promise<AccountStats<AccessTimeStats>> {
     const res = this.getAccount(reserve)
     return res.getStats()
   }
@@ -195,9 +195,10 @@ import {
 } from '../utils/layouts/index.js'
 import {
   Global${Name}Stats,
-  ${Name}Stats,
-  ${Name}ProgramData,
+  ${Name}AccountStats,
+  ${Name}AccountData,
   ${Name}AccountInfo,
+  TimeStats,
 } from '../types.js'
 import ${Name}Discoverer from './discoverer/${filename}.js'
 
@@ -239,13 +240,13 @@ export default class MainDomain
 
   async getAccounts(
     includeStats?: boolean,
-  ): Promise<Record<string, ${Name}ProgramData>> {
-    const accounts: Record<string, ${Name}ProgramData> = {}
+  ): Promise<Record<string, ${Name}AccountData>> {
+    const accounts: Record<string, ${Name}AccountData> = {}
 
     await Promise.all(
       Array.from(this.accounts || []).map(async (account) => {
         const actual = await this.getAccount(account, includeStats)
-        accounts[account] = actual as ${Name}ProgramData
+        accounts[account] = actual as ${Name}AccountData
       }),
     )
 
@@ -255,7 +256,7 @@ export default class MainDomain
   async getAccount(
     account: string,
     includeStats?: boolean,
-  ): Promise<${Name}ProgramData> {
+  ): Promise<${Name}AccountData> {
     const info = (await this.context.apiClient.invokeDomainMethod({
       account,
       method: 'getAccountInfo',
@@ -266,7 +267,7 @@ export default class MainDomain
     const { stats } = (await this.context.apiClient.invokeDomainMethod({
       account,
       method: 'get${Name}Stats',
-    })) as AccountStats<${Name}Stats>
+    })) as AccountStats<${Name}AccountStats>
 
     return { info, stats }
   }
@@ -306,20 +307,29 @@ export default class MainDomain
   async computeGlobalStats(
     accountAddresses?: string[],
   ): Promise<Global${Name}Stats> {
-    const accountsStats = await this.getAccountStats(accountAddresses)
+    const accountsStats = await this.getAccountStats<TimeStats>(accountAddresses)
     const globalStats: Global${Name}Stats = this.getNewGlobalStats()
 
     for (const accountStats of accountsStats) {
       if (!accountStats.stats) continue
 
-      const { totalRequests, totalUniqueAccessingPrograms, totalAccounts } =
-      accountStats.stats
+      const { accesses, accessesByProgramId, startTimestamp, endTimestamp } =
+        accountStats.stats
 
       const type = this.discoverer.getAccountType(accountStats.account)
 
-      globalStats.totalAccounts[type] += totalAccounts[type]
-      globalStats.totalRequests += totalRequests
-      globalStats.totalUniqueAccessingPrograms += totalUniqueAccessingPrograms
+      globalStats.totalAccounts[type]++
+      globalStats.totalAccesses += accesses
+      Object.entries(accessesByProgramId).forEach(([programId, accesses]) => {
+        globalStats.totalAccessesByProgramId[programId] =
+          (globalStats.totalAccessesByProgramId[programId] || 0) + accesses
+      })
+      globalStats.startTimestamp = Math.min(
+        globalStats.startTimestamp || Infinity, startTimestamp || Infinity,
+      )
+      globalStats.endTimestamp = Math.max(
+        globalStats.endTimestamp || 0, endTimestamp || 0,
+      )
 
     }
     return globalStats
@@ -327,7 +337,7 @@ export default class MainDomain
 
   getNewGlobalStats(): Global${Name}Stats {
     return {
-      totalRequests: 0,
+      totalAccesses: 0,
       totalAccounts: {`
   if(accounts){
     for(const account of accounts.accounts){
@@ -337,7 +347,9 @@ export default class MainDomain
   }
   mainDomain += `
       },
-      totalUniqueAccessingPrograms: 0,
+      totalAccessesByProgramId: {},
+      startTimestamp: undefined,
+      endTimestamp: undefined,
     }
   }
 }
