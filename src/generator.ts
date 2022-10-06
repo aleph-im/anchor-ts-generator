@@ -1,4 +1,4 @@
-import { Solita, Schema, Idl } from "@metaplex-foundation/solita"
+import { Solita, Idl } from "@metaplex-foundation/solita"
 import { TemplateType } from "./types.js";
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
 import { PACKAGE_ROOT } from "./constants.js";
@@ -60,7 +60,6 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.apiDir))
     mkdirSync(paths.apiDir)
-  await generateSchema(paths, idl);
   const { indexApi, resolversApi, schemaApi, apiTypes } = renderApiFiles(Name, instructionsView, accountsView, typesView)
   try {
     writeFileSync(paths.apiFile('index'), format(indexApi, DEFAULT_FORMAT_OPTS));
@@ -240,15 +239,6 @@ async function generateSolitaTypeScript(paths: Paths, idl: Idl) {
   await gen.renderAndWriteTo(paths.tsSolitaDir);
 
   console.log("Success on TS generation!");
-}
-
-async function generateSchema(paths: Paths, idl: Idl) {
-  console.log("Generating Schema to %s", paths.apiDir);
-
-  const gen = new Schema(idl, { formatCode: false });
-  await gen.renderAndWriteTo(paths.apiDir);
-
-  console.log("Success on Schema generation!");
 }
 
 function toCamelCase(str: string){
