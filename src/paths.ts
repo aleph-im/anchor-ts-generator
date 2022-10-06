@@ -16,7 +16,7 @@ export class Paths {
   }
 
   get outputDir() {
-   return path.join(this.rootDir.toString(), 'output')
+   return path.join(this.rootDir.toString(), 'packages')
   }
 
   get projectDir() {
