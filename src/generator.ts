@@ -120,7 +120,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.utilsDir)
   if(!existsSync(paths.layaoutsDir))
     mkdirSync(paths.layaoutsDir)
-  const { accountLayouts, ixLayouts, indexLayouts } = renderLayoutsFiles(idl.name, instructionsView, accountsView);
+  const { accountLayouts, ixLayouts, indexLayouts, layoutLayouts } = renderLayoutsFiles(idl.name, instructionsView, accountsView);
   try {
     if(accountLayouts) {
       writeFileSync(paths.layoutsFile('accounts'), format(accountLayouts, DEFAULT_FORMAT_OPTS));
@@ -129,6 +129,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
       writeFileSync(paths.layoutsFile('instructions'), format(ixLayouts, DEFAULT_FORMAT_OPTS));
     }
     writeFileSync(paths.layoutsFile('index'), format(indexLayouts, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.layoutsFile('layout'), format(layoutLayouts, DEFAULT_FORMAT_OPTS));
   } catch (err) {
     console.log(`Failed to format on layouts folder`)
     logError(err)

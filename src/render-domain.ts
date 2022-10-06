@@ -11,7 +11,8 @@ import {
   AccountStats,
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../dal/event.js'
-import { ParsedEvents, ${Name}AccountInfo } from '../types.js'
+import { ParsedEvents } from '../utils/layouts/index.js'
+import { ${Name}AccountInfo } from '../types.js'
 
 export class AccountDomain {
   constructor(
@@ -65,7 +66,8 @@ import {
 } from '@aleph-indexer/framework'
 import { eventParser as eParser } from '../parsers/event.js'
 import { createEventDAL } from '../dal/event.js'
-import { ParsedEvents, ${Name}AccountInfo } from '../types.js'
+import { ParsedEvents } from '../utils/layouts/index.js'
+import { ${Name}AccountInfo } from '../types.js'
 import { AccountDomain } from './account.js'
 import { createAccountStats } from './stats/timeSeries.js'
 import { ${NAME}_PROGRAM_ID } from '../constants.js'
@@ -188,12 +190,14 @@ import {
   AccountStats,
 } from '@aleph-indexer/framework'
 import {
+  AccountType,
+  ParsedEvents,
+} from '../utils/layouts/index.js'
+import {
   Global${Name}Stats,
   ${Name}Stats,
   ${Name}ProgramData,
-  AccountType,
   ${Name}AccountInfo,
-  ParsedEvents,
 } from '../types.js'
 import ${Name}Discoverer from './discoverer/${filename}.js'
 

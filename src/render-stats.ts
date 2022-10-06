@@ -13,7 +13,8 @@ export function renderStatsFiles(Name: string, filename: string, instructions: V
     TimeSeriesStats,
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../../dal/event.js'
-import { ParsedEvents, ${Name}Info } from '../../types.js'
+import { ParsedEvents } from '../../utils/layouts/index.js'
+import { ${Name}Info } from '../../types.js'
 import statsAggregator from './statsAggregator.js'
 import eventAggregator from './timeSeriesAggregator.js'
 
@@ -71,15 +72,17 @@ export async function createAccountStats(
         timeSeriesAggregator = 
 `
 import {
-  ParsedEvents,
   ${Name}Info,
   EventType1Info,
   EventType2Info,
+} from '../../types.js'
+import {
+  ParsedEvents,
   ${instructions.instructions[0].name}Event,
   ${instructions.instructions[1].name}Event,
   ${instructions.instructions[2].name}Event,
   ${instructions.instructions[3].name}Event
-} from '../../types.js'
+} from '../../utils/layouts/index.js'
 import { collectionEvent1Whitelist, collectionEvent2Whitelist } from '../../constants.js' // @todo: set to discriminate different event collections
 
 // @todo: This is just an example to group some related instructions and process the data together
