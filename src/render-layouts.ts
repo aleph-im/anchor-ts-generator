@@ -1,6 +1,9 @@
 import { ViewInstructions, ViewAccounts } from './types'
 
-export function renderLayoutsFiles(instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined){
+export function renderLayoutsFiles(filename: string, instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined){
+    const NAME = filename.toUpperCase()
+    const name = filename.toLowerCase()
+
     let accountLayouts: string = ""
 
     if(accountsView != undefined && accountsView.accounts.length > 0) {
@@ -16,8 +19,6 @@ export function renderLayoutsFiles(instructionsView: ViewInstructions | undefine
         }  
         accountLayouts +=
 `} from './solita/index.js'
-import { ParsedAccounts, ParsedAccountsData } from './solita/index.js'
-import { BeetStruct, FixableBeetStruct } from '@metaplex-foundation/beet'
 
 export enum AccountType {
         `
@@ -155,6 +156,27 @@ export type ParsedEvents =
 export * from './instructions.js'
 export * from './solita/index.js'
 `
+    const layoutLayouts =
+`import { ${NAME}_PROGRAM_ID } from '../../constants.js'
+import { ACCOUNTS_DATA_LAYOUT } from './accounts.js'
+import {
+  InstructionType,
+  IX_DATA_LAYOUT,
+  getInstructionType,
+  IX_ACCOUNTS_LAYOUT,
+} from './instructions.js'
 
-    return { accountLayouts, ixLayouts, indexLayouts }
+export default {
+  [${NAME}_PROGRAM_ID]: {
+    name: '${name}',
+    programID: ${NAME}_PROGRAM_ID,
+    accountLayoutMap: IX_ACCOUNTS_LAYOUT,
+    dataLayoutMap: IX_DATA_LAYOUT,
+    accountDataLayoutMap: ACCOUNTS_DATA_LAYOUT,
+    eventType: InstructionType,
+    getInstructionType,
+  },
+}`
+
+    return { accountLayouts, ixLayouts, indexLayouts, layoutLayouts }
 }

@@ -2,11 +2,11 @@
 Aleph Indexer Generator for Solana programs, using Anchor's IDLs.
 
 Currently, you can run the indexer generator CLI here from source: 
-1. `npm run start`
+1. `npm run build`
 2. You have two options, generating your indexer from a local Anchor IDL, or from a remote one:
    1. Providing the IDL path:`node ./dist/index.js -f ./path/to/idl/marinade_finance.json`
-   2. Providing your program address `node ./dist/index.js -a JUP3c2Uh3WA4Ng34tw6kPd2G4C5BB21Xo36Je1s32Ph`
-      (For this option you need to have anchor installed and your program published on https://www.apr.dev/)
+   2. Providing your program address `node ./dist/index.js -a MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD`
+       (For this option you need to have anchor installed and your program published on https://www.apr.dev/)
 
 ## Deploying a new Indexer
 For an example deployment, see this PR: https://github.com/aleph-im/anchor-ts-generator/pull/20/files
