@@ -11,9 +11,7 @@ Currently, you can run the indexer generator CLI here from source:
 ## Deploying a new Indexer
 For an example deployment, see this PR: https://github.com/aleph-im/anchor-ts-generator/pull/20/files
 - Make a fork of this project in your GitHub Workspace.
-- Create a package with your project name's and put it inside `/packages` directory.
-- Modify the `lerna.json` file and ensure to add there your package inside the list.
-- Write your custom indexer code or copy it from another project like `spl-lending` project.
+- Build the indexer using the anchor address or the IDL.
 - Substitute the `INDEXER` variable inside `.github/workflows/main.yml` file, changing it by your project's name:
 ```yml
 - name: Build and export
