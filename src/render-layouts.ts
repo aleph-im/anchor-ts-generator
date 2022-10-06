@@ -19,8 +19,6 @@ export function renderLayoutsFiles(filename: string, instructionsView: ViewInstr
         }  
         accountLayouts +=
 `} from './solita/index.js'
-import { ParsedAccounts, ParsedAccountsData } from './solita/index.js'
-import { BeetStruct, FixableBeetStruct } from '@metaplex-foundation/beet'
 
 export enum AccountType {
         `
