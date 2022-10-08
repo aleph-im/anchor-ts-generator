@@ -4,6 +4,7 @@ import { Command } from 'commander'
 import { exec } from 'child_process'
 import { Paths } from './paths.js'
 import { readFileSync } from "fs"
+import { Idl } from "@metaplex-foundation/solita"
 
 const program = new Command()
 
@@ -21,7 +22,10 @@ async function main() {
     let path: string[] = options.file.replace('.json', '').split('/')
     let programName: string = path[path.length - 1]
     const paths = new Paths(`./`, programName)
-    const idl = JSON.parse(readFileSync(paths.idlFile(programName), "utf8"))
+    const idl: Idl = JSON.parse(readFileSync(paths.idlFile(programName), "utf8"))
+    idl.metadata = {
+      address: "PROGRAM PUBKEY"
+    }
     await generate(idl, paths,
       [
         TemplateType.Types,
@@ -40,7 +44,10 @@ async function main() {
         }
         if(stdout) {
           console.log(stdout)
-          const idl = JSON.parse(stdout)
+          const idl: Idl = JSON.parse(stdout)
+          idl.metadata = {
+            address: options.address
+          }
           const paths = new Paths(`./`, idl.name)
           await generate(idl, paths,
             [

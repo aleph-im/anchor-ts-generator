@@ -120,4 +120,39 @@ export class Paths {
   get tsSolitaDir() {
     return path.join(this.layaoutsDir.toString(), 'solita')
   }
+  solitaFile(name: string) {
+    return path.join(this.tsSolitaDir, `${name}.ts`)
+  }
+
+  get ixSolitaDir() {
+    return path.join(this.tsSolitaDir.toString(), 'instructions/')
+  }
+
+  ixSolitaFile(name: string) {
+    return path.join(this.ixSolitaDir, `${name}`)
+  }
+
+  get accountSolitaDir() {
+    return path.join(this.tsSolitaDir.toString(), 'accounts/')
+  }
+
+  accountSolitaFile(name: string) {
+    return path.join(this.accountSolitaDir, `${name}`)
+  }
+
+  get typeSolitaDir() {
+    return path.join(this.tsSolitaDir.toString(), 'types/')
+  }
+
+  typeSolitaFile(name: string) {
+    return path.join(this.typeSolitaDir, `${name}`)
+  }
+
+  get errorSolitaDir() {
+    return path.join(this.tsSolitaDir.toString(), 'errors/')
+  }
+
+  errorSolitaFile(name: string) {
+    return path.join(this.errorSolitaDir, `${name}`)
+  }
 }

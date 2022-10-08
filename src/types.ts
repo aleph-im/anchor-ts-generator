@@ -183,7 +183,6 @@ export type IdlType =
   | "i64"
   | "u128"
   | "i128"
-  | "bytes"
   | "string"
   | "publicKey"
   | IdlTypeDefined

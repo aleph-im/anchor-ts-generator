@@ -1,8 +1,6 @@
 import { Solita, Idl } from "@metaplex-foundation/solita"
 import { TemplateType } from "./types.js";
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
-import { PACKAGE_ROOT } from "./constants.js";
-import Mustache from "mustache";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 import IdlTransformer from "./transformer.js";
 import { Paths } from './paths.js'
 import { renderRootFiles } from './render-root.js'
@@ -16,6 +14,7 @@ import { renderApiFiles } from "./render-api.js";
 import { renderDiscovererFiles } from "./render-discoverer.js";
 import { logError } from './utils/index.js'
 import { renderStatsFiles } from "./render-stats.js";
+import { renderSolitaMods } from "./render-solita.js";
 
 const DEFAULT_FORMAT_OPTS: Options = {
   semi: false,
@@ -44,8 +43,8 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   writeFileSync(paths.projectFile('types.d.ts'), typesdts);
   writeFileSync(paths.projectFile('cmd.sh'), cmd);
 
-  const { typesView, instructionsView, eventsView, accountsView } = generateFromTemplateType(idl, toGenerate)
-  console.log(typesView, instructionsView, eventsView, accountsView)
+  const { typesView, instructionsView, accountsView } = generateFromTemplateType(idl, toGenerate)
+  console.log(typesView, instructionsView, accountsView)
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
@@ -137,7 +136,13 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   if(!existsSync(paths.tsSolitaDir))
     mkdirSync(paths.tsSolitaDir)
   await generateSolitaTypeScript(paths, idl);
-
+  const { indexSolita } = renderSolitaMods(instructionsView, accountsView, typesView, paths, DEFAULT_FORMAT_OPTS)
+  try {
+    writeFileSync(paths.solitaFile('index'), format(indexSolita, DEFAULT_FORMAT_OPTS));
+  } catch (err) {
+    console.log(`Failed to format on parser folder`)
+    logError(err)
+  }
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
   const { event } = renderParsersFiles(instructionsView)
@@ -150,15 +155,12 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 }
 
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
-  let typesView, instructionsView, eventsView, accountsView = undefined
-  let textAndTemplate: [TemplateType, string][] = []
+  let typesView, instructionsView, accountsView = undefined
   for (const templateType of toGenerate) {
     switch (templateType) {
       case TemplateType.Types:
         if (idl.types) {
-          const { template, view } = generateTypes(idl)
-          const text = Mustache.render(template, view);
-          textAndTemplate.push([templateType, text])
+          const view = generateTypes(idl)
           typesView = view
         }
         else console.log("Missing IDL types")
@@ -166,29 +168,15 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
   
       case TemplateType.Instructions:
         if (idl.instructions) {
-          const { template, view } = generateInstructions(idl)
-          const text = Mustache.render(template, view);
-          textAndTemplate.push([templateType, text.slice(0, text.length-2)])
+          const view = generateInstructions(idl)
           instructionsView = view
         }
         else console.log("Missing IDL instructions")
         break
   
-      case TemplateType.Events:
-        if (idl.events){
-          const { template, view } = generateEvents(idl)
-          const text = Mustache.render(template, view)
-          textAndTemplate.push([templateType, text.slice(0, text.length-2)])
-          eventsView = view
-        }
-        else console.log("Missing IDL events")
-        break
-
       case TemplateType.Accounts:
         if (idl.accounts){
-          const { template, view } = generateAccounts(idl)
-          const text = Mustache.render(template, view)
-          textAndTemplate.push([templateType, text])
+          const view = generateAccounts(idl)
           accountsView = view
         }
         else console.log("Missing IDL accounts")
@@ -198,39 +186,25 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
         console.log(`template type ${templateType} not supported`)
     }
   }
-  return { typesView, instructionsView, eventsView, accountsView, textAndTemplate }
+  return { typesView, instructionsView, accountsView }
 }
 
 function generateTypes(idl: Idl) {
   const trafo = new IdlTransformer(idl);
   let view = trafo.generateViewTypes();
-  const template = readFileSync(
-    `${PACKAGE_ROOT}/src/mustaches/types.mustache`, "utf8");
-  return { template, view };
+  return view;
 }
 
 function generateInstructions(idl: Idl) {
   const trafo = new IdlTransformer(idl);
   const view = trafo.generateViewInstructions();
-  const template = readFileSync(
-    `${PACKAGE_ROOT}/src/mustaches/instructions.mustache`, "utf8");
-  return { template, view };
-}
-
-function generateEvents(idl: Idl) {
-  const trafo = new IdlTransformer(idl);
-  const view = trafo.generateViewEvents();
-  const template = readFileSync(
-    `${PACKAGE_ROOT}/src/mustaches/events.mustache`, "utf8");
-  return { template, view };
+  return view;
 }
 
 function generateAccounts(idl: Idl) {
   const trafo = new IdlTransformer(idl);
   const view = trafo.generateViewAccounts();
-  const template = readFileSync(
-    `${PACKAGE_ROOT}/src/mustaches/accounts.mustache`, "utf8");
-  return { template, view };
+  return view ;
 }
 
 async function generateSolitaTypeScript(paths: Paths, idl: Idl) {

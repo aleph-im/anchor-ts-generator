@@ -1,24 +1,24 @@
 import {
-  ViewEnum, ViewEvent, ViewEvents,
+  ViewEnum,
+  IdlEvent, IdlEventField,
   ViewField,
   ViewInstruction,
   ViewInstructions,
   ViewStruct,
   ViewTypes,
   _ViewAccount,
-  ViewAccounts
+  ViewAccounts,
+  IdlTypeDefTyEnum,
+  IdlTypeDefTyStruct,
+  IdlTypeDef,
 } from "./types";
 import { 
   Idl,
-  IdlEvent, IdlEventField,
   IdlField,
   IdlInstruction,
   IdlType,
   IdlTypeArray,
-  IdlTypeDef,
   IdlTypeDefined,
-  IdlTypeDefTyEnum,
-  IdlTypeDefTyStruct,
   IdlTypeOption,
   IdlTypeVec,
  } from "@metaplex-foundation/solita";
@@ -26,7 +26,6 @@ import { primitivesMap, primitivesMapGraphqQl } from "./constants.js";
 
 export default class IdlTransformer {
   private _viewTypes: ViewTypes | undefined = undefined;
-  private _viewEvents: ViewEvents | undefined = undefined;
   private _viewInstructions: ViewInstructions | undefined = undefined;
   private _viewAccounts: ViewAccounts | undefined = undefined; //L wasnt used after commenting out
 
@@ -120,26 +119,6 @@ export default class IdlTransformer {
     }
     this._viewTypes = view;
     return this._viewTypes;
-  }
-
-  public generateViewEvents(idl?: IdlEvent[]): ViewEvents {
-    if (idl === undefined)
-      idl = this.idl.events as IdlEvent[];
-    let events: ViewEvent[] = [];
-    let typeImports: Set<string> = new Set([])
-    for (const event of idl) {
-      const struct = this.toViewStruct(event)
-      for (const field of struct.fields)
-        if(!this.ignoreImports.has(field.type) && !typeImports.has(field.type)) {
-          typeImports.add(field.type)
-        }
-      events = [...events, struct];
-    }
-    this._viewEvents = {
-      typeImports: [...typeImports.values()],
-      events
-    };
-    return this._viewEvents;
   }
 
   public generateViewAccounts(idl?: IdlTypeDef[]): ViewAccounts {
