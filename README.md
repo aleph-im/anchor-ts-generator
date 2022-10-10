@@ -1,5 +1,7 @@
 # anchor-ts-generator
-Aleph Indexer Generator for Solana programs, using Anchor's IDLs.
+## WARNING: This generator is still work-in-progress and may contain bugs! Do not rely on the indexer data, unless you are sure it delivers what you expect. This warning will disappear, as soon as we consider usage safe.
+
+Aleph Indexer Generator for Solana programs, using Anchor's IDLs. It generates all boilerplate necessary for starting your own Solana indexer on our [open-source, multi-threaded node.js framework](https://github.com/aleph-im/solana-indexer-framework), using [moleculer](https://moleculer.services/).
 
 Currently, you can run the indexer generator CLI here from source: 
 1. `npm run build`
