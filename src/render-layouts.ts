@@ -6,12 +6,12 @@ export function renderLayoutsFiles(filename: string, instructionsView: ViewInstr
 
     let accountLayouts: string = ""
 
-    if(accountsView != undefined && accountsView.accounts.length > 0) {
+    if(accountsView != undefined && accountsView.length > 0) {
         accountLayouts = 
 `import {
 ` 
 
-        for(const account of accountsView.accounts){
+        for(const account of accountsView){
             accountLayouts += 
 `  ${account.name.charAt(0).toLowerCase().concat(account.name.slice(1))}Discriminator,
   ${account.name.charAt(0).toLowerCase().concat(account.name.slice(1))}Beet,
@@ -22,7 +22,7 @@ export function renderLayoutsFiles(filename: string, instructionsView: ViewInstr
 
 export enum AccountType {
         `
-        for(const account of accountsView.accounts){
+        for(const account of accountsView){
             accountLayouts += 
 `   ${account.name} = '${account.name}',
 `
@@ -32,7 +32,7 @@ export enum AccountType {
 
 export const ACCOUNT_DISCRIMINATOR: Record<AccountType, Buffer> = {
 `
-        for(const account of accountsView.accounts){
+        for(const account of accountsView){
             accountLayouts += 
 `   [AccountType.${account.name}]: Buffer.from(${account.name.charAt(0).toLowerCase().concat(account.name.slice(1))}Discriminator),
 `
@@ -45,7 +45,7 @@ export const ACCOUNTS_DATA_LAYOUT: Record<
     any
 > = {
 `
-        for(const account of accountsView.accounts){
+        for(const account of accountsView){
             accountLayouts += 
 `   [AccountType.${account.name}]: ${account.name.charAt(0).toLowerCase().concat(account.name.slice(1))}Beet,
 `
@@ -55,7 +55,7 @@ export const ACCOUNTS_DATA_LAYOUT: Record<
     }
 
     let ixLayouts: string = ''
-    if(instructionsView != undefined && instructionsView.instructions.length > 0) {
+    if(instructionsView != undefined && instructionsView.length > 0) {
         ixLayouts += `import { EventBase } from '@aleph-indexer/core'
 import * as solita from './solita/index.js'
 `
@@ -63,7 +63,7 @@ import * as solita from './solita/index.js'
         ixLayouts += `
 export enum InstructionType { 
 ` 
-        for(const instruction of instructionsView.instructions){
+        for(const instruction of instructionsView){
                 ixLayouts += 
 `   ${instruction.name} = '${instruction.name}',
 `
@@ -75,7 +75,7 @@ export type InstructionBase = EventBase<InstructionType> & {
 }
 
 ` 
-        for(const instruction of instructionsView.instructions){
+        for(const instruction of instructionsView){
                 ixLayouts += 
 `export type ${instruction.name}Info = {
 ` 
@@ -102,7 +102,7 @@ export function getInstructionType(data: Buffer): InstructionType | undefined {
 export const IX_METHOD_CODE: Map<string, InstructionType | undefined > = 
   new Map<string, InstructionType | undefined >([
 `
-        for(const instruction of instructionsView.instructions){
+        for(const instruction of instructionsView){
             ixLayouts += 
 `   [Buffer.from(solita.${instruction.name.charAt(0).toLowerCase().concat(instruction.name.slice(1))}InstructionDiscriminator).toString('ascii'), InstructionType.${instruction.name}],
 `
@@ -112,7 +112,7 @@ export const IX_METHOD_CODE: Map<string, InstructionType | undefined > =
 ])
 export const IX_DATA_LAYOUT: Partial<Record<InstructionType, any>> = {
 `
-        for(const instruction of instructionsView.instructions){
+        for(const instruction of instructionsView){
             ixLayouts += 
 `   [InstructionType.${instruction.name}]: solita.${instruction.name.charAt(0).toLowerCase().concat(instruction.name.slice(1))}Struct,
 `
@@ -123,7 +123,7 @@ export const IX_DATA_LAYOUT: Partial<Record<InstructionType, any>> = {
 
 export const IX_ACCOUNTS_LAYOUT: Partial<Record<InstructionType, any>> = {
 `
-        for(const instruction of instructionsView.instructions){
+        for(const instruction of instructionsView){
             ixLayouts += 
 `   [InstructionType.${instruction.name}]: solita.${instruction.name}Accounts,
 `
@@ -134,7 +134,7 @@ export const IX_ACCOUNTS_LAYOUT: Partial<Record<InstructionType, any>> = {
     
 export type ParsedEventsInfo = 
 `
-        for(const instruction of instructionsView.instructions){
+        for(const instruction of instructionsView){
             ixLayouts += 
 `   | ${instruction.name}Info
 `
@@ -144,7 +144,7 @@ export type ParsedEventsInfo =
 `       
 export type ParsedEvents = 
 `
-        for(const instruction of instructionsView.instructions){
+        for(const instruction of instructionsView){
                 ixLayouts += 
 `   | ${instruction.name}Event
 `

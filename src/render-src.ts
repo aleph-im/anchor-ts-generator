@@ -40,9 +40,7 @@ export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
   }
 
     types +=
-`
-import { AccountStats } from '@aleph-indexer/framework'
-import { AccountType, ParsedEvents, ParsedAccountsData } from './utils/layouts/index.js'
+`import { AccountType, ParsedEvents, ParsedAccountsData } from './utils/layouts/index.js'
 
 export type ${Name}AccountInfo = {
   name: string

@@ -17,7 +17,7 @@ export const primitivesMap: Record<string, string> = {
   string: "string",
   publicKey: "PublicKey",
   bytes: "Buffer"
-};
+} 
 
 export const primitivesMapGraphqQl: Record<string, string> = {
   u8: "GraphQLInt",
@@ -38,6 +38,4 @@ export const primitivesMapGraphqQl: Record<string, string> = {
   string: "GraphQLString",
   publicKey: "GraphQLString",
   bytes: "GraphQLString"
-};
-
-export const PACKAGE_ROOT: string = "./"
+}

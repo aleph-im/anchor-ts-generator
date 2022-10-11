@@ -11,7 +11,7 @@ import {
   InstructionType,
   `
   if(instructions != undefined){
-    for (const instruction of instructions.instructions) {
+    for (const instruction of instructions) {
       event += 
 ` ${instruction.name}Event,
 `
@@ -49,7 +49,7 @@ export class EventParser {
 `
 
 if(instructions != undefined){
-  for (const instruction of instructions.instructions) {
+  for (const instruction of instructions) {
     event += 
 `       case InstructionType.${instruction.name}:
           return {

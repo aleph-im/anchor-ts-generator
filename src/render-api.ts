@@ -272,7 +272,7 @@ export const AccessTimeStats = new GraphQLObjectType({
 export const TotalAccounts = new GraphQLObjectType({
   name: 'TotalAccounts',
   fields: {`
-    for(const account of accounts.accounts){
+    for(const account of accounts){
       apiTypes += `
       ${account.name}: { type: new GraphQLNonNull(GraphQLInt) },`
     }
@@ -307,7 +307,7 @@ export const AccountsEnum = new GraphQLEnumType({
   name: 'AccountsEnum',
   values: {`
 
-  for(const account of accounts.accounts){
+  for(const account of accounts){
     apiTypes += `
     ${account.name}: { value: '${account.name}' },`
   }
@@ -315,7 +315,7 @@ export const AccountsEnum = new GraphQLEnumType({
 })
 `
 
-  for(const account of accounts.accounts){
+  for(const account of accounts){
     apiTypes += `
 export const ${account.name} = new GraphQLObjectType({
   name: '${account.name}',
@@ -335,7 +335,7 @@ export const ${account.name} = new GraphQLObjectType({
 export const ParsedAccountsData = new GraphQLUnionType({
     name: "ParsedAccountsData",
     types: [`
-    for(const account of accounts.accounts){
+    for(const account of accounts){
       apiTypes += `
       ${account.name}, `
     }
@@ -345,10 +345,10 @@ export const ParsedAccountsData = new GraphQLUnionType({
       // here is selected a unique property of each account to discriminate between types`
 
     const uniqueAccountProperty: Record<string, string> = {}
-    for(const account of accounts.accounts){
+    for(const account of accounts){
       for (const field of account.data.fields) {
-        let checksRequired = accounts.accounts.length - 1
-        for(const _account of accounts.accounts) {
+        let checksRequired = accounts.length - 1
+        for(const _account of accounts) {
           if(_account.name == account.name) continue
           if(_account.data.fields.includes(field)) continue
           checksRequired--
@@ -368,7 +368,7 @@ export const ParsedAccountsData = new GraphQLUnionType({
 
     apiTypes += `
     }
-});
+}) 
 
 const commonAccountInfoFields = {
   name: { type: new GraphQLNonNull(GraphQLString) },
@@ -401,7 +401,7 @@ export const ParsedEvents = new GraphQLEnumType({
   name: 'ParsedEvents',
   values: {
 `
-    for(const instruction of instructions.instructions){
+    for(const instruction of instructions){
         apiTypes +=`${instruction.name}Event: { value: '${instruction.name}Event' },
 `
     }
@@ -425,7 +425,7 @@ const Event = new GraphQLInterfaceType({
 
 `
 
-    for(const instruction of instructions.instructions){
+    for(const instruction of instructions){
       apiTypes +=  
 `export const ${instruction.name}Event = new GraphQLObjectType({
   name: '${instruction.name}Event',
@@ -448,7 +448,7 @@ const Event = new GraphQLInterfaceType({
 `export const Events = new GraphQLList(Event)
 
 export const types = [`
-    for(const instruction of instructions.instructions){
+    for(const instruction of instructions){
         apiTypes += 
 `   
   ${instruction.name}Event,`

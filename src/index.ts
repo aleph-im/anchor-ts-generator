@@ -23,14 +23,15 @@ async function main() {
     let programName: string = path[path.length - 1]
     const paths = new Paths(`./`, programName)
     const idl: Idl = JSON.parse(readFileSync(paths.idlFile(programName), "utf8"))
-    idl.metadata = {
-      address: "PROGRAM PUBKEY"
+    if(!idl.metadata) {
+      idl.metadata = {
+        address: "PROGRAM PUBKEY"
+      }
     }
     await generate(idl, paths,
       [
         TemplateType.Types,
         TemplateType.Instructions,
-        TemplateType.Events,
         TemplateType.Accounts
       ]
     )
@@ -39,21 +40,20 @@ async function main() {
     if (options.address) {
       exec(`anchor idl fetch --provider.cluster mainnet ${options.address}`, async (error, stdout, stderr) => {
         if(error) {
-          console.log(error.message)
           return
         }
         if(stdout) {
-          console.log(stdout)
           const idl: Idl = JSON.parse(stdout)
-          idl.metadata = {
-            address: options.address
+          if(!idl.metadata) {
+            idl.metadata = {
+              address: options.address
+            }
           }
           const paths = new Paths(`./`, idl.name)
           await generate(idl, paths,
             [
               TemplateType.Types,
               TemplateType.Instructions,
-              TemplateType.Events,
               TemplateType.Accounts
             ],
             options.address
@@ -61,7 +61,6 @@ async function main() {
           return
         }
         if(stderr) {
-          console.log(stderr);
           return
         }
       })

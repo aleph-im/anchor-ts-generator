@@ -1,84 +1,93 @@
 import { Paths } from "./paths"
 import { ViewAccounts, ViewInstructions, ViewTypes } from "./types"
-import { readdirSync, readFileSync, writeFileSync } from "fs";
+import { readdirSync, readFileSync, writeFileSync, existsSync } from "fs" 
 import { format, Options } from 'prettier'
 import { logError } from './utils/index.js'
 
 export function renderSolitaMods(instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined, typesView: ViewTypes | undefined, paths: Paths, DEFAULT_FORMAT_OPTS: Options){
-    
-    let files = readdirSync(paths.ixSolitaDir)
-    for(const fileName of files) {
-        let content = readFileSync(paths.ixSolitaDir + fileName).toString()
-        let fromPos = content.indexOf('from \'.')
+    let files: string[] = []
 
-        while (fromPos != -1) {
-            let posToWrite = content.indexOf('\'', fromPos + 7)
-            content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
-            fromPos = content.indexOf('from \'.', posToWrite)
-        }
+    if(existsSync(paths.ixSolitaDir)) {
+        files = readdirSync(paths.ixSolitaDir)
+        for(const fileName of files) {
+            let content = readFileSync(paths.ixSolitaDir + fileName).toString()
+            let fromPos = content.indexOf('from \'.')
 
-        try {
-            writeFileSync(paths.ixSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS));
-        } catch (err) {
-            console.log(`Failed to format on solita/instructions folder`)
-            logError(err)
-        }
-    }
+            while (fromPos != -1) {
+                let posToWrite = content.indexOf('\'', fromPos + 7)
+                content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
+                fromPos = content.indexOf('from \'.', posToWrite)
+            }
 
-    files = readdirSync(paths.accountSolitaDir)
-    for(const fileName of files) {
-        let content = readFileSync(paths.accountSolitaDir + fileName).toString()
-        let fromPos = content.indexOf('from \'.')
-
-        while (fromPos != -1) {
-            let posToWrite = content.indexOf('\'', fromPos + 7)
-            content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
-            fromPos = content.indexOf('from \'.', posToWrite)
-        }
-
-        try {
-            writeFileSync(paths.accountSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS));
-        } catch (err) {
-            console.log(`Failed to format on solita/instructions folder`)
-            logError(err)
+            try {
+                writeFileSync(paths.ixSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS)) 
+            } catch (err) {
+                console.log(`Failed to format on solita/instructions folder`)
+                logError(err)
+            }
         }
     }
 
-    files = readdirSync(paths.typeSolitaDir)
-    for(const fileName of files) {
-        let content = readFileSync(paths.typeSolitaDir + fileName).toString()
-        let fromPos = content.indexOf('from \'.')
+    if(existsSync(paths.accountSolitaDir)) {
+        files = readdirSync(paths.accountSolitaDir)
+        for(const fileName of files) {
+            let content = readFileSync(paths.accountSolitaDir + fileName).toString()
+            let fromPos = content.indexOf('from \'.')
 
-        while (fromPos != -1) {
-            let posToWrite = content.indexOf('\'', fromPos + 7)
-            content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
-            fromPos = content.indexOf('from \'.', posToWrite)
-        }
+            while (fromPos != -1) {
+                let posToWrite = content.indexOf('\'', fromPos + 7)
+                content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
+                fromPos = content.indexOf('from \'.', posToWrite)
+            }
 
-        try {
-            writeFileSync(paths.typeSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS));
-        } catch (err) {
-            console.log(`Failed to format on solita/instructions folder`)
-            logError(err)
+            try {
+                writeFileSync(paths.accountSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS)) 
+            } catch (err) {
+                console.log(`Failed to format on solita/instructions folder`)
+                logError(err)
+            }
         }
     }
 
-    files = readdirSync(paths.errorSolitaDir)
-    for(const fileName of files) {
-        let content = readFileSync(paths.errorSolitaDir + fileName).toString()
-        let fromPos = content.indexOf('from \'.')
+    if(existsSync(paths.typeSolitaDir)) {
+        files = readdirSync(paths.typeSolitaDir)
+        for(const fileName of files) {
+            let content = readFileSync(paths.typeSolitaDir + fileName).toString()
+            let fromPos = content.indexOf('from \'.')
 
-        while (fromPos != -1) {
-            let posToWrite = content.indexOf('\'', fromPos + 7)
-            content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
-            fromPos = content.indexOf('from \'.', posToWrite)
+            while (fromPos != -1) {
+                let posToWrite = content.indexOf('\'', fromPos + 7)
+                content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
+                fromPos = content.indexOf('from \'.', posToWrite)
+            }
+
+            try {
+                writeFileSync(paths.typeSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS)) 
+            } catch (err) {
+                console.log(`Failed to format on solita/instructions folder`)
+                logError(err)
+            }
         }
+    }
 
-        try {
-            writeFileSync(paths.errorSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS));
-        } catch (err) {
-            console.log(`Failed to format on solita/instructions folder`)
-            logError(err)
+    if(existsSync(paths.errorSolitaDir)) {
+        files = readdirSync(paths.errorSolitaDir)
+        for(const fileName of files) {
+            let content = readFileSync(paths.errorSolitaDir + fileName).toString()
+            let fromPos = content.indexOf('from \'.')
+
+            while (fromPos != -1) {
+                let posToWrite = content.indexOf('\'', fromPos + 7)
+                content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
+                fromPos = content.indexOf('from \'.', posToWrite)
+            }
+
+            try {
+                writeFileSync(paths.errorSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS)) 
+            } catch (err) {
+                console.log(`Failed to format on solita/instructions folder`)
+                logError(err)
+            }
         }
     }
 
@@ -87,17 +96,23 @@ export * from './errors/index.js'
 export * from './instructions/index.js'
 export * from './types/index.js'
 import { AccountMeta, PublicKey } from '@solana/web3.js'
+`
+    if(accountsView) {
+        indexSolita += `
 import {
 `
-    if(instructionsView && accountsView && typesView) {
-        for(const account of accountsView.accounts) {
+        for(const account of accountsView) {
             indexSolita += ` ${account.name},
     ${account.name}Args,
 `
         }
         indexSolita += `
 } from './accounts'
-import {
+
+`
+    }
+    if(typesView) {
+        indexSolita += `import {
 `
         for(const type of typesView.types) {
             indexSolita += ` ${type.name},
@@ -112,7 +127,9 @@ import {
         indexSolita += `
 } from './types'
 `
-        for(const instruction of instructionsView.instructions) {
+    }
+    if(instructionsView) {
+        for(const instruction of instructionsView) {
             indexSolita += `
 export type ${instruction.name}Instruction = {
     programId: PublicKey
@@ -131,15 +148,16 @@ export const ${instruction.name}Accounts = [`
         indexSolita += `
 export type ParsedInstructions =
 `
-        for(const instruction of instructionsView.instructions) {
+        for(const instruction of instructionsView) {
             indexSolita += `
     | ${instruction.name}Instruction`
         }
+    }
+    if(accountsView) {
         indexSolita += `
-        
 export type ParsedAccounts =
 `
-        for(const account of accountsView.accounts) {
+        for(const account of accountsView) {
             indexSolita += `
             | ${account.name}`
         }
@@ -148,12 +166,14 @@ export type ParsedAccounts =
         
 export type ParsedAccountsData =
         `
-                for(const account of accountsView.accounts) {
-                    indexSolita += `
-                    | ${account.name}Args`
-                }
-        
-                indexSolita += `
+        for(const account of accountsView) {
+            indexSolita += `
+            | ${account.name}Args`
+        }
+
+    }   
+    if(typesView){
+        indexSolita += `
         
 export type ParsedTypes =
 `
