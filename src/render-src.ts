@@ -17,21 +17,6 @@ export enum ProgramName {
   ${Name} = '${name}',
 }
 
-// @todo: This is just an example, to use it on a type guard on stats folder 
-export const collectionEvent1 = [
-  InstructionType.${instructionsView.instructions[0].name},
-  InstructionType.${instructionsView.instructions[1].name},
-]
-
-export const collectionEvent1Whitelist = new Set(collectionEvent1)
-
-export const collectionEvent2 = [
-  InstructionType.${instructionsView.instructions[2].name},
-  InstructionType.${instructionsView.instructions[3].name},
-]
-
-export const collectionEvent2Whitelist = new Set(collectionEvent1)
-
 const DAY = 1000 * 60 * 60 * 24
 const START_DATE = Date.now()
 const SINCE_DATE = START_DATE - 7 * DAY
@@ -55,9 +40,7 @@ export const ${NAME}_PROGRAM_ID_PK = new PublicKey(${NAME}_PROGRAM_ID)
   }
 
     types +=
-`
-import { AccountStats } from '@aleph-indexer/framework'
-import { AccountType, ParsedEvents, ParsedAccountsData } from './utils/layouts/index.js'
+`import { AccountType, ParsedEvents, ParsedAccountsData } from './utils/layouts/index.js'
 
 export type ${Name}AccountInfo = {
   name: string
@@ -69,52 +52,58 @@ export type ${Name}AccountInfo = {
 
 // -------------------------- STATS --------------------------
 
-export type AccountTimeStat = {
-  requests: number
-  uniqueProgramIds: number
-  interval: string
+export type AccessTimeStats = {
+  /**
+   * Total number of times the account was accessed
+   */
+  accesses: number
+  /**
+   * Number of times accessed, grouped by program ID
+   */
+  accessesByProgramId: {
+    [programId: string]: number
+  }
+  /**
+   * First access time in milliseconds digested in the stats
+   */
+  startTimestamp?: number
+  /**
+   * Last access time in milliseconds digested in the stats
+   */
+  endTimestamp?: number
 }
 
-// You should group different related instructions to process their information together
-export type ${Name}Info = EventType1Info & EventType2Info
+export type TimeStats =
+  | AccessTimeStats  //@note: Add more types of time stats here
 
-export type EventType1Info = {
-  customProperties1: number
-}
-
-export type EventType2Info = {
-  customProperties2: number
-}
-
-export type ${Name}Stats = {
-  requestsStatsByHour: Record<string, AccountTimeStat>
-  last1h: ${Name}Info
-  last24h: ${Name}Info
-  last7d: ${Name}Info
-  total: ${Name}Info
+export type ${Name}AccountStats = {
+  requestsStatsByHour: Record<string, AccessTimeStats>
+  last1h: AccessTimeStats
+  last24h: AccessTimeStats
+  last7d: AccessTimeStats
+  total: AccessTimeStats
   accessingPrograms: Set<string>
   lastRequest?: ParsedEvents
 }
 
 export type HourlyStats = {
-  stats: AccountTimeStat[]
-  statsMap: Record<string, AccountTimeStat>
+  stats: AccessTimeStats[]
+  statsMap: Record<string, AccessTimeStats>
 }
 
 export type Global${Name}Stats = {
   totalAccounts: Record<AccountType, number>
-  totalRequests: number
-  totalUniqueAccessingPrograms: number
+  totalAccesses: number
+  totalAccessesByProgramId: {
+    [programId: string]: number
+  }
+  startTimestamp?: number
+  endTimestamp?: number
 }
 
-export type ${Name}ProgramData = {
+export type ${Name}AccountData = {
   info: ${Name}AccountInfo
-  stats?: ${Name}Stats
-}
-
-export type AccountTypesGlobalStats = {
-  type: AccountType
-  stats: AccountStats<Global${Name}Stats>
+  stats?: ${Name}AccountStats
 }
 ` 
   }

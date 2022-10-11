@@ -14,7 +14,7 @@ import {
 import {
   Global${Name}Stats,
   ${Name}AccountInfo,
-  ${Name}ProgramData,
+  ${Name}AccountData,
 } from '../types.js'
 
 export type AccountsFilters = {
@@ -104,7 +104,7 @@ export class APIResolvers {
     types, 
     accounts, 
     includeStats 
-  }: AccountsFilters): Promise<${Name}ProgramData[]> {
+  }: AccountsFilters): Promise<${Name}AccountData[]> {
     const accountMap = await this.domain.getAccounts(includeStats)
 
     accounts =
@@ -150,7 +150,7 @@ export default class APISchema extends IndexerAPISchema {
     super(domain, {
       types: Types.types,
 
-      customTimeSeriesTypesMap: { ${naMe}Info: Types.${Name}Info },
+      customTimeSeriesTypesMap: { ${naMe}Info: Types.AccessTimeStats },
       customStatsType: Types.${Name}Stats,
 
       query: new GraphQLObjectType({
@@ -214,7 +214,7 @@ import {
   GraphQLInterfaceType,
   GraphQLUnionType,
 } from 'graphql'
-import { GraphQLBigNumber, GraphQLLong } from '@aleph-indexer/core'
+import { GraphQLBigNumber, GraphQLLong, GraphQLJSON } from '@aleph-indexer/core'
 import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
@@ -259,20 +259,20 @@ export const ${type.name} = new GraphQLObjectType({
 
 // ------------------- STATS ---------------------------
 
-// look .src/domain/stats/statsAggregator & ./src/types.ts
-
-export const ${Name}Info = new GraphQLObjectType({
-  name: '${Name}Info',
+export const AccessTimeStats = new GraphQLObjectType({
+  name: 'MarinadeFinanceInfo',
   fields: {
-    customProperties1: { type: new GraphQLNonNull(GraphQLInt) },
-    customProperties2: { type: new GraphQLNonNull(GraphQLInt) },
+    accesses: { type: new GraphQLNonNull(GraphQLInt) },
+    accessesByProgramId: { type: new GraphQLNonNull(GraphQLJSON) },
+    startTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
+    endTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
   },
 })
 
 export const TotalAccounts = new GraphQLObjectType({
   name: 'TotalAccounts',
   fields: {`
-    for(const account of accounts.accounts){
+    for(const account of accounts){
       apiTypes += `
       ${account.name}: { type: new GraphQLNonNull(GraphQLInt) },`
     }
@@ -284,18 +284,20 @@ export const Global${Name}Stats = new GraphQLObjectType({
   name: 'Global${Name}Stats',
   fields: {
     totalAccounts: { type: new GraphQLNonNull(TotalAccounts) },
-    totalRequests: { type: new GraphQLNonNull(GraphQLInt) },
-    totalUniqueAccessingPrograms: { type: new GraphQLNonNull(GraphQLInt) },
+    totalAccesses: { type: new GraphQLNonNull(GraphQLInt) },
+    totalAccessesByProgramId: { type: new GraphQLNonNull(GraphQLJSON) },
+    startTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
+    endTimestamp: { type: new GraphQLNonNull(GraphQLLong) },
   },
 })
 
 export const ${Name}Stats = new GraphQLObjectType({
   name: '${Name}Stats',
   fields: {
-    last1h: { type: ${Name}Info },
-    last24h: { type: ${Name}Info },
-    last7d: { type: ${Name}Info },
-    total: { type: ${Name}Info },
+    last1h: { type: AccessTimeStats },
+    last24h: { type: AccessTimeStats },
+    last7d: { type: AccessTimeStats },
+    total: { type: AccessTimeStats },
   },
 })
 
@@ -305,7 +307,7 @@ export const AccountsEnum = new GraphQLEnumType({
   name: 'AccountsEnum',
   values: {`
 
-  for(const account of accounts.accounts){
+  for(const account of accounts){
     apiTypes += `
     ${account.name}: { value: '${account.name}' },`
   }
@@ -313,7 +315,7 @@ export const AccountsEnum = new GraphQLEnumType({
 })
 `
 
-  for(const account of accounts.accounts){
+  for(const account of accounts){
     apiTypes += `
 export const ${account.name} = new GraphQLObjectType({
   name: '${account.name}',
@@ -333,7 +335,7 @@ export const ${account.name} = new GraphQLObjectType({
 export const ParsedAccountsData = new GraphQLUnionType({
     name: "ParsedAccountsData",
     types: [`
-    for(const account of accounts.accounts){
+    for(const account of accounts){
       apiTypes += `
       ${account.name}, `
     }
@@ -343,10 +345,10 @@ export const ParsedAccountsData = new GraphQLUnionType({
       // here is selected a unique property of each account to discriminate between types`
 
     const uniqueAccountProperty: Record<string, string> = {}
-    for(const account of accounts.accounts){
+    for(const account of accounts){
       for (const field of account.data.fields) {
-        let checksRequired = accounts.accounts.length - 1
-        for(const _account of accounts.accounts) {
+        let checksRequired = accounts.length - 1
+        for(const _account of accounts) {
           if(_account.name == account.name) continue
           if(_account.data.fields.includes(field)) continue
           checksRequired--
@@ -366,7 +368,7 @@ export const ParsedAccountsData = new GraphQLUnionType({
 
     apiTypes += `
     }
-});
+}) 
 
 const commonAccountInfoFields = {
   name: { type: new GraphQLNonNull(GraphQLString) },
@@ -399,7 +401,7 @@ export const ParsedEvents = new GraphQLEnumType({
   name: 'ParsedEvents',
   values: {
 `
-    for(const instruction of instructions.instructions){
+    for(const instruction of instructions){
         apiTypes +=`${instruction.name}Event: { value: '${instruction.name}Event' },
 `
     }
@@ -423,7 +425,7 @@ const Event = new GraphQLInterfaceType({
 
 `
 
-    for(const instruction of instructions.instructions){
+    for(const instruction of instructions){
       apiTypes +=  
 `export const ${instruction.name}Event = new GraphQLObjectType({
   name: '${instruction.name}Event',
@@ -446,7 +448,7 @@ const Event = new GraphQLInterfaceType({
 `export const Events = new GraphQLList(Event)
 
 export const types = [`
-    for(const instruction of instructions.instructions){
+    for(const instruction of instructions){
         apiTypes += 
 `   
   ${instruction.name}Event,`

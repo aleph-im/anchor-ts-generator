@@ -14,9 +14,9 @@ export function renderStatsFiles(Name: string, filename: string, instructions: V
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../../dal/event.js'
 import { ParsedEvents } from '../../utils/layouts/index.js'
-import { ${Name}Info } from '../../types.js'
+import { AccessTimeStats } from '../../types.js'
 import statsAggregator from './statsAggregator.js'
-import eventAggregator from './timeSeriesAggregator.js'
+import accessAggregator from './timeSeriesAggregator.js'
 
 export async function createAccountStats(
     account: string,
@@ -26,171 +26,122 @@ export async function createAccountStats(
     statsTimeSeriesDAL: StatsTimeSeriesStorage,
 ): Promise<AccountTimeSeriesStatsManager> {
     
-    const ${Name}TimeSeries = new TimeSeriesStats<ParsedEvents, ${Name}Info>(
-        {
-        type: '${name}',
-        startDate: 0,
-        timeFrames: [
-            TimeFrame.Hour,
-            TimeFrame.Day,
-            TimeFrame.Week,
-            TimeFrame.Month,
-            TimeFrame.Year,
-            TimeFrame.All,
-        ],
-        getInputStream: ({ account, startDate, endDate }) => {
-            return eventDAL
-            .useIndex(EventDALIndex.AccoountTimestamp)
-            .getAllValuesFromTo([account, startDate], [account, endDate])
-          },
-        aggregate: ({ input, prevValue }): ${Name}Info => {
-            return eventAggregator.aggregate(input, prevValue)
+  // @note: this aggregator is used to aggregate usage stats for the account
+  const accessTimeSeries = new TimeSeriesStats<ParsedEvents, AccessTimeStats>(
+    {
+      type: 'access',
+      startDate: 0,
+      timeFrames: [
+          TimeFrame.Hour,
+          TimeFrame.Day,
+          TimeFrame.Week,
+          TimeFrame.Month,
+          TimeFrame.Year,
+          TimeFrame.All,
+      ],
+      getInputStream: ({ account, startDate, endDate }) => {
+          return eventDAL
+          .useIndex(EventDALIndex.AccoountTimestamp)
+          .getAllValuesFromTo([account, startDate], [account, endDate])
         },
+        aggregate: ({ input, prevValue }): AccessTimeStats => {
+          return accessAggregator.aggregate(input, prevValue)
+      },
+    },
+    statsStateDAL,
+    statsTimeSeriesDAL,
+  )
+
+  return new AccountTimeSeriesStatsManager(
+    {
+        account,
+        series: [accessTimeSeries],  // place your other aggregated stats here
+        aggregate(args) {
+          return statsAggregator.aggregate(args)
         },
-        statsStateDAL,
-        statsTimeSeriesDAL,
-    )
-    
-    const accountTimeSeries = new AccountTimeSeriesStatsManager(
-        {
-            account,
-            series: [${Name}TimeSeries],
-            aggregate(args) {
-                return statsAggregator.aggregate(args)
-            },
-        },
-        indexerApi,
-        statsStateDAL,
-        statsTimeSeriesDAL,
-    )
-    
-    return accountTimeSeries
+    },
+    indexerApi,
+    statsStateDAL,
+    statsTimeSeriesDAL,
+  )
 }
 `
     let timeSeriesAggregator = ''
     if(instructions){
         timeSeriesAggregator = 
-`
-import {
-  ${Name}Info,
-  EventType1Info,
-  EventType2Info,
-} from '../../types.js'
-import {
-  ParsedEvents,
-  ${instructions.instructions[0].name}Event,
-  ${instructions.instructions[1].name}Event,
-  ${instructions.instructions[2].name}Event,
-  ${instructions.instructions[3].name}Event
-} from '../../utils/layouts/index.js'
-import { collectionEvent1Whitelist, collectionEvent2Whitelist } from '../../constants.js' // @todo: set to discriminate different event collections
+`import { AccessTimeStats } from '../../types.js'
+import { ParsedEvents } from '../../utils/layouts/index.js'
 
-// @todo: This is just an example to group some related instructions and process the data together
-type CollectionEvent1 = ${instructions.instructions[0].name}Event & ${instructions.instructions[1].name}Event
-type CollectionEvent2 = ${instructions.instructions[2].name}Event & ${instructions.instructions[3].name}Event
-
-export class ${Name}EventTimeSeriesAggregator {
-  aggregate(curr: ParsedEvents | ${Name}Info, prev?: ${Name}Info): ${Name}Info {
-    prev = this.prepare${Name}InfoItem(prev)
-
-    if (this.is${Name}Event(curr)) {
-        if (this.isCollectionEvent1(curr)) {
-            const info = this.prepareEventType1Info(curr)
-            this.processEventType1Info(prev, info)
-        }
-
-        if (this.isCollectionEvent1(curr)) {
-            const info = this.prepareEventType2Info(curr)
-            this.processEventType2Info(prev, info)
-        }
-
-    } else {
-        const info = this.prepare${Name}InfoItem(curr)
-        this.process${Name}Info(prev, info)
-    }
-
+export class AccessTimeSeriesAggregator {
+  aggregate(    
+    curr: ParsedEvents | AccessTimeStats,
+    prev?: AccessTimeStats,
+  ): AccessTimeStats {
+    prev = this.prepareAccessStats(prev)
+    this.processAccessStats(prev, curr)
+ 
     return prev
   }
 
-  protected prepare${Name}InfoItem(info?: ${Name}Info): ${Name}Info {
-    info = info || {
-        customProperties1: 0,
-        customProperties2: 0,
-    }
-
-    return info
-  }
-
-  protected prepareEventType1Info(event: CollectionEvent1): EventType1Info {
+  getEmptyAccessTimeStats(): AccessTimeStats {
     return {
-        customProperties1: 0
+      accesses: 0,
+      accessesByProgramId: {},
+      startTimestamp: undefined,
+      endTimestamp: undefined,
     }
   }
 
-  protected prepareEventType2Info(event: CollectionEvent2): EventType2Info {
-    return {
-        customProperties2: 0
-    }
+  protected prepareAccessStats(info?: AccessTimeStats): AccessTimeStats {
+    return info || this.getEmptyAccessTimeStats()
   }
 
   // @note: We assume that curr data is sorted by time
-  protected process${Name}Info(
-    acc: ${Name}Info,
-    curr: ${Name}Info,
-  ): ${Name}Info {
-    this.processEventType1Info(acc, curr)
-    this.processEventType2Info(acc, curr)
-
-    return acc
-  }
-
-  protected processEventType1Info(
-    acc: ${Name}Info,
-    curr: EventType1Info,
-  ): ${Name}Info {
-    acc.customProperties1 += curr.customProperties1
-
-    return acc
-  }
-
-  protected processEventType2Info(
-    acc: ${Name}Info,
-    curr: EventType2Info,
-  ): ${Name}Info {
-    acc.customProperties2 += curr.customProperties2
-
+  protected processAccessStats(
+    acc: AccessTimeStats,
+    curr: ParsedEvents | AccessTimeStats,
+  ): AccessTimeStats {
+    if ((curr as ParsedEvents).data?.programId) {
+      const programId = (curr as ParsedEvents).data.programId.toBase58()
+      acc.accesses++
+      acc.accessesByProgramId[programId] = acc.accessesByProgramId[programId] ? acc.accessesByProgramId[programId] + 1 : 1
+      acc.startTimestamp = acc.startTimestamp || (curr as ParsedEvents).timestamp
+      acc.endTimestamp = (curr as ParsedEvents).timestamp || acc.endTimestamp
+    } else {
+      acc.accesses += (curr as AccessTimeStats).accesses
+      if ((curr as AccessTimeStats).accessesByProgramId) {
+        Object.entries((curr as AccessTimeStats).accessesByProgramId).forEach(([programId, count]) => {
+          acc.accessesByProgramId[programId] = acc.accessesByProgramId[programId] ? acc.accessesByProgramId[programId] + count : count
+        })
+      }
+      acc.startTimestamp = acc.startTimestamp || (curr as AccessTimeStats).startTimestamp
+      acc.endTimestamp = (curr as AccessTimeStats).endTimestamp || acc.endTimestamp
+    }
     return acc
   }
 
   protected is${Name}Event(
-    event: ParsedEvents | ${Name}Info,
+    event: ParsedEvents | AccessTimeStats,
   ): event is ParsedEvents {
     return 'type' in event
   }
-
-  protected isCollectionEvent1(event: ParsedEvents): event is CollectionEvent1 {
-    return collectionEvent1Whitelist.has(event.type)
-  }
-
-  protected isCollectionEvent2(event: ParsedEvents): event is CollectionEvent1 {
-    return collectionEvent2Whitelist.has(event.type)
-  }
 }
 
-export const eventAggregator = new ${Name}EventTimeSeriesAggregator()
-export default eventAggregator
+export const accessAggregator = new AccessTimeSeriesAggregator()
+export default accessAggregator
 `
     }
+
     const statsAggregator =
 `import { DateTime } from 'luxon'
 import { TimeFrame, AccountAggregatorFnArgs } from '@aleph-indexer/framework'
-import { ${Name}Stats, ${Name}Info } from '../../types.js'
-import eventAggregator from './timeSeriesAggregator.js'
+import { ${Name}AccountStats } from '../../types.js'
+import accessAggregator from './timeSeriesAggregator.js'
 
 export class StatsAggregator {
   async aggregate(
     args: AccountAggregatorFnArgs,
-  ): Promise<${Name}Stats> {
+  ): Promise<${Name}AccountStats> {
     const { now, account, timeSeriesDAL } = args
 
     const stats = this.getEmptyStats()
@@ -211,7 +162,7 @@ export class StatsAggregator {
 
     let last24h
     for await (const event of last24hEvents) {
-      last24h = eventAggregator.aggregate(event.data, last24h)
+      last24h = accessAggregator.aggregate(event.data, last24h)
     }
 
     const last7dEvents = await timeSeriesDAL.getAllValuesFromTo(
@@ -221,7 +172,7 @@ export class StatsAggregator {
 
     let last7d
     for await (const event of last7dEvents) {
-      last7d = eventAggregator.aggregate(event.data, last7d)
+      last7d = accessAggregator.aggregate(event.data, last7d)
     }
 
     const total = await timeSeriesDAL.get([account, type, TimeFrame.All, 0])
@@ -234,21 +185,14 @@ export class StatsAggregator {
     return stats
   }
 
-  protected getEmptyStats(): ${Name}Stats {
+  protected getEmptyStats(): ${Name}AccountStats {
     return {
         requestsStatsByHour: {},
-        last1h: this.getEmpty${Name}Stats(),
-        last24h: this.getEmpty${Name}Stats(),
-        last7d: this.getEmpty${Name}Stats(),
-        total: this.getEmpty${Name}Stats(),
+        last1h: accessAggregator.getEmptyAccessTimeStats(),
+        last24h: accessAggregator.getEmptyAccessTimeStats(),
+        last7d: accessAggregator.getEmptyAccessTimeStats(),
+        total: accessAggregator.getEmptyAccessTimeStats(),
         accessingPrograms: new Set<string>(),
-    }
-  }
-  protected getEmpty${Name}Stats(): ${Name}Info {
-    return {
-        customProperties1: 0,
-
-        customProperties2: 0,
     }
   }
 }

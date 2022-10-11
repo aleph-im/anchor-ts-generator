@@ -1,9 +1,7 @@
 import { Solita, Idl } from "@metaplex-foundation/solita"
-import { TemplateType } from "./types.js";
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs";
-import { PACKAGE_ROOT } from "./constants.js";
-import Mustache from "mustache";
-import IdlTransformer from "./transformer.js";
+import { TemplateType } from "./types.js" 
+import { existsSync, mkdirSync, writeFileSync } from "fs" 
+import IdlTransformer from "./transformer.js" 
 import { Paths } from './paths.js'
 import { renderRootFiles } from './render-root.js'
 import { renderSrcFiles } from './render-src.js'
@@ -12,10 +10,11 @@ import { renderDALFiles } from './render-dal.js'
 import { renderDomainFiles } from './render-domain.js'
 import { renderLayoutsFiles } from './render-layouts.js'
 import { format, Options } from 'prettier'
-import { renderApiFiles } from "./render-api.js";
-import { renderDiscovererFiles } from "./render-discoverer.js";
+import { renderApiFiles } from "./render-api.js" 
+import { renderDiscovererFiles } from "./render-discoverer.js" 
 import { logError } from './utils/index.js'
-import { renderStatsFiles } from "./render-stats.js";
+import { renderStatsFiles } from "./render-stats.js" 
+import { renderSolitaMods } from "./render-solita.js" 
 
 const DEFAULT_FORMAT_OPTS: Options = {
   semi: false,
@@ -37,22 +36,21 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   if(!existsSync(paths.projectDir))
     mkdirSync(paths.projectDir)
   const { docker, pkg, run, tsconfig, typesdts, cmd } = renderRootFiles(idl.name)
-  writeFileSync(paths.projectFile('docker-compose.yaml'), docker);
-  writeFileSync(paths.projectFile('package.json'), pkg);
-  writeFileSync(paths.projectFile('run.ts'), run);
-  writeFileSync(paths.projectFile('tsconfig.json'), tsconfig);
-  writeFileSync(paths.projectFile('types.d.ts'), typesdts);
-  writeFileSync(paths.projectFile('cmd.sh'), cmd);
+  writeFileSync(paths.projectFile('docker-compose.yaml'), docker) 
+  writeFileSync(paths.projectFile('package.json'), pkg) 
+  writeFileSync(paths.projectFile('run.ts'), run) 
+  writeFileSync(paths.projectFile('tsconfig.json'), tsconfig) 
+  writeFileSync(paths.projectFile('types.d.ts'), typesdts) 
+  writeFileSync(paths.projectFile('cmd.sh'), cmd) 
 
-  const { typesView, instructionsView, eventsView, accountsView } = generateFromTemplateType(idl, toGenerate)
-  console.log(typesView, instructionsView, eventsView, accountsView)
+  const { typesView, instructionsView, accountsView } = generateFromTemplateType(idl, toGenerate)
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
   const { constants, types } = renderSrcFiles(Name, idl.name, instructionsView, address)
   try {
-    writeFileSync(paths.srcFile('constants'), format(constants, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.srcFile('types'), format(types, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.srcFile('constants'), format(constants, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.srcFile('types'), format(types, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     console.log(`Failed to format on src folder`)
     logError(err)
@@ -62,10 +60,10 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.apiDir)
   const { indexApi, resolversApi, schemaApi, apiTypes } = renderApiFiles(Name, instructionsView, accountsView, typesView)
   try {
-    writeFileSync(paths.apiFile('index'), format(indexApi, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.apiFile('resolvers'), format(resolversApi, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.apiFile('schema'), format(schemaApi, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.apiFile('types'), format(apiTypes, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.apiFile('index'), format(indexApi, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.apiFile('resolvers'), format(resolversApi, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.apiFile('schema'), format(schemaApi, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.apiFile('types'), format(apiTypes, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     logError(`Failed to format on api folder`)
     logError(err)
@@ -75,7 +73,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.dalDir)
   const { eventDal } = renderDALFiles()
   try {
-    writeFileSync(paths.dalFile('event'), format(eventDal, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.dalFile('event'), format(eventDal, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     logError(`Failed to format on dal folder`)
     logError(err)
@@ -85,9 +83,9 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.domainDir)
   const { account, worker, mainDomain } = renderDomainFiles(Name, idl.name, accountsView)
   try {
-    writeFileSync(paths.domainFile('account'), format(account, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.domainFile('worker'), format(worker, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.domainFile('main'), format(mainDomain, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.domainFile('account'), format(account, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.domainFile('worker'), format(worker, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.domainFile('main'), format(mainDomain, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     logError(`Failed to format on domain folder`)
     logError(err)
@@ -97,9 +95,9 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.statsDir)
   const { timeSeries, timeSeriesAggregator, statsAggregator } = renderStatsFiles(Name, idl.name, instructionsView)
   try {
-    writeFileSync(paths.statsFile('timeSeries'), format(timeSeries, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.statsFile('timeSeriesAggregator'), format(timeSeriesAggregator, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.statsFile('statsAggregator'), format(statsAggregator, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.statsFile('timeSeries'), format(timeSeries, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.statsFile('timeSeriesAggregator'), format(timeSeriesAggregator, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.statsFile('statsAggregator'), format(statsAggregator, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     logError(`Failed to format on domain folder`)
     logError(err)
@@ -109,7 +107,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.discovererDir)
   const { discoverer } = renderDiscovererFiles(Name, idl.name)
   try {
-    writeFileSync(paths.discovererFile(idl.name), format(discoverer, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.discovererFile(idl.name), format(discoverer, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     logError(`Failed to format on discoverer folder`)
     logError(err)
@@ -119,16 +117,16 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     mkdirSync(paths.utilsDir)
   if(!existsSync(paths.layaoutsDir))
     mkdirSync(paths.layaoutsDir)
-  const { accountLayouts, ixLayouts, indexLayouts, layoutLayouts } = renderLayoutsFiles(idl.name, instructionsView, accountsView);
+  const { accountLayouts, ixLayouts, indexLayouts, layoutLayouts } = renderLayoutsFiles(idl.name, instructionsView, accountsView) 
   try {
     if(accountLayouts) {
-      writeFileSync(paths.layoutsFile('accounts'), format(accountLayouts, DEFAULT_FORMAT_OPTS));
+      writeFileSync(paths.layoutsFile('accounts'), format(accountLayouts, DEFAULT_FORMAT_OPTS)) 
     }
     if(ixLayouts) {
-      writeFileSync(paths.layoutsFile('instructions'), format(ixLayouts, DEFAULT_FORMAT_OPTS));
+      writeFileSync(paths.layoutsFile('instructions'), format(ixLayouts, DEFAULT_FORMAT_OPTS)) 
     }
-    writeFileSync(paths.layoutsFile('index'), format(indexLayouts, DEFAULT_FORMAT_OPTS));
-    writeFileSync(paths.layoutsFile('layout'), format(layoutLayouts, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.layoutsFile('index'), format(indexLayouts, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.layoutsFile('layout'), format(layoutLayouts, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     console.log(`Failed to format on layouts folder`)
     logError(err)
@@ -136,13 +134,19 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   
   if(!existsSync(paths.tsSolitaDir))
     mkdirSync(paths.tsSolitaDir)
-  await generateSolitaTypeScript(paths, idl);
-
+  await generateSolitaTypeScript(paths, idl) 
+  const { indexSolita } = renderSolitaMods(instructionsView, accountsView, typesView, paths, DEFAULT_FORMAT_OPTS)
+  try {
+    writeFileSync(paths.solitaFile('index'), format(indexSolita, DEFAULT_FORMAT_OPTS)) 
+  } catch (err) {
+    console.log(`Failed to format on parser folder`)
+    logError(err)
+  }
   if(!existsSync(paths.parsersDir))
     mkdirSync(paths.parsersDir)
   const { event } = renderParsersFiles(instructionsView)
   try {
-    writeFileSync(paths.parsersFile('event'), format(event, DEFAULT_FORMAT_OPTS));
+    writeFileSync(paths.parsersFile('event'), format(event, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     console.log(`Failed to format on parser folder`)
     logError(err)
@@ -150,15 +154,12 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 }
 
 function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
-  let typesView, instructionsView, eventsView, accountsView = undefined
-  let textAndTemplate: [TemplateType, string][] = []
+  let typesView, instructionsView, accountsView = undefined
   for (const templateType of toGenerate) {
     switch (templateType) {
       case TemplateType.Types:
         if (idl.types) {
-          const { template, view } = generateTypes(idl)
-          const text = Mustache.render(template, view);
-          textAndTemplate.push([templateType, text])
+          const view = generateTypes(idl)
           typesView = view
         }
         else console.log("Missing IDL types")
@@ -166,29 +167,15 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
   
       case TemplateType.Instructions:
         if (idl.instructions) {
-          const { template, view } = generateInstructions(idl)
-          const text = Mustache.render(template, view);
-          textAndTemplate.push([templateType, text.slice(0, text.length-2)])
+          const view = generateInstructions(idl)
           instructionsView = view
         }
         else console.log("Missing IDL instructions")
         break
   
-      case TemplateType.Events:
-        if (idl.events){
-          const { template, view } = generateEvents(idl)
-          const text = Mustache.render(template, view)
-          textAndTemplate.push([templateType, text.slice(0, text.length-2)])
-          eventsView = view
-        }
-        else console.log("Missing IDL events")
-        break
-
       case TemplateType.Accounts:
         if (idl.accounts){
-          const { template, view } = generateAccounts(idl)
-          const text = Mustache.render(template, view)
-          textAndTemplate.push([templateType, text])
+          const view = generateAccounts(idl)
           accountsView = view
         }
         else console.log("Missing IDL accounts")
@@ -198,55 +185,41 @@ function generateFromTemplateType(idl: Idl, toGenerate: TemplateType[]) {
         console.log(`template type ${templateType} not supported`)
     }
   }
-  return { typesView, instructionsView, eventsView, accountsView, textAndTemplate }
+  return { typesView, instructionsView, accountsView }
 }
 
 function generateTypes(idl: Idl) {
-  const trafo = new IdlTransformer(idl);
-  let view = trafo.generateViewTypes();
-  const template = readFileSync(
-    `${PACKAGE_ROOT}/src/mustaches/types.mustache`, "utf8");
-  return { template, view };
+  const trafo = new IdlTransformer(idl) 
+  let view = trafo.generateViewTypes() 
+  return view 
 }
 
 function generateInstructions(idl: Idl) {
-  const trafo = new IdlTransformer(idl);
-  const view = trafo.generateViewInstructions();
-  const template = readFileSync(
-    `${PACKAGE_ROOT}/src/mustaches/instructions.mustache`, "utf8");
-  return { template, view };
-}
-
-function generateEvents(idl: Idl) {
-  const trafo = new IdlTransformer(idl);
-  const view = trafo.generateViewEvents();
-  const template = readFileSync(
-    `${PACKAGE_ROOT}/src/mustaches/events.mustache`, "utf8");
-  return { template, view };
+  const trafo = new IdlTransformer(idl) 
+  const view = trafo.generateViewInstructions() 
+  return view 
 }
 
 function generateAccounts(idl: Idl) {
-  const trafo = new IdlTransformer(idl);
-  const view = trafo.generateViewAccounts();
-  const template = readFileSync(
-    `${PACKAGE_ROOT}/src/mustaches/accounts.mustache`, "utf8");
-  return { template, view };
+  const trafo = new IdlTransformer(idl) 
+  const view = trafo.generateViewAccounts() 
+  return view  
 }
 
 async function generateSolitaTypeScript(paths: Paths, idl: Idl) {
-  console.log("Generating TypeScript SDK to %s", paths.tsSolitaDir);
+  console.log("Generating TypeScript SDK to %s", paths.tsSolitaDir) 
 
-  const gen = new Solita(idl, { formatCode: true });
-  await gen.renderAndWriteTo(paths.tsSolitaDir);
+  const gen = new Solita(idl, { formatCode: true }) 
+  await gen.renderAndWriteTo(paths.tsSolitaDir) 
 
-  console.log("Success on TS generation!");
+  console.log("Success on TS generation!") 
 }
 
 function toCamelCase(str: string){
-  let wordArr = str.split(/[-_]/g);
+  let wordArr = str.split(/[-_]/g) 
   let camelCase = ""
   for (let i in wordArr){
-    camelCase += wordArr[i].charAt(0).toUpperCase() + wordArr[i].slice(1);
+    camelCase += wordArr[i].charAt(0).toUpperCase() + wordArr[i].slice(1) 
   }
-  return camelCase;
+  return camelCase 
 }
