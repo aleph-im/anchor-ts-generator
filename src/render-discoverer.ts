@@ -57,8 +57,8 @@ export default class ${Name}Discoverer {
                 ],
               },
             )
-            accounts.map(
-              (value: { pubkey: PublicKey; account: AccountInfo<Buffer> }) =>
+            accounts.slice(0, 10).map(
+                (value: { pubkey: PublicKey; account: AccountInfo<Buffer> }) =>
                 accountsInfo.push(this.deserializeAccountResponse(value, type)),
             )
         }
