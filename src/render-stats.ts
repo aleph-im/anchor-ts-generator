@@ -39,7 +39,7 @@ export async function createAccountStats(
           TimeFrame.All,
       ],
       getInputStream: async ({ account, startDate, endDate }) => {
-        return eventDAL
+        return await eventDAL
           .useIndex(EventDALIndex.AccountTimestamp)
           .getAllValuesFromTo([account, startDate], [account, endDate])
       },
@@ -71,6 +71,7 @@ export async function createAccountStats(
 `import { AccessTimeStats } from '../../types.js'
 import { ParsedEvents } from '../../utils/layouts/index.js'
 import { PublicKey } from '@solana/web3.js'
+import { DateTime } from "luxon";
 
 export class AccessTimeSeriesAggregator {
   aggregate(    
@@ -112,9 +113,12 @@ export class AccessTimeSeriesAggregator {
       acc.accessesByProgramId[programId] = acc.accessesByProgramId[programId]
         ? acc.accessesByProgramId[programId] + 1
         : 1
-      acc.startTimestamp =
-        acc.startTimestamp || (curr as ParsedEvents).timestamp
-      acc.endTimestamp = (curr as ParsedEvents).timestamp || acc.endTimestamp
+      if(!acc.startTimestamp || acc.startTimestamp > (curr as ParsedEvents).timestamp) {
+        acc.startTimestamp = (curr as ParsedEvents).timestamp
+      }
+      if(!acc.endTimestamp || acc.endTimestamp < (curr as ParsedEvents).timestamp) {
+        acc.endTimestamp = (curr as ParsedEvents).timestamp
+      }
     } else {
       acc.accesses += (curr as AccessTimeStats).accesses || 0
       if ((curr as AccessTimeStats).accessesByProgramId) {
@@ -128,10 +132,22 @@ export class AccessTimeSeriesAggregator {
           },
         )
       }
-      acc.startTimestamp =
-        acc.startTimestamp || (curr as AccessTimeStats).startTimestamp
-      acc.endTimestamp =
-        (curr as AccessTimeStats).endTimestamp || acc.endTimestamp
+      if(!acc.startTimestamp) {
+        acc.startTimestamp = (curr as AccessTimeStats).startTimestamp
+      } else if (
+        (curr as AccessTimeStats).startTimestamp
+        && acc.startTimestamp > ((curr as AccessTimeStats).startTimestamp as number)
+      ) {
+        acc.startTimestamp = (curr as AccessTimeStats).startTimestamp
+      }
+      if(!acc.endTimestamp) {
+        acc.endTimestamp = (curr as AccessTimeStats).endTimestamp
+      } else if (
+        (curr as AccessTimeStats).endTimestamp
+        && acc.endTimestamp < ((curr as AccessTimeStats).endTimestamp as number)
+      ) {
+        acc.endTimestamp = (curr as AccessTimeStats).endTimestamp
+      }
     }
     return acc
   }

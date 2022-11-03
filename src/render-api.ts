@@ -484,11 +484,9 @@ function checkOrder(types: ViewTypes | undefined){
           if(allTypes.includes(field.graphqlType) && !alreadyIncluded.includes(field.graphqlType)){
             posToUpgrade.push(allTypes.indexOf(field.graphqlType)) // LiqPool
             typesToUpgrade.push(types.types[allTypes.indexOf(field.graphqlType)])
-            console.log(field.graphqlType, types.types[allTypes.indexOf(field.graphqlType)])
 
             posToDowngrade.push(allTypes.indexOf(type.name)) // InitilizeData
             typesToDowngrade.push(type)
-            console.log(type.name, type)
           }
         }
         alreadyIncluded.push(type.name)
