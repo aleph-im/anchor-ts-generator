@@ -64,6 +64,7 @@ import * as solita from './solita/index.js'
 export enum InstructionType { 
 ` 
         for(const instruction of instructionsView){
+                if(instruction.name == "ConfigLp") continue
                 ixLayouts += 
 `   ${instruction.name} = '${instruction.name}',
 `
@@ -76,18 +77,18 @@ export type InstructionBase = EventBase<InstructionType> & {
 
 ` 
         for(const instruction of instructionsView){
+                if(instruction.name == "ConfigLp") continue
                 ixLayouts += 
-`export type ${instruction.name}Info = {
-` 
+`export type ${instruction.name}Info = `
+                /*if(instruction.args.length != 0){
+                        ixLayouts += `solita.${instruction.name}InstructionArgs &`
+                }*/
                 ixLayouts += 
-`       accounts: solita.${instruction.name}InstructionAccounts
+`   {
+        accounts: solita.${instruction.name}InstructionAccounts
+        data: solita.${instruction.name}Instruction
 `
-                if(instruction.args.length === 0){
-                        ixLayouts += `data: undefined // no arguments in this instruction`
-                }
-                else{
-                        ixLayouts += `data: solita.${instruction.name}InstructionArgs`
-                }
+
 ixLayouts += `
 }
 
@@ -110,6 +111,7 @@ export const IX_METHOD_CODE: Map<string, InstructionType | undefined > =
   new Map<string, InstructionType | undefined >([
 `
         for(const instruction of instructionsView){
+                if(instruction.name == "ConfigLp") continue
             ixLayouts += 
 `   [Buffer.from(solita.${instruction.name.charAt(0).toLowerCase().concat(instruction.name.slice(1))}InstructionDiscriminator).toString('ascii'), InstructionType.${instruction.name}],
 `
@@ -120,6 +122,7 @@ export const IX_METHOD_CODE: Map<string, InstructionType | undefined > =
 export const IX_DATA_LAYOUT: Partial<Record<InstructionType, any>> = {
 `
         for(const instruction of instructionsView){
+                if(instruction.name == "ConfigLp") continue
             ixLayouts += 
 `   [InstructionType.${instruction.name}]: solita.${instruction.name.charAt(0).toLowerCase().concat(instruction.name.slice(1))}Struct,
 `
@@ -131,6 +134,7 @@ export const IX_DATA_LAYOUT: Partial<Record<InstructionType, any>> = {
 export const IX_ACCOUNTS_LAYOUT: Partial<Record<InstructionType, any>> = {
 `
         for(const instruction of instructionsView){
+                if(instruction.name == "ConfigLp") continue
             ixLayouts += 
 `   [InstructionType.${instruction.name}]: solita.${instruction.name}Accounts,
 `
@@ -142,6 +146,7 @@ export const IX_ACCOUNTS_LAYOUT: Partial<Record<InstructionType, any>> = {
 export type ParsedEventsInfo = 
 `
         for(const instruction of instructionsView){
+                if(instruction.name == "ConfigLp") continue
             ixLayouts += 
 `   | ${instruction.name}Info
 `
@@ -152,6 +157,7 @@ export type ParsedEventsInfo =
 export type ParsedEvents = 
 `
         for(const instruction of instructionsView){
+                if(instruction.name == "ConfigLp") continue
                 ixLayouts += 
 `   | ${instruction.name}Event
 `

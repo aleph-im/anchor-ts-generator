@@ -403,6 +403,7 @@ export const ParsedEvents = new GraphQLEnumType({
   values: {
 `
     for(const instruction of instructions){
+      if(instruction.name == "ConfigLp") continue
         apiTypes +=`${instruction.name}Event: { value: '${instruction.name}Event' },
 `
     }
@@ -427,6 +428,7 @@ const Event = new GraphQLInterfaceType({
 `
 
     for(const instruction of instructions){
+      if(instruction.name == "ConfigLp") continue
       apiTypes +=  
 `export const ${instruction.name} = new GraphQLObjectType({
   name: '${instruction.name}',
@@ -450,6 +452,7 @@ const Event = new GraphQLInterfaceType({
 
 export const types = [`
     for(const instruction of instructions){
+      if(instruction.name == "ConfigLp") continue
         apiTypes += 
 `   
   ${instruction.name},`
