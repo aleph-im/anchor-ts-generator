@@ -69,9 +69,48 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     logError(err)
   }
 
+  if(!existsSync(paths.utilsDir))
+    mkdirSync(paths.utilsDir)
+  if(!existsSync(paths.layaoutsDir))
+    mkdirSync(paths.layaoutsDir)
+  const { accountLayouts, ixLayouts, indexLayouts, layoutLayouts } = renderLayoutsFiles(idl.name, instructionsView, accountsView) 
+  try {
+    if(accountLayouts) {
+      writeFileSync(paths.layoutsFile('accounts'), format(accountLayouts, DEFAULT_FORMAT_OPTS)) 
+    }
+    if(ixLayouts) {
+      writeFileSync(paths.layoutsFile('instructions'), format(ixLayouts, DEFAULT_FORMAT_OPTS)) 
+    }
+    writeFileSync(paths.layoutsFile('index'), format(indexLayouts, DEFAULT_FORMAT_OPTS)) 
+    writeFileSync(paths.layoutsFile('layout'), format(layoutLayouts, DEFAULT_FORMAT_OPTS)) 
+  } catch (err) {
+    console.log(`Failed to format on layouts folder`)
+    logError(err)
+  }
+
+  if(!existsSync(paths.tsSolitaDir))
+    mkdirSync(paths.tsSolitaDir)
+  await generateSolitaTypeScript(paths, idl) 
+  const { indexSolita } = renderSolitaMods(instructionsView, accountsView, typesView, paths, DEFAULT_FORMAT_OPTS)
+  try {
+    writeFileSync(paths.solitaFile('index'), format(indexSolita, DEFAULT_FORMAT_OPTS)) 
+  } catch (err) {
+    console.log(`Failed to format on parser folder`)
+    logError(err)
+  }
+  if(!existsSync(paths.parsersDir))
+    mkdirSync(paths.parsersDir)
+  const { event } = renderParsersFiles(instructionsView)
+  try {
+    writeFileSync(paths.parsersFile('event'), format(event, DEFAULT_FORMAT_OPTS)) 
+  } catch (err) {
+    console.log(`Failed to format on parser folder`)
+    logError(err)
+  }
+
   if(!existsSync(paths.dalDir))
     mkdirSync(paths.dalDir)
-  const { eventDal } = renderDALFiles()
+  const { eventDal } = renderDALFiles(instructionsView)
   try {
     writeFileSync(paths.dalFile('event'), format(eventDal, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
@@ -93,7 +132,7 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.statsDir))
     mkdirSync(paths.statsDir)
-  const { timeSeries, timeSeriesAggregator, statsAggregator } = renderStatsFiles(Name, idl.name, instructionsView)
+  const { timeSeries, timeSeriesAggregator, statsAggregator } = renderStatsFiles(Name, instructionsView)
   try {
     writeFileSync(paths.statsFile('timeSeries'), format(timeSeries, DEFAULT_FORMAT_OPTS)) 
     writeFileSync(paths.statsFile('timeSeriesAggregator'), format(timeSeriesAggregator, DEFAULT_FORMAT_OPTS)) 
@@ -110,45 +149,6 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
     writeFileSync(paths.discovererFile(idl.name), format(discoverer, DEFAULT_FORMAT_OPTS)) 
   } catch (err) {
     logError(`Failed to format on discoverer folder`)
-    logError(err)
-  }
-
-  if(!existsSync(paths.utilsDir))
-    mkdirSync(paths.utilsDir)
-  if(!existsSync(paths.layaoutsDir))
-    mkdirSync(paths.layaoutsDir)
-  const { accountLayouts, ixLayouts, indexLayouts, layoutLayouts } = renderLayoutsFiles(idl.name, instructionsView, accountsView) 
-  try {
-    if(accountLayouts) {
-      writeFileSync(paths.layoutsFile('accounts'), format(accountLayouts, DEFAULT_FORMAT_OPTS)) 
-    }
-    if(ixLayouts) {
-      writeFileSync(paths.layoutsFile('instructions'), format(ixLayouts, DEFAULT_FORMAT_OPTS)) 
-    }
-    writeFileSync(paths.layoutsFile('index'), format(indexLayouts, DEFAULT_FORMAT_OPTS)) 
-    writeFileSync(paths.layoutsFile('layout'), format(layoutLayouts, DEFAULT_FORMAT_OPTS)) 
-  } catch (err) {
-    console.log(`Failed to format on layouts folder`)
-    logError(err)
-  }
-  
-  if(!existsSync(paths.tsSolitaDir))
-    mkdirSync(paths.tsSolitaDir)
-  await generateSolitaTypeScript(paths, idl) 
-  const { indexSolita } = renderSolitaMods(instructionsView, accountsView, typesView, paths, DEFAULT_FORMAT_OPTS)
-  try {
-    writeFileSync(paths.solitaFile('index'), format(indexSolita, DEFAULT_FORMAT_OPTS)) 
-  } catch (err) {
-    console.log(`Failed to format on parser folder`)
-    logError(err)
-  }
-  if(!existsSync(paths.parsersDir))
-    mkdirSync(paths.parsersDir)
-  const { event } = renderParsersFiles(instructionsView)
-  try {
-    writeFileSync(paths.parsersFile('event'), format(event, DEFAULT_FORMAT_OPTS)) 
-  } catch (err) {
-    console.log(`Failed to format on parser folder`)
     logError(err)
   }
 }

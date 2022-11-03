@@ -6,6 +6,8 @@ import { logError } from './utils/index.js'
 
 export function renderSolitaMods(instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined, typesView: ViewTypes | undefined, paths: Paths, DEFAULT_FORMAT_OPTS: Options){
     let files: string[] = []
+    let BNProperties: string[] = []
+    let PubkeyProperties: string[] = []
 
     if(existsSync(paths.ixSolitaDir)) {
         files = readdirSync(paths.ixSolitaDir)
@@ -186,6 +188,5 @@ export type ParsedTypes =
             | ${type.name}`
         }
     }
-    return { indexSolita }
-
+    return { indexSolita, BNProperties, PubkeyProperties }
 }

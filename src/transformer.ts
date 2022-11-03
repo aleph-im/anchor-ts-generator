@@ -31,9 +31,7 @@ export default class IdlTransformer {
   constructor(
     protected idl: Idl,
     protected ignoreImports: Set<string> =
-      new Set(["boolean", "number", "string", "BN", "PublicKey", "Buffer"])) {
-  }
-
+      new Set(["boolean", "number", "string", "BN", "PublicKey", "Buffer"])) {}
   // ------------------------------------------
   // ----------------- PUBLIC -----------------
   // ------------------------------------------
@@ -51,11 +49,12 @@ export default class IdlTransformer {
     } 
     
     let instructions: ViewInstruction[] = [] 
-    let code = 0 
+    let code = 0
 
     for (const ix of idl) {
       const name = ix.name.slice(0, 1).toUpperCase() + ix.name.slice(1) 
-      eventTypeEnum.variants.push(name) 
+      eventTypeEnum.variants.push(name)
+      const args = ix.args
       instructions.push({
         name,
         code,
@@ -65,6 +64,7 @@ export default class IdlTransformer {
             multiple: true//!!(account as IdlAccounts).accounts
           }
         }),
+        args,
       }) 
       code++ 
     }

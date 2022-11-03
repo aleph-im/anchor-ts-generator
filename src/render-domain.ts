@@ -12,13 +12,13 @@ import {
 } from '@aleph-indexer/framework'
 import { EventDALIndex, EventStorage } from '../dal/event.js'
 import { ParsedEvents } from '../utils/layouts/index.js'
-import { ${Name}AccountInfo, TimeStats } from '../types.js'
+import { ${Name}AccountInfo, ${Name}AccountStats } from '../types.js'
 
 export class AccountDomain {
   constructor(
     public info: ${Name}AccountInfo,
     protected eventDAL: EventStorage,
-    protected timeSeriesStats: AccountTimeSeriesStatsManager,
+    protected timeSeriesStats: AccountTimeSeriesStatsManager<${Name}AccountStats>,
   ) {}
 
   async updateStats(now: number): Promise<void> {
@@ -32,7 +32,7 @@ export class AccountDomain {
     return this.timeSeriesStats.getTimeSeriesStats(type, filters)
   }
 
-  async getStats(): Promise<AccountStats<TimeStats>> {
+  async getStats(): Promise<AccountStats<${Name}AccountStats>> {
     return this.timeSeriesStats.getStats()
   }
 
@@ -42,7 +42,7 @@ export class AccountDomain {
     opts: any,
   ): Promise<StorageStream<string, ParsedEvents>> {
     return this.eventDAL
-      .useIndex(EventDALIndex.AccoountTimestamp)
+      .useIndex(EventDALIndex.AccountTimestamp)
       .getAllFromTo(
         [this.info.address, startDate],
         [this.info.address, endDate],
@@ -67,14 +67,14 @@ import {
 import { eventParser as eParser } from '../parsers/event.js'
 import { createEventDAL } from '../dal/event.js'
 import { ParsedEvents } from '../utils/layouts/index.js'
-import { AccessTimeStats, ${Name}AccountInfo } from '../types.js'
+import { ${Name}AccountStats, ${Name}AccountInfo } from '../types.js'
 import { AccountDomain } from './account.js'
 import { createAccountStats } from './stats/timeSeries.js'
 import { ${NAME}_PROGRAM_ID } from '../constants.js'
 
 const { isParsedIx } = Utils
 
-export default class IndexerDomain
+export default class WorkerDomain
   extends IndexerWorkerDomain
   implements IndexerWorkerDomainWithStats
 {
@@ -124,23 +124,23 @@ export default class IndexerDomain
     type: string,
     filters: AccountStatsFilters,
   ): Promise<AccountTimeSeriesStats> {
-    const oracle = this.getAccount(account)
-    return oracle.getTimeSeriesStats(type, filters)
+    const actual = this.getAccount(account)
+    return actual.getTimeSeriesStats(type, filters)
   }
 
-  async getStats(account: string): Promise<AccountStats<AccessTimeStats>> {
+  async getStats(account: string): Promise<AccountStats<${Name}AccountStats>> {
     return this.getAccountStats(account)
   }
 
   // ------------- Custom impl methods -------------------
 
-  async getAccountInfo(reserve: string): Promise<${Name}AccountInfo> {
-    const res = this.getAccount(reserve)
+  async getAccountInfo(actual: string): Promise<${Name}AccountInfo> {
+    const res = this.getAccount(actual)
     return res.info
   }
 
-  async getAccountStats(reserve: string): Promise<AccountStats<AccessTimeStats>> {
-    const res = this.getAccount(reserve)
+  async getAccountStats(actual: string): Promise<AccountStats<${Name}AccountStats>> {
+    const res = this.getAccount(actual)
     return res.getStats()
   }
 

@@ -5,6 +5,8 @@ export function renderApiFiles(Name: string, instructions: ViewInstructions | un
 
   const indexApi: string = `export { default } from './schema.js'`
 
+  checkOrder(types)
+
   const resolversApi: string = `import MainDomain from '../domain/main.js'
 import {
   AccountType,
@@ -222,7 +224,6 @@ import { InstructionType } from '../utils/layouts/index.js'
 // if you have some errors here most probably will be solved by changing the order of types
 `
   if(accounts && instructions && types){
-
     for(const type of types.enums){
       apiTypes += `
 export const ${type.name} = new GraphQLEnumType({
@@ -427,8 +428,8 @@ const Event = new GraphQLInterfaceType({
 
     for(const instruction of instructions){
       apiTypes +=  
-`export const ${instruction.name}Event = new GraphQLObjectType({
-  name: '${instruction.name}Event',
+`export const ${instruction.name} = new GraphQLObjectType({
+  name: '${instruction.name}',
   interfaces: [Event],
   isTypeOf: (item) => item.type === InstructionType.${instruction.name},
   fields: {
@@ -451,11 +452,54 @@ export const types = [`
     for(const instruction of instructions){
         apiTypes += 
 `   
-  ${instruction.name}Event,`
+  ${instruction.name},`
       }
       apiTypes += 
 `]
 `
   }
   return { indexApi, resolversApi, schemaApi, apiTypes }
+}
+
+function checkOrder(types: ViewTypes | undefined){
+  const allTypes: string[] = []
+  const alreadyIncluded: string[] = []
+
+  const posToUpgrade: number[] = []
+  const typesToUpgrade = []
+
+  const posToDowngrade: number[] = []
+  const typesToDowngrade = []
+
+  if(types) {
+    for (const type of types.types) {
+      if(type.name){
+        allTypes.push(type.name)
+      }
+    }
+
+    for(const type of types.types){
+      if(type.name){
+        for(const field of type.fields){
+          if(allTypes.includes(field.graphqlType) && !alreadyIncluded.includes(field.graphqlType)){
+            posToUpgrade.push(allTypes.indexOf(field.graphqlType)) // LiqPool
+            typesToUpgrade.push(types.types[allTypes.indexOf(field.graphqlType)])
+            console.log(field.graphqlType, types.types[allTypes.indexOf(field.graphqlType)])
+
+            posToDowngrade.push(allTypes.indexOf(type.name)) // InitilizeData
+            typesToDowngrade.push(type)
+            console.log(type.name, type)
+          }
+        }
+        alreadyIncluded.push(type.name)
+      }
+    }
+
+    if(posToUpgrade.length > 0) {
+      for(let i = 0; i < posToUpgrade.length; i++){
+        types.types[posToUpgrade[i]] = typesToDowngrade[i]
+        types.types[posToDowngrade[i]] = typesToUpgrade[i]
+      }
+    }
+  }
 }

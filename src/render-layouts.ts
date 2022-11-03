@@ -81,7 +81,14 @@ export type InstructionBase = EventBase<InstructionType> & {
 ` 
                 ixLayouts += 
 `       accounts: solita.${instruction.name}InstructionAccounts
-        data: solita.${instruction.name}Instruction
+`
+                if(instruction.args.length === 0){
+                        ixLayouts += `data: undefined // no arguments in this instruction`
+                }
+                else{
+                        ixLayouts += `data: solita.${instruction.name}InstructionArgs`
+                }
+ixLayouts += `
 }
 
 export type ${instruction.name}Event = InstructionBase &

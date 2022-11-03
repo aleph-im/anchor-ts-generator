@@ -1,3 +1,5 @@
+import { IdlInstructionArg } from "@metaplex-foundation/solita"
+
 export enum TemplateType {
   Types = "types",
   Instructions = "instructions",
@@ -48,6 +50,7 @@ export type ViewInstruction = {
   name: string
   code: number
   accounts: ViewAccount[]
+  args: IdlInstructionArg[]
 }
 
 export type ViewInstructions = ViewInstruction[]
