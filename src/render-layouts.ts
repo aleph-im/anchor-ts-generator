@@ -1,4 +1,4 @@
-import { ViewInstructions, ViewAccounts } from './types'
+import { ViewInstructions, ViewAccounts, _ViewAccount } from './types'
 
 export function renderLayoutsFiles(filename: string, instructionsView: ViewInstructions | undefined, accountsView: ViewAccounts | undefined){
     const NAME = filename.toUpperCase()
@@ -55,47 +55,110 @@ export const ACCOUNTS_DATA_LAYOUT: Record<
     }
 
     let ixLayouts: string = ''
-    if(instructionsView != undefined && instructionsView.length > 0) {
+    if(instructionsView && instructionsView.instructions.length > 0) {
         ixLayouts += `import { EventBase } from '@aleph-indexer/core'
 import * as solita from './solita/index.js'
 `
+        for(const otherImport of instructionsView.imports.otherImports){
+                        if (isBN(otherImport))  ixLayouts += `import { PublicKey } from '@solana/web3.js'
+`
+                        if (isPubkey(otherImport))  ixLayouts += `import BN from 'bn.js'
+`
+        }
+        /*if (instructionsView.imports.definedImports.length > 0) {
+                ixLayouts += `import {
+`
+                for(const definedImport of instructionsView.imports.definedImports){
+                        ixLayouts += `  ${definedImport},
+`
+                }
+                ixLayouts += `} from './solita/index.js'
+`
+        }*/
 
         ixLayouts += `
 export enum InstructionType { 
 ` 
-        for(const instruction of instructionsView){
-                if(instruction.name == "ConfigLp") continue
+        for(const instruction of instructionsView.instructions){
                 ixLayouts += 
-`   ${instruction.name} = '${instruction.name}',
+`   ${instruction.name} = '${instruction.name}Event',
 `
         }
         ixLayouts += `}
 
 export type InstructionBase = EventBase<InstructionType> & {
+        programId: string
+        signer: string
         account: string
 }
 
+/*-----------------------* CUSTOM EVENTS TYPES *-----------------------*/
+
 ` 
-        for(const instruction of instructionsView){
-                if(instruction.name == "ConfigLp") continue
-                ixLayouts += 
-`export type ${instruction.name}Info = `
-                /*if(instruction.args.length != 0){
-                        ixLayouts += `solita.${instruction.name}InstructionArgs &`
-                }*/
-                ixLayouts += 
-`   {
-        accounts: solita.${instruction.name}InstructionAccounts
-        data: solita.${instruction.name}Instruction
+        for(const instruction of instructionsView.instructions){
+                let definedData = false
+                
+                if(instruction.args.length > 0){
+                        for (const arg of instruction.args) {
+                                for (const definedImport of instructionsView.imports.definedImports) {
+                                        if (arg.tsType === definedImport) definedData = true
+                                }
+                        }
+                        if (definedData) {
+                                ixLayouts += `
+
+export type ${instruction.name}Info = {`
+                                if(instruction.args.length > 0){
+                                        ixLayouts += ` 
+        data: solita.${instruction.args[0].tsType}
+`
+                                }
+                                if(instruction.accounts.length > 0){
+                                        ixLayouts += `accounts: solita.${instruction.name}InstructionAccounts
+` 
+                                }
+                        
+                                ixLayouts += `}`
+                        }
+                        else {
+                                ixLayouts += `export type ${instruction.name}EventData = {`
+                                for (const arg of instruction.args) {
+                                        ixLayouts += ` 
+        ${arg.name}: ${arg.tsType}`
+                                }
+                                ixLayouts += `}
+
+export type ${instruction.name}Info = {
+        data: ${instruction.name}EventData
 `
 
-ixLayouts += `
-}
+                                if(instruction.accounts.length > 0){
+                                        ixLayouts += `accounts: solita.${instruction.name}InstructionAccounts
+` 
+                                }
+                        
+                                ixLayouts += `}`
+                        }
+                }
+                else {
+                        ixLayouts += `
+
+export type ${instruction.name}Info = {
+`
+                        if(instruction.accounts.length > 0){
+                                ixLayouts += `accounts: solita.${instruction.name}InstructionAccounts
+` 
+                        }                    
+                        ixLayouts += `}`
+                }
+                ixLayouts += `
 
 export type ${instruction.name}Event = InstructionBase &
-    ${instruction.name}Info & {
-    type: InstructionType.${instruction.name}
-  }
+        ${instruction.name}Info & {
+                type: InstructionType.${instruction.name}
+        }
+
+/*----------------------------------------------------------------------*/
 
 `
         }
@@ -110,9 +173,8 @@ export function getInstructionType(data: Buffer): InstructionType | undefined {
 export const IX_METHOD_CODE: Map<string, InstructionType | undefined > = 
   new Map<string, InstructionType | undefined >([
 `
-        for(const instruction of instructionsView){
-                if(instruction.name == "ConfigLp") continue
-            ixLayouts += 
+        for(const instruction of instructionsView.instructions){
+                ixLayouts += 
 `   [Buffer.from(solita.${instruction.name.charAt(0).toLowerCase().concat(instruction.name.slice(1))}InstructionDiscriminator).toString('ascii'), InstructionType.${instruction.name}],
 `
         }
@@ -121,55 +183,51 @@ export const IX_METHOD_CODE: Map<string, InstructionType | undefined > =
 ])
 export const IX_DATA_LAYOUT: Partial<Record<InstructionType, any>> = {
 `
-        for(const instruction of instructionsView){
-                if(instruction.name == "ConfigLp") continue
-            ixLayouts += 
+        for(const instruction of instructionsView.instructions){
+                ixLayouts += 
 `   [InstructionType.${instruction.name}]: solita.${instruction.name.charAt(0).toLowerCase().concat(instruction.name.slice(1))}Struct,
 `
         }
 
-        ixLayouts += 
+                ixLayouts += 
 `}
 
 export const IX_ACCOUNTS_LAYOUT: Partial<Record<InstructionType, any>> = {
 `
-        for(const instruction of instructionsView){
-                if(instruction.name == "ConfigLp") continue
-            ixLayouts += 
+                for(const instruction of instructionsView.instructions){
+                        ixLayouts += 
 `   [InstructionType.${instruction.name}]: solita.${instruction.name}Accounts,
 `
-        }
+                }
 
-        ixLayouts += 
+                ixLayouts += 
 `}
     
 export type ParsedEventsInfo = 
 `
-        for(const instruction of instructionsView){
-                if(instruction.name == "ConfigLp") continue
-            ixLayouts += 
+                for(const instruction of instructionsView.instructions){
+                        ixLayouts += 
 `   | ${instruction.name}Info
 `
-        }
+                }
 
-        ixLayouts += 
+                ixLayouts += 
 `       
 export type ParsedEvents = 
 `
-        for(const instruction of instructionsView){
-                if(instruction.name == "ConfigLp") continue
-                ixLayouts += 
+                for(const instruction of instructionsView.instructions){
+                        ixLayouts += 
 `   | ${instruction.name}Event
 `
+                }
         }
-    }
 
-    const indexLayouts = 
+        const indexLayouts = 
 `export * from './accounts.js'
 export * from './instructions.js'
 export * from './solita/index.js'
 `
-    const layoutLayouts =
+        const layoutLayouts =
 `import { ${NAME}_PROGRAM_ID } from '../../constants.js'
 import { ACCOUNTS_DATA_LAYOUT } from './accounts.js'
 import {
@@ -184,21 +242,7 @@ export default {
     name: '${name}',
     programID: ${NAME}_PROGRAM_ID,
     accountLayoutMap: IX_ACCOUNTS_LAYOUT,
-    dataLayoutMap: new Proxy(IX_DATA_LAYOUT, {
-        get(target: Partial<Record<InstructionType, any>>, p: string | symbol): any {
-          const schema = target[p as InstructionType]
-          return new Proxy(schema, {get: (target2, p2) => {
-            switch (p2) {
-              case 'decode':
-                return target2.deserialize.bind(target2)
-              case 'encode':
-                return target2.serialize.bind(target2)
-            }
-            return target2[p2]
-            }
-          })
-        }
-      }),
+    dataLayoutMap: IX_DATA_LAYOUT,
     accountDataLayoutMap: ACCOUNTS_DATA_LAYOUT,
     eventType: InstructionType,
     getInstructionType,
@@ -206,4 +250,11 @@ export default {
 }`
 
     return { accountLayouts, ixLayouts, indexLayouts, layoutLayouts }
+}
+
+function isPubkey(type: string): boolean {
+        return type === "PublicKey"
+}
+function isBN(type: string): boolean {
+        return type === "BN"
 }

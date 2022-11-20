@@ -6,7 +6,7 @@ export function renderDALFiles(instructionsView: ViewInstructions | undefined){
   const uniquePubkeyProp: string[] = []
 
   if(instructionsView){
-    for(const ix of instructionsView){
+    for(const ix of instructionsView.instructions){
       for(const arg of ix.args){
         if(typeof arg.type === 'string') {
           if (arg.type === 'publicKey'){

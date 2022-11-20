@@ -1,8 +1,6 @@
 import { ViewAccounts, ViewInstructions, ViewTypes } from "./types"
 
 export function renderApiFiles(Name: string, instructions: ViewInstructions | undefined, accounts: ViewAccounts | undefined, types: ViewTypes | undefined){
-  const naMe = Name.charAt(0).toLowerCase() + Name.slice(1)
-
   const indexApi: string = `export { default } from './schema.js'`
 
   checkOrder(types)
@@ -152,7 +150,7 @@ export default class APISchema extends IndexerAPISchema {
     super(domain, {
       types: Types.types,
 
-      customTimeSeriesTypesMap: { ${naMe}Info: Types.AccessTimeStats },
+      customTimeSeriesTypesMap: { access: Types.AccessTimeStats },
       customStatsType: Types.${Name}Stats,
 
       query: new GraphQLObjectType({
@@ -221,7 +219,6 @@ import { InstructionType } from '../utils/layouts/index.js'
 
 // ------------------- TYPES ---------------------------
 
-// if you have some errors here most probably will be solved by changing the order of types
 `
   if(accounts && instructions && types){
     for(const type of types.enums){
@@ -402,8 +399,7 @@ export const ParsedEvents = new GraphQLEnumType({
   name: 'ParsedEvents',
   values: {
 `
-    for(const instruction of instructions){
-      if(instruction.name == "ConfigLp") continue
+    for(const instruction of instructions.instructions){
         apiTypes +=`${instruction.name}Event: { value: '${instruction.name}Event' },
 `
     }
@@ -416,6 +412,7 @@ const commonEventFields = {
   timestamp: { type: GraphQLLong },
   type: { type: new GraphQLNonNull(ParsedEvents) },
   account: { type: new GraphQLNonNull(GraphQLString) },
+  signer: { type: new GraphQLNonNull(GraphQLString) },
 }
 
 const Event = new GraphQLInterfaceType({
@@ -425,37 +422,103 @@ const Event = new GraphQLInterfaceType({
   },
 })
 
-`
+/*-----------------------* CUSTOM EVENTS TYPES *-----------------------*/
 
-    for(const instruction of instructions){
-      if(instruction.name == "ConfigLp") continue
-      apiTypes +=  
-`export const ${instruction.name} = new GraphQLObjectType({
-  name: '${instruction.name}',
-  interfaces: [Event],
-  isTypeOf: (item) => item.type === InstructionType.${instruction.name},
-  fields: {
-    ...commonEventFields,`
-      for(const account of instruction.accounts){
-          apiTypes +=
-`       
-      ${account.name.toLowerCase()}: { type: new GraphQLNonNull(GraphQLString) },`
+` 
+        for(const instruction of instructions.instructions){
+          let definedData = false
+
+          if (instruction.accounts.length > 0) {
+            apiTypes +=` export const ${instruction.name}EventAccounts = new GraphQLObjectType({
+name: '${instruction.name}EventAccounts',
+fields: {
+`
+    for(const account of instruction.accounts){
+      apiTypes +=`${account.name}: { type: new GraphQLNonNull(GraphQLString) },
+`
     }
-      apiTypes += `
-  }
+  apiTypes +=`}
 })
 
 `
+          }
+          if(instruction.args.length > 0){
+            for (const arg of instruction.args) {
+              for (const definedImport of instructions.imports.definedImports) {
+                  if (arg.tsType === definedImport) definedData = true
+              }
+            }
+
+            if (definedData) {
+                apiTypes += `export const ${instruction.name}Event = new GraphQLObjectType({
+  name: '${instruction.name}Event',
+  interfaces: [Event],
+  isTypeOf: (item) => item.type === InstructionType.${instruction.name},
+  fields: {
+    ...commonEventFields,
+    data: { type: new GraphQLNonNull(${instruction.args[0].graphQLType}) },`
+  if (instruction.accounts.length > 0 ) apiTypes += `
+    accounts: { type: new GraphQLNonNull(${instruction.name}EventAccounts) },`
+  apiTypes += `
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+`
+            }
+            else {
+              apiTypes += `export const ${instruction.name}EventData = new GraphQLObjectType({
+  name: '${instruction.name}EventData',
+  fields: {
+`
+              for(const arg of instruction.args){
+                apiTypes +=`${arg.name}: { type: new GraphQLNonNull(${arg.graphQLType}) },
+`
+              }
+              apiTypes +=`}
+})                
+            
+export const ${instruction.name}Event = new GraphQLObjectType({
+  name: '${instruction.name}Event',
+  interfaces: [Event],
+  isTypeOf: (item) => item.type === InstructionType.${instruction.name},
+  fields: {
+    ...commonEventFields,
+    data: { type: new GraphQLNonNull(${instruction.name}EventData) },
+    accounts: { type: new GraphQLNonNull(${instruction.name}EventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+`
+            }
+          }
+          else {
+            apiTypes += `           
+export const ${instruction.name}Event = new GraphQLObjectType({
+  name: '${instruction.name}Event',
+  interfaces: [Event],
+  isTypeOf: (item) => item.type === InstructionType.${instruction.name},
+  fields: {
+    ...commonEventFields,
+    accounts: { type: new GraphQLNonNull(${instruction.name}EventAccounts) },
+  },
+})
+
+/*----------------------------------------------------------------------*/
+
+`            
+          }
     }
     apiTypes += 
 `export const Events = new GraphQLList(Event)
 
 export const types = [`
-    for(const instruction of instructions){
-      if(instruction.name == "ConfigLp") continue
-        apiTypes += 
-`   
-  ${instruction.name},`
+    for(const instruction of instructions.instructions){
+        apiTypes += `   
+  ${instruction.name}Event,`
       }
       apiTypes += 
 `]
@@ -485,10 +548,10 @@ function checkOrder(types: ViewTypes | undefined){
       if(type.name){
         for(const field of type.fields){
           if(allTypes.includes(field.graphqlType) && !alreadyIncluded.includes(field.graphqlType)){
-            posToUpgrade.push(allTypes.indexOf(field.graphqlType)) // LiqPool
+            posToUpgrade.push(allTypes.indexOf(field.graphqlType))
             typesToUpgrade.push(types.types[allTypes.indexOf(field.graphqlType)])
 
-            posToDowngrade.push(allTypes.indexOf(type.name)) // InitilizeData
+            posToDowngrade.push(allTypes.indexOf(type.name))
             typesToDowngrade.push(type)
           }
         }
