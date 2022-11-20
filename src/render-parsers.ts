@@ -11,8 +11,7 @@ import {
   InstructionType,
   `
   if(instructions != undefined){
-    for (const instruction of instructions) {
-      if(instruction.name == "ConfigLp") continue
+    for (const instruction of instructions.instructions) {
       event += 
 ` ${instruction.name}Event,
 `
@@ -42,7 +41,8 @@ export class EventParser {
     id,
     timestamp,
     type: parsed.type,
-    account: txContext.parserContext.account
+    account: txContext.parserContext.account,
+    signer: txContext.tx.parsed.message.accountKeys[0].pubkey,
   }
 
     try {
@@ -50,8 +50,7 @@ export class EventParser {
 `
 
 if(instructions != undefined){
-  for (const instruction of instructions) {
-    if(instruction.name == "ConfigLp") continue
+  for (const instruction of instructions.instructions) {
     event += 
 `       case InstructionType.${instruction.name}:
           return {

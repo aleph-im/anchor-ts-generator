@@ -50,7 +50,7 @@ services:
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/beet-solana": "0.4.0",
     "@solana/spl-token": "0.3.5",
-    "@solana/web3.js": "1.61.1",
+    "@solana/web3.js": "^1.66.2",
     "bs58": "5.0.0"
   },
   "devDependencies": {
@@ -84,7 +84,7 @@ async function main() {
   const projectId = '${name}'
   const dataPath = config.INDEXER_DATA_PATH || undefined // 'data'
   const transport =
-    (config.INDEXER_TRANSPORT as TransportType) || TransportType.LocalNet
+    (config.INDEXER_TRANSPORT as TransportType) || TransportType.Thread
 
   const transportConfig: any =
     tcpUrls || natsUrl ? { tcpUrls, natsUrl } : undefined

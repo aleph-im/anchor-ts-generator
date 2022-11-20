@@ -198,7 +198,6 @@ import {
   ${Name}AccountStats,
   ${Name}AccountData,
   ${Name}AccountInfo,
-  TimeStats,
 } from '../types.js'
 import ${Name}Discoverer from './discoverer/${filename}.js'
 
@@ -214,7 +213,7 @@ export default class MainDomain
   ) {
     super(context, {
       discoveryInterval: 1000 * 60 * 60 * 1,
-      stats: 1000 * 60 * 5,
+      stats: 1000 * 60 * 1,
     })
   }
 
@@ -284,7 +283,6 @@ export default class MainDomain
       args: [startDate, endDate, opts],
     })
 
-    console.log('getAccountEventsByTime stream', typeof stream)
     return stream as StorageStream<string, ParsedEvents>
   }
 
@@ -307,14 +305,18 @@ export default class MainDomain
   async computeGlobalStats(
     accountAddresses?: string[],
   ): Promise<Global${Name}Stats> {
-    const accountsStats = await this.getAccountStats<TimeStats>(accountAddresses)
+    console.log(\`📊 computing global stats for \${accountAddresses?.length} accounts\`)
+    const accountsStats = await this.getAccountStats<MarinadeFinanceAccountStats>(
+      accountAddresses,
+    )
     const globalStats: Global${Name}Stats = this.getNewGlobalStats()
 
     for (const accountStats of accountsStats) {
       if (!accountStats.stats) continue
 
-      const { accesses, accessesByProgramId, startTimestamp, endTimestamp } =
-        accountStats.stats
+      const { accesses, accessesByProgramId, startTimestamp, endTimestamp } = accountStats.stats.total
+
+      console.log(\`📊 computing global stats for \${accountStats.account} with \${accesses} accesses\`)
 
       const type = this.discoverer.getAccountType(accountStats.account)
 
