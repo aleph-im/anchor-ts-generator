@@ -65,16 +65,6 @@ import * as solita from './solita/index.js'
                         if (isPubkey(otherImport))  ixLayouts += `import BN from 'bn.js'
 `
         }
-        /*if (instructionsView.imports.definedImports.length > 0) {
-                ixLayouts += `import {
-`
-                for(const definedImport of instructionsView.imports.definedImports){
-                        ixLayouts += `  ${definedImport},
-`
-                }
-                ixLayouts += `} from './solita/index.js'
-`
-        }*/
 
         ixLayouts += `
 export enum InstructionType { 
