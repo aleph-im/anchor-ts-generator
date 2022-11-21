@@ -2,7 +2,7 @@ import { PathLike } from 'fs'
 import path from 'path'
 
 export class Paths {
-  constructor(readonly root: PathLike, readonly project: string) {}
+  constructor(readonly root: PathLike, readonly project: string, readonly output?: string | undefined) {}
 
   get rootDir() {
     return this.root.toString()
@@ -16,7 +16,7 @@ export class Paths {
   }
 
   get outputDir() {
-   return path.join(this.rootDir.toString(), 'packages')
+   return this.output ? path.resolve(this.output) : path.join(this.rootDir.toString(), 'packages')
   }
 
   get projectDir() {
@@ -100,25 +100,25 @@ export class Paths {
     return path.join(this.utilsDir, `${name}.ts`)
   }
 
-  get layaoutsDir() {
+  get layoutsDir() {
     return path.join(this.utilsDir.toString(), 'layouts')
   }
-  get relLayaoutsDir() {
-    return path.relative(process.cwd(), this.layaoutsDir)
+  get relLayoutsDir() {
+    return path.relative(process.cwd(), this.layoutsDir)
   }
   layoutsFile(name: string) {
-    return path.join(this.layaoutsDir, `${name}.ts`)
+    return path.join(this.layoutsDir, `${name}.ts`)
   }
 
   get tsDir() {
-    return path.join(this.layaoutsDir.toString(), 'ts')
+    return path.join(this.layoutsDir.toString(), 'ts')
   }
   tsFile(name: string) {
     return path.join(this.tsDir, `${name}.ts`)
   }
 
   get tsSolitaDir() {
-    return path.join(this.layaoutsDir.toString(), 'solita')
+    return path.join(this.layoutsDir.toString(), 'solita')
   }
   solitaFile(name: string) {
     return path.join(this.tsSolitaDir, `${name}.ts`)
