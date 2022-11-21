@@ -12,17 +12,29 @@ program
   .name('igen')
   .option('-f, --file <path>', 'Generates Indexer based on your IDL.')
   .option('-a, --address <pubkey>', 'Generates Indexer based on your program PubKey. If --file is provided, then this address will only be used as the programId in the generated code.')
-  .option('-o, --output <path>', 'Sets the output path for the generated indexer folder.', './packages')
+  .option('-o, --output <path>', 'Sets the output path for the generated indexer folder.')
   .action(main)
 
 program.parse(process.argv)
 
 async function main() {
   const options = program.opts()
+  let paths: Paths | undefined = undefined
+  if (!options.file && !options.address) {
+    console.log('You must provide either a file or a program address.')
+    return
+  }
+  if (options.output) {
+    let output = options.output.split('/')
+    if (output[output.length - 1] === '') {
+      output = output.slice(0, output.length - 1)
+    }
+    paths = new Paths('./', output[output.length - 1], output.slice(0, output.length - 1).join('/'))
+  }
   if (options.file) {
     let path: string[] = options.file.replace('.json', '').split('/')
     let programName: string = path[path.length - 1]
-    const paths = new Paths(`./`, programName, options.output)
+    paths = paths ?? new Paths(`./`, programName)
     const idl: Idl = JSON.parse(readFileSync(paths.idlFile(programName), "utf8"))
     if(!idl.metadata) {
       idl.metadata = {
@@ -53,7 +65,7 @@ async function main() {
               address: options.address
             }
           }
-          const paths = new Paths(`./`, idl.name, options.output)
+          paths = paths ?? new Paths(`./`, idl.name)
           await generate(idl, paths,
             [
               TemplateType.Types,
