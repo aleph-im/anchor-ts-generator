@@ -7,6 +7,8 @@ import {
   ViewTypes,
   _ViewAccount,
   ViewAccounts,
+  ParsedInstructionArg,
+  ArgsImports
 } from "./types" 
 import { 
   Idl,
@@ -50,11 +52,12 @@ export default class IdlTransformer {
     
     let instructions: ViewInstruction[] = [] 
     let code = 0
+    const imports = this.getArgsImports(idl)
 
     for (const ix of idl) {
       const name = ix.name.slice(0, 1).toUpperCase() + ix.name.slice(1) 
       eventTypeEnum.variants.push(name)
-      const args = ix.args
+      const args = this.getParsedArgs(ix)
       instructions.push({
         name,
         code,
@@ -69,7 +72,7 @@ export default class IdlTransformer {
       code++ 
     }
 
-    return instructions
+    return { instructions, imports }
   }
 
   public generateViewTypes(idl?: IdlDefinedTypeDefinition[]): ViewTypes {
@@ -127,6 +130,49 @@ export default class IdlTransformer {
       (type as IdlTypeArray).array[0]) 
   }
 
+  protected getParsedArgs(ix: IdlInstruction): ParsedInstructionArg[] {
+    const parsedArgs: ParsedInstructionArg[] = []
+    //const { otherImports, definedImports } = this.getArgsImports(ixns)
+
+      for (const arg of ix.args) {
+        const graphQLType = this.toGraphQLTypes(arg.type)
+        const tsType = this.toTypeScriptType(arg.type)
+        
+        parsedArgs.push({
+          ...arg,
+          graphQLType: graphQLType,
+          tsType: tsType
+        })
+    }
+
+    return parsedArgs
+  }
+
+  protected getArgsImports(ixns: IdlInstruction[]): ArgsImports {
+    const otherImports: string[] = []
+    const definedImports: string[] = []
+
+    for(const ix of ixns){
+      for (const arg of ix.args) {
+        if (this.isPubkey(arg.type) || this.isBN(arg.type)) {
+          const tsType = this.toTypeScriptType(arg.type)
+          if ( tsType && !otherImports.includes(tsType) ) otherImports.push(tsType)
+        }
+        if (this.isIdlDefined(arg.type)) {
+          const tsType = this.toTypeScriptType(arg.type)
+          if ( tsType && !otherImports.includes(tsType) ) definedImports.push(tsType)
+        }
+      }
+    }
+    
+    const argsImports: ArgsImports = {
+      otherImports,
+      definedImports
+    }
+
+    return argsImports
+  }
+
   protected toGraphQLTypes(type: IdlType): string {
     if (type === undefined) return "undefined" 
 
@@ -168,6 +214,12 @@ export default class IdlTransformer {
   }
   protected isIdlDefined(type: IdlType): type is IdlTypeDefined {
     return (type as IdlTypeDefined).defined !== undefined
+  }
+  protected isPubkey(type: IdlType): boolean {
+    return type === "publicKey"
+  }
+  protected isBN(type: IdlType): boolean {
+    return type === "u64" || type === "u128" || type === "u256" || type === "u512" || type === "i64" || type === "i128" || type === "i256" || type === "i512" 
   }
 
   protected toViewField(field: IdlField ): ViewField {

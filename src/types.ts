@@ -50,10 +50,23 @@ export type ViewInstruction = {
   name: string
   code: number
   accounts: ViewAccount[]
-  args: IdlInstructionArg[]
+  args: ParsedInstructionArg[]
 }
 
-export type ViewInstructions = ViewInstruction[]
+export type ArgsImports = {
+  otherImports: string[] // pubkey & bn
+  definedImports: string[]
+}
+
+export type ParsedInstructionArg = IdlInstructionArg & {
+  graphQLType: string
+  tsType: string | undefined
+}
+
+export type ViewInstructions = {
+  instructions: ViewInstruction[]
+  imports: ArgsImports
+}
 
 export type ViewEvent = ViewStruct
 

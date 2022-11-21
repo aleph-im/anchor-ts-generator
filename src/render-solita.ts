@@ -131,8 +131,7 @@ import {
 `
     }
     if(instructionsView) {
-        for(const instruction of instructionsView) {
-            if(instruction.name == "ConfigLp") continue
+        for(const instruction of instructionsView.instructions) {
             indexSolita += `
 export type ${instruction.name}Instruction = {
     programId: PublicKey
@@ -151,8 +150,7 @@ export const ${instruction.name}Accounts = [`
         indexSolita += `
 export type ParsedInstructions =
 `
-        for(const instruction of instructionsView) {
-            if(instruction.name == "ConfigLp") continue
+        for(const instruction of instructionsView.instructions) {
             indexSolita += `
     | ${instruction.name}Instruction`
         }

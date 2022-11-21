@@ -40,7 +40,7 @@ async function main() {
     if (options.address) {
       exec(`anchor idl fetch --provider.cluster mainnet ${options.address}`, async (error, stdout, stderr) => {
         if(error) {
-          return
+          console.log(error) 
         }
         if(stdout) {
           const idl: Idl = JSON.parse(stdout)
