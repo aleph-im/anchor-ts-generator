@@ -10,8 +10,9 @@ const program = new Command()
 
 program
   .name('igen')
-  .option('-f, --file <path>', 'Generates Indexer based on your IDL')
-  .option('-a, --address <pubkey>', 'Generates Indexer based on your program PubKey')
+  .option('-f, --file <path>', 'Generates Indexer based on your IDL.')
+  .option('-a, --address <pubkey>', 'Generates Indexer based on your program PubKey. If --file is provided, then this address will only be used as the programId in the generated code.')
+  .option('-o, --output <path>', 'Sets the output path for the generated indexer folder.', './packages')
   .action(main)
 
 program.parse(process.argv)
@@ -21,12 +22,15 @@ async function main() {
   if (options.file) {
     let path: string[] = options.file.replace('.json', '').split('/')
     let programName: string = path[path.length - 1]
-    const paths = new Paths(`./`, programName)
+    const paths = new Paths(`./`, programName, options.output)
     const idl: Idl = JSON.parse(readFileSync(paths.idlFile(programName), "utf8"))
     if(!idl.metadata) {
       idl.metadata = {
         address: "PROGRAM PUBKEY"
       }
+    }
+    if(options.address) {
+      idl.metadata.address = options.address
     }
     await generate(idl, paths,
       [
@@ -49,7 +53,7 @@ async function main() {
               address: options.address
             }
           }
-          const paths = new Paths(`./`, idl.name)
+          const paths = new Paths(`./`, idl.name, options.output)
           await generate(idl, paths,
             [
               TemplateType.Types,

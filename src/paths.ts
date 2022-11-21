@@ -2,7 +2,7 @@ import { PathLike } from 'fs'
 import path from 'path'
 
 export class Paths {
-  constructor(readonly root: PathLike, readonly project: string) {}
+  constructor(readonly root: PathLike, readonly project: string, readonly output?: string | undefined) {}
 
   get rootDir() {
     return this.root.toString()
@@ -16,7 +16,7 @@ export class Paths {
   }
 
   get outputDir() {
-   return path.join(this.rootDir.toString(), 'packages')
+   return this.output ? path.resolve(this.output) : path.join(this.rootDir.toString(), 'packages')
   }
 
   get projectDir() {
