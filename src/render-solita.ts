@@ -20,6 +20,15 @@ export function renderSolitaMods(instructionsView: ViewInstructions | undefined,
                 content = content.substring(0, posToWrite) + '.js' + content.substring(posToWrite)
                 fromPos = content.indexOf('from \'.', posToWrite)
             }
+            
+            let lines = content.split('\n')
+            for (const line of lines) {
+                if (line.includes("wasAnEmptyDefinedType")) {
+                    const lineIndex = lines.indexOf(line)
+                    lines.splice(lineIndex, 1)
+                }
+            }
+            content = lines.join("\n")
 
             try {
                 writeFileSync(paths.ixSolitaFile(fileName), format(content, DEFAULT_FORMAT_OPTS)) 

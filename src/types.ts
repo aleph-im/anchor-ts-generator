@@ -1,4 +1,4 @@
-import { IdlInstructionArg } from "@metaplex-foundation/solita"
+import { IdlInstructionArg, IdlDataEnumVariantWithNamedFields, IdlField } from "@metaplex-foundation/solita"
 
 export enum TemplateType {
   Types = "types",
@@ -32,7 +32,7 @@ export type ViewEnum = {
 }
 
 export type ViewStruct = {
-  name: string | undefined
+  name: string
   fields: ViewField[]
 }
 
@@ -81,4 +81,11 @@ export type ViewAccounts = _ViewAccount[]
 export type _ViewAccount = {
   name: string
   data: ViewStruct
+}
+
+export type EnumVariant = Omit<
+  IdlDataEnumVariantWithNamedFields,
+  'fields'
+> & {
+  fields?: IdlField[]
 }
