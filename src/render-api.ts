@@ -1,5 +1,5 @@
 import { ViewAccounts, ViewInstructions, ViewTypes } from "./types"
-
+import { ViewStruct } from "./types"
 export function renderApiFiles(Name: string, instructions: ViewInstructions | undefined, accounts: ViewAccounts | undefined, types: ViewTypes | undefined){
   const indexApi: string = `export { default } from './schema.js'`
 
@@ -524,46 +524,53 @@ export const types = [`
 `]
 `
   }
+
   return { indexApi, resolversApi, schemaApi, apiTypes }
 }
 
 function checkOrder(types: ViewTypes | undefined){
-  const allTypes: string[] = []
-  const alreadyIncluded: string[] = []
-
-  const posToUpgrade: number[] = []
-  const typesToUpgrade = []
-
-  const posToDowngrade: number[] = []
-  const typesToDowngrade = []
-
   if(types) {
-    for (const type of types.types) {
-      if(type.name){
-        allTypes.push(type.name)
-      }
-    }
+    modifyOrder(types)
+  }
+}
 
-    for(const type of types.types){
-      if(type.name){
-        for(const field of type.fields){
-          if(allTypes.includes(field.graphqlType) && !alreadyIncluded.includes(field.graphqlType)){
-            posToUpgrade.push(allTypes.indexOf(field.graphqlType))
-            typesToUpgrade.push(types.types[allTypes.indexOf(field.graphqlType)])
+function modifyOrder(types: ViewTypes) {
+  const alreadyIncluded: string[] = []
+  let { nameTypes, auxTypes } = getTypesInfo(types)
+  let modified = false
 
-            posToDowngrade.push(allTypes.indexOf(type.name))
-            typesToDowngrade.push(type)
-          }
+  for(const type of types.types){
+    if(type.name){
+      for(const field of type.fields){
+        if(nameTypes.includes(field.graphqlType) && !alreadyIncluded.includes(field.graphqlType)){
+          const upperIndex = nameTypes.indexOf(field.graphqlType)
+          const lowerIndex = nameTypes.indexOf(type.name)
+
+          types.types[upperIndex] = auxTypes[lowerIndex]
+          types.types[lowerIndex] = auxTypes[upperIndex]
+
+          alreadyIncluded.push(field.graphqlType)
+
+          modified = true
+          break
         }
-        alreadyIncluded.push(type.name)
       }
-    }
-
-    if(posToUpgrade.length > 0) {
-      for(let i = 0; i < posToUpgrade.length; i++){
-        types.types[posToUpgrade[i]] = typesToDowngrade[i]
-        types.types[posToDowngrade[i]] = typesToUpgrade[i]
-      }
+      alreadyIncluded.push(type.name)
     }
   }
+  if (modified) modifyOrder(types)
+}
+
+function getTypesInfo(types: ViewTypes) {
+  const nameTypes: string[] = []
+  const auxTypes: ViewStruct[] = []
+
+  for (const type of types.types) {
+    if(type.name){
+      nameTypes.push(type.name)
+      auxTypes.push(type)
+    }
+  }
+
+  return { nameTypes, auxTypes }
 }
