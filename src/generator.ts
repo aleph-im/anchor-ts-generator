@@ -73,8 +73,8 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   if(!existsSync(paths.utilsDir))
     mkdirSync(paths.utilsDir)
-  if(!existsSync(paths.layaoutsDir))
-    mkdirSync(paths.layaoutsDir)
+  if(!existsSync(paths.layoutsDir))
+    mkdirSync(paths.layoutsDir)
   const { accountLayouts, ixLayouts, indexLayouts, layoutLayouts } = renderLayoutsFiles(idl.name, instructionsView, accountsView) 
   try {
     if(accountLayouts) {

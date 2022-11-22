@@ -1,16 +1,175 @@
 # anchor-ts-generator
-## WARNING: This generator is still work-in-progress and may contain bugs! Do not rely on the indexer data, unless you are sure it delivers what you expect. This warning will disappear, as soon as we consider usage safe.
 
 Aleph Indexer Generator for Solana programs, using Anchor's IDLs. It generates all boilerplate necessary for starting your own Solana indexer on our [open-source, multi-threaded node.js framework](https://github.com/aleph-im/solana-indexer-framework), using [moleculer](https://moleculer.services/).
 
-Currently, you can run the indexer generator CLI here from source: 
-1. `npm run build`
-2. You have two options, generating your indexer from a local Anchor IDL, or from a remote one:
-   1. Providing the IDL path:`node ./dist/index.js -f ./path/to/idl/marinade_finance.json`
-   2. Providing your program address `node ./dist/index.js -a MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD`
-       (For this option you need to have anchor installed and your program published on https://www.apr.dev/)
+Currently, you can run the indexer generator CLI here from source:
+1. `npm run build` to build the CLI
+2. You have three options, generating your indexer either from a local Anchor IDL file or from a remote one:
+  1. Providing the IDL path:`node ./dist/index.js -f ./path/to/idl/marinade_finance.json`
+  2. Providing your program address `node ./dist/index.js -a MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD`
+     (For this option you need to have anchor installed and your program published on https://www.apr.dev/)
+  3. If you provide both, the local IDL will be used and the address will be inserted into the generated code, where
+     necessary.
 
-## Deploying a new Indexer
+## Example Usage
+Clone the solana-indexer-framework repo, in which you run the generated indexer:
+```bash
+cd ../
+git clone https://github.com/aleph-im/solana-indexer-framework.git
+```
+
+Generate a new indexer for the Marinade Finance program into the cloned repo:
+```bash
+node ./dist/index.js -a MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD -o ../solana-indexer-framework/packages/marinade_finance
+```
+
+Run the generated indexer:
+```bash
+cd ../solana-indexer-framework/
+npm run start marinade_finance
+```
+
+It is now running a GraphQL server on http://localhost:8080.
+
+## Supported Queries
+### Total program accounts and instruction invocations
+Return global stats about the amount of accounts and total amount of instructions processed by the indexer:
+```graphql
+{
+    globalStats {
+        totalAccounts {
+            State
+            TicketAccountData
+        }
+        totalAccesses
+        totalAccessesByProgramId
+    }
+}
+```
+
+### Accounts
+Get all accounts, their addresses, Anchor type and contents:
+```graphql
+{
+  accounts {
+    address
+    type
+    data {
+      ...on State {
+        msolMint
+        adminAuthority
+        liqPool {
+          lpLiquidityTarget
+          lpMaxFee {
+            basisPoints
+          }
+          lpMinFee {
+            basisPoints
+          }
+          treasuryCut {
+            basisPoints
+          }
+        }
+        # and other fields, see generated GraphQL schema
+      }
+    }
+  }
+}
+```
+
+### Indexing state
+Get the current progress of the indexer. Accurate means that the indexer fetched all transaction signatures belonging to
+that account, progress tells you how much percent of all transactions have been fetched and processed.
+```graphql
+{
+  accountState(account: "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC") {
+    accurate
+    progress
+    pending
+    processed
+  }
+}
+```
+
+### General account stats
+Get accesses in the last hour, day, week or in total:
+```graphql
+{
+  accountStats(account: "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC") {
+    stats {
+      last1h {
+        accesses
+      }
+      last24h {
+        accesses
+      }
+      last7d {
+        accesses
+      }
+      total {
+        accesses
+      }
+    }
+  }
+}
+```
+
+### Account time series stats
+Get aggregated accesses by signing wallet and month:
+```graphql
+{
+  accountTimeSeriesStats(timeFrame:Month, account: "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC", type: "access") {
+    series {
+      date
+      value {
+        ...on MarinadeFinanceInfo {
+          accessesByProgramId
+        }
+      }
+    }
+  }
+}
+```
+
+### Processed instructions (Events)
+Get the latest 1000 processed instructions:
+```graphql
+{
+  events(account: "8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC", limit: 10) {
+    id
+    timestamp
+    type
+    signer
+    ...on OrderUnstakeEvent {
+      data {
+        msolAmount
+      }
+    }
+    ...on AddLiquidityEvent {
+      data {
+        lamports
+      }
+    }
+    ...on DepositEvent {
+      data {
+        lamports
+      }
+    }
+    ...on LiquidUnstakeEvent {
+      data {
+        msolAmount
+      }
+    }
+    ...on RemoveLiquidityEvent {
+      data {
+        tokens
+      }
+    }
+  }
+}
+```
+
+## Deploying an Indexer to Aleph.im
 For an example deployment, see this PR: https://github.com/aleph-im/anchor-ts-generator/pull/20/files
 - Make a fork of this project in your GitHub Workspace.
 - Build the indexer using the anchor address or the IDL.
