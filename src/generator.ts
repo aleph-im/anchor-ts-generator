@@ -47,6 +47,11 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
 
   const { typesView, instructionsView, accountsView } = generateFromTemplateType(idl, toGenerate)
 
+  if (!accountsView) {
+    console.log('This implementation is only for those programs that use accounts')
+    process.exit(0)
+  }
+
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
   const { constants, types } = renderSrcFiles(Name, idl.name, instructionsView, address)

@@ -100,14 +100,18 @@ export function renderSolitaMods(instructionsView: ViewInstructions | undefined,
                 logError(err)
             }
         }
-    }
+    } 
 
-    let indexSolita = `export * from './accounts/index.js'
-export * from './errors/index.js'
-export * from './instructions/index.js'
-export * from './types/index.js'
+    let indexSolita = `
 import { AccountMeta, PublicKey } from '@solana/web3.js'
 `
+    if(accountsView) indexSolita += `export * from './accounts/index.js'
+`
+    if(instructionsView) indexSolita += `export * from './instructions/index.js'
+`
+    if(typesView) indexSolita += `export * from './types/index.js'
+`
+
     if(accountsView) {
         indexSolita += `
 import {
@@ -118,7 +122,7 @@ import {
 `
         }
         indexSolita += `
-} from './accounts'
+} from './accounts/index.js'
 
 `
     }
@@ -136,7 +140,7 @@ import {
         }
 
         indexSolita += `
-} from './types'
+} from './types/index.js'
 `
     }
     if(instructionsView) {

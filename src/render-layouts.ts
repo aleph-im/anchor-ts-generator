@@ -6,7 +6,7 @@ export function renderLayoutsFiles(filename: string, instructionsView: ViewInstr
 
     let accountLayouts: string = ""
 
-    if(accountsView != undefined && accountsView.length > 0) {
+    if(accountsView && accountsView.length > 0) {
         accountLayouts = 
 `import {
 ` 
@@ -99,9 +99,17 @@ export type InstructionBase = EventBase<InstructionType> & {
 
 export type ${instruction.name}Info = {`
                                 if(instruction.args.length > 0){
-                                        ixLayouts += ` 
+                                        if (instruction.args.length === 1) {
+                                                ixLayouts += ` 
         data: solita.${instruction.args[0].tsType}
 `
+                                        }
+                                        else {
+                                                ixLayouts += ` 
+        data: solita.${instruction.name}InstructionArgs
+`
+                                        }
+                                        
                                 }
                                 if(instruction.accounts.length > 0){
                                         ixLayouts += `accounts: solita.${instruction.name}InstructionAccounts
@@ -212,11 +220,11 @@ export type ParsedEvents =
                 }
         }
 
-        const indexLayouts = 
-`export * from './accounts.js'
-export * from './instructions.js'
+        let indexLayouts = 
+`export * from './instructions.js'
 export * from './solita/index.js'
 `
+        if (accountsView) indexLayouts += `export * from './accounts.js'`
         const layoutLayouts =
 `import { ${NAME}_PROGRAM_ID } from '../../constants.js'
 import { ACCOUNTS_DATA_LAYOUT } from './accounts.js'

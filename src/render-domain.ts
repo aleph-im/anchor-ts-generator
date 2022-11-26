@@ -189,10 +189,10 @@ import {
   IndexerMainDomainContext,
   AccountStats,
 } from '@aleph-indexer/framework'
-import {
-  AccountType,
-  ParsedEvents,
-} from '../utils/layouts/index.js'
+import { `
+
+  if(accounts) mainDomain += `AccountType, `
+  mainDomain += `ParsedEvents } from '../utils/layouts/index.js'
 import {
   Global${Name}Stats,
   ${Name}AccountStats,
@@ -306,7 +306,7 @@ export default class MainDomain
     accountAddresses?: string[],
   ): Promise<Global${Name}Stats> {
     console.log(\`📊 computing global stats for \${accountAddresses?.length} accounts\`)
-    const accountsStats = await this.getAccountStats<MarinadeFinanceAccountStats>(
+    const accountsStats = await this.getAccountStats<${Name}AccountStats>(
       accountAddresses,
     )
     const globalStats: Global${Name}Stats = this.getNewGlobalStats()
