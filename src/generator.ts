@@ -1,5 +1,5 @@
-import { Solita, Idl } from "@metaplex-foundation/solita"
-import { TemplateType } from "./types.js" 
+import { Solita, Idl, IdlType, IdlTypeDefined, IdlInstructionArg, IdlDataEnumVariant, isIdlFieldsType, IdlField } from "@metaplex-foundation/solita"
+import { TemplateType, EnumVariant } from "./types.js" 
 import { existsSync, mkdirSync, writeFileSync } from "fs" 
 import IdlTransformer from "./transformer.js" 
 import { Paths } from './paths.js'
@@ -29,7 +29,9 @@ const DEFAULT_FORMAT_OPTS: Options = {
 
 export default async function generate(idl: Idl, paths: Paths, toGenerate: TemplateType[], address?: string, ) {
   const Name = toCamelCase(idl.name)
-  
+
+  processIdl(idl)
+
   if(!existsSync(paths.outputDir))
     mkdirSync(paths.outputDir)
 
@@ -44,6 +46,11 @@ export default async function generate(idl: Idl, paths: Paths, toGenerate: Templ
   writeFileSync(paths.projectFile('cmd.sh'), cmd) 
 
   const { typesView, instructionsView, accountsView } = generateFromTemplateType(idl, toGenerate)
+
+  if (!accountsView) {
+    console.log('This implementation is only for those programs that use accounts')
+    process.exit(0)
+  }
 
   if(!existsSync(paths.srcDir))
     mkdirSync(paths.srcDir)
@@ -222,4 +229,42 @@ function toCamelCase(str: string){
     camelCase += wordArr[i].charAt(0).toUpperCase() + wordArr[i].slice(1) 
   }
   return camelCase 
+}
+
+function processIdl(idl: Idl) {
+  if(idl.types) {
+    for (const type of idl.types) {
+      if (type.type.kind === "struct" && type.type.fields.length === 0) {
+        const index = idl.types.indexOf(type)
+        idl.types.splice(index, 1)
+        for (const ix of idl.instructions) {
+          for (const arg of ix.args) {
+            if (isIdlDefined(arg.type) && arg.type.defined === type.name) {
+              const newArgs: IdlInstructionArg[] = []
+              newArgs.push({
+                "name": "wasAnEmptyDefinedType",
+                "type": "u32"
+              })
+              ix.args = newArgs
+            }
+          }
+        }
+      }
+      if (!isIdlFieldsType(type.type) && type.type.variants) {
+        for (const variant of type.type.variants) {
+          if (hasFields(variant) && variant.fields && isIdlDefined(variant.fields[0]) && variant.fields[0].defined === "bincode::Error") {
+            delete variant.fields
+          }
+        }
+      }
+    }
+  }
+}
+
+function isIdlDefined(type: IdlType | IdlField): type is IdlTypeDefined {
+  return (type as IdlTypeDefined).defined !== undefined
+}
+
+function hasFields(type: IdlDataEnumVariant): type is EnumVariant {
+  return (type as EnumVariant).fields !== undefined
 }

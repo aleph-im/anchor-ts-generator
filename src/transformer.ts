@@ -23,7 +23,6 @@ import {
   IdlDefinedTypeDefinition,
   IdlTypeEnum,
   IdlInstructionArg,
-  isIdlTypeDataEnum,
   IdlFieldsType
 } from "@metaplex-foundation/solita" 
 import { primitivesMap, primitivesMapGraphqQl } from "./constants.js" 
@@ -78,16 +77,24 @@ export default class IdlTransformer {
   public generateViewTypes(idl?: IdlDefinedTypeDefinition[]): ViewTypes {
     if (idl === undefined)
       idl = this.idl.types as IdlDefinedTypeDefinition[]
+      
+    const typesNames: string[] = []
     let view: ViewTypes = {
       enums: [],
       types: []
     } 
+    
     for (const type of idl) {
-      if (type.type.kind === "struct")
-        view.types = [...view.types, this.toViewStruct(type)] 
-      else if (isIdlTypeDataEnum(type.type))
-        view.enums = [...view.enums, this.toViewEnum(type)] 
+      if (type.type.kind === "struct" && !typesNames.includes(type.name)) {
+        view.types.push(this.toViewStruct(type))
+        typesNames.push(type.name)
+      }
+      if (type.type.kind === "enum" && !typesNames.includes(type.name)) {
+        view.enums.push(this.toViewEnum(type))
+        typesNames.push(type.name)
+      }
     }
+
     return view
   }
 
@@ -132,8 +139,7 @@ export default class IdlTransformer {
 
   protected getParsedArgs(ix: IdlInstruction): ParsedInstructionArg[] {
     const parsedArgs: ParsedInstructionArg[] = []
-    //const { otherImports, definedImports } = this.getArgsImports(ixns)
-
+    if (ix.args) {
       for (const arg of ix.args) {
         const graphQLType = this.toGraphQLTypes(arg.type)
         const tsType = this.toTypeScriptType(arg.type)
@@ -143,6 +149,7 @@ export default class IdlTransformer {
           graphQLType: graphQLType,
           tsType: tsType
         })
+      }
     }
 
     return parsedArgs
@@ -153,14 +160,16 @@ export default class IdlTransformer {
     const definedImports: string[] = []
 
     for(const ix of ixns){
-      for (const arg of ix.args) {
-        if (this.isPubkey(arg.type) || this.isBN(arg.type)) {
-          const tsType = this.toTypeScriptType(arg.type)
-          if ( tsType && !otherImports.includes(tsType) ) otherImports.push(tsType)
-        }
-        if (this.isIdlDefined(arg.type)) {
-          const tsType = this.toTypeScriptType(arg.type)
-          if ( tsType && !otherImports.includes(tsType) ) definedImports.push(tsType)
+      if (ix.args) {
+        for (const arg of ix.args) {
+          if (this.isPubkey(arg.type) || this.isBN(arg.type)) {
+            const tsType = this.toTypeScriptType(arg.type)
+            if ( tsType && !otherImports.includes(tsType) ) otherImports.push(tsType)
+          }
+          if (this.isIdlDefined(arg.type)) {
+            const tsType = this.toTypeScriptType(arg.type)
+            if ( tsType && !otherImports.includes(tsType) ) definedImports.push(tsType)
+          }
         }
       }
     }

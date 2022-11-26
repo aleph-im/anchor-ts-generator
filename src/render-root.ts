@@ -45,8 +45,8 @@ services:
   "author": "ALEPH.im",
   "license": "ISC",
   "dependencies": {
-    "@aleph-indexer/core": "^1.0.14",
-    "@aleph-indexer/framework": "^1.0.14",
+    "@aleph-indexer/core": "^1.0.21",
+    "@aleph-indexer/framework": "^1.0.21",
     "@metaplex-foundation/beet": "0.7.1",
     "@metaplex-foundation/beet-solana": "0.4.0",
     "@solana/spl-token": "0.3.5",
